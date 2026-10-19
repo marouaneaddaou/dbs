@@ -389,15 +389,28 @@ export function hardestQuestions(rows: QuizResultRow[], limit = 5): QuestionDiff
 /* ------------------------------------------------------------------ */
 
 /**
- * Direct join link for one specific room: `<origin>/quiz/?code=CODE`.
+ * Direct join link for one specific room: `<origin>/quiz/join?room=CODE`.
  * The origin is passed in explicitly (normally `window.location.origin`) so
  * the link works on localhost, a classroom LAN and any deployed domain — and
- * so this stays a pure function tests can assert on. `trailingSlash: true`
- * in next.config.mjs means the path keeps its trailing slash.
+ * so this stays a pure function tests can assert on. `/quiz/join` is a thin
+ * route that forwards to the existing `/quiz` join page with the code filled in.
  */
 export function buildQuizShareUrl(code: string, origin: string): string {
   const base = origin.replace(/\/+$/, "");
-  return `${base}/quiz/?code=${encodeURIComponent(normalizeCode(code))}`;
+  return `${base}/quiz/join?room=${encodeURIComponent(normalizeCode(code))}`;
+}
+
+/**
+ * Direct room link in the exact `<origin>/quiz/room/?code=CODE&host=1` shape.
+ * The origin is passed in explicitly (normally `window.location.origin`) so
+ * the link works on localhost, a classroom LAN and any deployed domain — and
+ * so this stays a pure function tests can assert on. The code is normalized
+ * and URL-encoded. Admin sessions open the host controls for that room;
+ * everyone else (students) lands on the room's username + join screen.
+ */
+export function buildRoomShareUrl(code: string, origin: string): string {
+  const base = origin.replace(/\/+$/, "");
+  return `${base}/quiz/room/?code=${encodeURIComponent(normalizeCode(code))}&host=1`;
 }
 
 /**

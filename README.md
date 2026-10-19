@@ -152,10 +152,14 @@ Random Boxes does not use room codes at all — it is a standalone single-device
 The flow teachers actually use:
 
 1. **Create** a quiz in `/quiz/create` (or the dashboard) with a manual room code, e.g. `12355`.
-2. **Open the room** from the dashboard (**Host** action → `/quiz/room?code=12355&host=1`, admin-gated).
-   The teacher's browser becomes the host and shows the big room code.
-3. **Students join**: on their own phone/laptop they open `/quiz`, enter `12355` + their name. They land in
-   the lobby and wait.
+2. **Open the room** from the dashboard (**Host** action → `/quiz/room?code=12355&host=1`; the host
+   controls open for a signed-in admin). The teacher's browser becomes the host and shows the big room
+   code plus a **Share room** button — a small popup offering *Copy room link*, *Share on WhatsApp*,
+   *Share on Facebook* and *Share via other apps* (Web Share API), each built from the live origin as
+   `…/quiz/room/?code=12355&host=1`.
+3. **Students join**: on their own phone/laptop they open `/quiz`, enter `12355` + their name — or open
+   the shared room link directly, which lands them on that room's name + join screen (no account; the
+   password gate only protects the host controls). They land in the lobby and wait.
 4. **Start** — the lobby closes; late joiners are politely refused with the code prompt.
 5. **Everyone answers independently** and at their own pace on their own screen (per-question timers are
    optional). The teacher's screen shows live per-student progress and per-question answer counts — but
@@ -248,8 +252,9 @@ app/
   votes/room/page.tsx      Voting room (Suspense + client)
   voting/…                 Legacy URLs — client-side redirects to /votes/…
   quiz/page.tsx            Public quiz join page (code + username)
+  quiz/join/page.tsx       Shared-link forwarder (?room= → the /quiz join page, code prefilled)
   quiz/create/page.tsx     Quiz builder (admin only)
-  quiz/room/page.tsx       Quiz room dispatcher (host=1 requires admin)
+  quiz/room/page.tsx       Quiz room dispatcher (host controls for admins; shared links → student join)
   settings/page.tsx        Storage overview, backup / restore, clear data (admin only)
 components/
   admin/                   AdminLogin, AdminGate (password gate)
@@ -290,8 +295,9 @@ shows a login screen; the password is **`123456`**.
 - **Session**: after login the session lives in `sessionStorage` (`dbs_admin_session_v1`) — closing the tab
   requires logging in again. Nothing about the password is persisted.
 - **Gated routes**: `/admin`, `/settings`, `/boxes`, `/quiz/create`, `/votes/create`, plus host/creator views
-  (`/quiz/room?host=1`, `/votes/room?host=1`). Participant pages (`/`, `/quiz`, `/votes`, non-host room views)
-  never show admin links or controls.
+  (`/quiz/room?host=1` for signed-in admins, `/votes/room?host=1`). Participant pages (`/`, `/quiz`, `/votes`,
+  non-host room views — and shared quiz-room links opened without a session, which land on the username +
+  join screen) never show admin links or controls.
 - **Logout** button in the dashboard header clears the session.
 
 > ⚠️ **Demo-only gate.** This is a frontend app with no server: the password ships in the client bundle, so

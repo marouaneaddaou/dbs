@@ -4,7 +4,10 @@
 
    ▲ Next.js 15.5.28
    - Local:        http://localhost:3000
-   - Network:      http://192.168.1.15:3000
+   - Network:      http://192.168.1.2:3000
 
  ✓ Starting...
- ✓ Ready in 4.8s
+ ✓ Ready in 4.6s
+ ○ Compiling /quiz/room ...
+ ✓ Compiled /quiz/room in 10.2s (851 modules)
+ GET /quiz/room/?code=123&host=1 200 in 11168ms

@@ -4,7 +4,7 @@ import { buildContentsOrder } from "../lib/randomization";
 import type { BoxConfig, BoxContent } from "../types/boxes";
 import { castVote, computeResults, createEmptyRoom, isVotingOpen, validateBallot } from "../lib/voting";
 import type { VotingRoom, VotingRoomRecord } from "../types/voting";
-import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing } from "../lib/quiz";
+import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildRoomShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing } from "../lib/quiz";
 import type { QuizHistoryMap, QuizPlayer, QuizQuestion, QuizResponse, QuizRoom } from "../types/quiz";
 
 let passed = 0;
@@ -402,16 +402,39 @@ ok("validateRoom rejects empty title, missing correct answer", () => {
 ok("share links: origin + normalized code; no hardcoded host", () => {
   assert.equal(
     buildQuizShareUrl("ab12cd", "https://dbs.example.com"),
-    "https://dbs.example.com/quiz/?code=AB12CD",
+    "https://dbs.example.com/quiz/join?room=AB12CD",
   );
   assert.equal(
     buildQuizShareUrl("ab 12 cd", "http://localhost:3000/"),
-    "http://localhost:3000/quiz/?code=AB12CD",
+    "http://localhost:3000/quiz/join?room=AB12CD",
     "trailing slash origin is stripped, code is normalized",
   );
   // The link is built from whatever origin the site runs on — deployed,
   // LAN or localhost — never a fixed domain.
-  assert.equal(buildQuizShareUrl("X1", "https://quiz.school.de"), "https://quiz.school.de/quiz/?code=X1");
+  assert.equal(buildQuizShareUrl("X1", "https://quiz.school.de"), "https://quiz.school.de/quiz/join?room=X1");
+});
+
+ok("room share link: exact /quiz/room/?code=…&host=1 format from the live origin", () => {
+  assert.equal(
+    buildRoomShareUrl("ab12cd", "https://dbs.example.com"),
+    "https://dbs.example.com/quiz/room/?code=AB12CD&host=1",
+  );
+  assert.equal(
+    buildRoomShareUrl("ab 12 cd", "http://localhost:3000/"),
+    "http://localhost:3000/quiz/room/?code=AB12CD&host=1",
+    "trailing slash origin is stripped, code is normalized",
+  );
+  // Same rule as the join link: whatever origin the site runs on — deployed,
+  // LAN or localhost — never a fixed domain, never a missing host flag.
+  assert.equal(
+    buildRoomShareUrl("X1", "https://quiz.school.de"),
+    "https://quiz.school.de/quiz/room/?code=X1&host=1",
+  );
+  assert.equal(
+    (buildRoomShareUrl("X1", "https://quiz.school.de").match(/\/quiz\/room\//g) ?? []).length,
+    1,
+    "route appears exactly once (no doubled slashes)",
+  );
 });
 
 ok("WhatsApp share URL encodes the message with the room link", () => {

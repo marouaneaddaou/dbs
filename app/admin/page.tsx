@@ -32,11 +32,10 @@ import type { QuizHistoryMap, QuizRoom, QuizSessionRecord } from "@/types/quiz";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { useLocalStorage, useHydrated } from "@/lib/hooks";
 import { normalizeCode, isRoomExpired } from "@/lib/voting";
-import { removeQuizHistory } from "@/lib/quiz";
+import { buildQuizShareUrl, removeQuizHistory } from "@/lib/quiz";
 import { logoutAdmin } from "@/lib/admin-auth";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { QuizHistoryModal } from "@/components/quiz/QuizHistoryModal";
-import { QuizShareModal } from "@/components/quiz/QuizShareModal";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -45,7 +44,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
-import { downloadJSON } from "@/lib/io";
+import { downloadJSON, copyToClipboard } from "@/lib/io";
 
 interface PendingAction {
   title: string;
@@ -98,7 +97,6 @@ function AdminPageContent() {
   const [createOpen, setCreateOpen] = useState(false);
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [historyFor, setHistoryFor] = useState<QuizRoom | null>(null);
-  const [shareFor, setShareFor] = useState<QuizRoom | null>(null);
 
   function handleLogout() {
     logoutAdmin();
@@ -116,6 +114,26 @@ function AdminPageContent() {
       () => toast.success(`Copied code ${code}.`),
       () => toast.error("Could not copy to clipboard."),
     );
+  }
+
+  async function shareRoom(room: QuizRoom) {
+    const url = buildQuizShareUrl(room.code, window.location.origin);
+    const title = room.title || "Quiz";
+    // Prefer the native share sheet (Web Share API) when the browser offers it.
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, text: `Join the quiz "${title}" — room code ${room.code}`, url });
+        return;
+      } catch (err) {
+        // User dismissed the share sheet — leave everything untouched.
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        // Any other failure falls through to the clipboard fallback below.
+      }
+    }
+    // Fallback: copy the link and confirm.
+    const ok = await copyToClipboard(url);
+    if (ok) toast.success(`Share link copied — ${url}`);
+    else toast.error("Could not copy the share link.");
   }
 
   /* ----------------------------- Voting actions ---------------------------- */
@@ -543,10 +561,10 @@ function AdminPageContent() {
                             variant="gold"
                             size="sm"
                             icon={<Share2 className="h-4 w-4" />}
-                            onClick={() => setShareFor(room)}
-                            aria-label={`Teilen / Share Room ${room.code}`}
+                            onClick={() => shareRoom(room)}
+                            aria-label={`Share Room ${room.code}`}
                           >
-                            Teilen / Share Room
+                            Share Room
                           </Button>
                           <IconBtn
                             label="Copy code"
@@ -673,12 +691,6 @@ function AdminPageContent() {
         onClose={() => setHistoryFor(null)}
         roomCode={historyFor?.code ?? ""}
         roomTitle={historyFor?.title || "Quiz results"}
-      />
-
-      <QuizShareModal
-        open={!!shareFor}
-        onClose={() => setShareFor(null)}
-        room={shareFor}
       />
 
       <ConfirmDialog
