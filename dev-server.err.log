@@ -1,0 +1,13 @@
+ ⚠ Cross origin request detected from 192.168.1.6 to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ ⨯ ./components/quiz/QuizStudentView.tsx
+Module parse failed: Identifier 'deadline' has already been declared (1118:10)
+|     const picked = pickedId !== null;
+|     const answeredRecord = answers[current.id];
+>     const deadline = current.timeLimitSec && current.timeLimitSec > 0 ? questionStart + current.timeLimitSec * 1000 : null;
+|     return /*#__PURE__*/ _jsxDEV(StudentShell, {
+|         code: code,
+
+Import trace for requested module:
+./components/quiz/QuizStudentView.tsx
+./components/quiz/QuizRoomEntry.tsx

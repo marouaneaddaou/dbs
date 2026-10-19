@@ -1,0 +1,19 @@
+
+> dbs-zentrum@1.0.0 dev
+> next dev
+
+   ▲ Next.js 15.5.28
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.6:3000
+
+ ✓ Starting...
+ ✓ Ready in 4.1s
+ ○ Compiling /admin/results ...
+ ✓ Compiled /admin/results in 9.2s (756 modules)
+ GET /admin/results/ 200 in 10239ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 2s (798 modules)
+ GET /admin/ 200 in 2449ms
+ ○ Compiling /quiz/room ...
+ ✓ Compiled /quiz/room in 1307ms (874 modules)
+ GET /quiz/room/ 200 in 1812ms

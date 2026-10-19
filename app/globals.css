@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background-color: #ffffff;
+}
+
+body {
+  @apply bg-white text-gray-900 antialiased;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 17, 17, 0.25) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(17, 17, 17, 0.2);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(221, 0, 0, 0.4);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* Dark purple backdrop with a subtle grid — student quiz gameplay screen. */
+  .quiz-grid-bg {
+    background-color: #1d0f42;
+    background-image:
+      radial-gradient(1100px 480px at 50% -10%, rgba(139, 92, 246, 0.28), transparent 65%),
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: auto, 28px 28px, 28px 28px;
+  }
+}
