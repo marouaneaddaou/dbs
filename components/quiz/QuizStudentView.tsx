@@ -600,7 +600,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           <p className="mt-2 text-sm text-gray-500">
             {reachable
               ? `Joining room ${code} as ${name}.`
-              : `Room ${code} isn't hosting right now. Make sure your teacher has the room open on their screen — we keep retrying automatically.`}
+              : `Room ${code} isn't hosting right now. Make sure your teacher has the room open on their screen — or ask for a new code if this room was deleted. We keep retrying automatically.`}
           </p>
           <div className="mt-5 flex justify-center gap-3">
             <Button variant="secondary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => retryNowRef.current()}>

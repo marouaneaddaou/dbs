@@ -4,7 +4,7 @@ import { buildContentsOrder } from "../lib/randomization";
 import type { BoxConfig, BoxContent } from "../types/boxes";
 import { castVote, computeResults, createEmptyRoom, isVotingOpen, validateBallot } from "../lib/voting";
 import type { VotingRoom, VotingRoomRecord } from "../types/voting";
-import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions } from "../lib/quiz";
+import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing } from "../lib/quiz";
 import type { QuizHistoryMap, QuizPlayer, QuizQuestion, QuizResponse, QuizRoom } from "../types/quiz";
 
 let passed = 0;
@@ -397,6 +397,48 @@ ok("summarizeQuizResults and hardestQuestions aggregate correctly", () => {
 ok("validateRoom rejects empty title, missing correct answer", () => {
   const room = createQuizRoom();
   assert.equal(validateRoom(room).ok, false);
+});
+
+ok("share links: origin + normalized code; no hardcoded host", () => {
+  assert.equal(
+    buildQuizShareUrl("ab12cd", "https://dbs.example.com"),
+    "https://dbs.example.com/quiz/?code=AB12CD",
+  );
+  assert.equal(
+    buildQuizShareUrl("ab 12 cd", "http://localhost:3000/"),
+    "http://localhost:3000/quiz/?code=AB12CD",
+    "trailing slash origin is stripped, code is normalized",
+  );
+  // The link is built from whatever origin the site runs on — deployed,
+  // LAN or localhost — never a fixed domain.
+  assert.equal(buildQuizShareUrl("X1", "https://quiz.school.de"), "https://quiz.school.de/quiz/?code=X1");
+});
+
+ok("WhatsApp share URL encodes the message with the room link", () => {
+  const link = "https://dbs.example.com/quiz/?code=AB12CD";
+  const url = buildWhatsAppShareUrl(`Join "Trivia" ${link} (code: AB12CD)`);
+  assert.ok(url.startsWith("https://wa.me/?text="), "wa.me share scheme");
+  const payload = decodeURIComponent(url.slice("https://wa.me/?text=".length));
+  assert.ok(payload.includes(link), "message contains the share link");
+  assert.ok(payload.includes("AB12CD"), "message contains the room code");
+  assert.ok(!/\s/.test(url.split("?text=")[1] ?? ""), "message is fully URL-encoded");
+});
+
+ok("isSharedRoomMissing only fires on quiz-managing browsers", () => {
+  const room = { ...createQuizRoom(), code: "ROOM1", title: "Trivia" };
+  assert.equal(isSharedRoomMissing("ROOM1", true, [room]), false, "existing room → fine");
+  assert.equal(isSharedRoomMissing("room1", true, [room]), false, "case-insensitive match");
+  assert.equal(
+    isSharedRoomMissing("GONE1", true, [room]),
+    true,
+    "deleted room on a browser that stores quiz rooms → clear error",
+  );
+  assert.equal(
+    isSharedRoomMissing("GONE1", false, []),
+    false,
+    "participant device (no quiz-rooms key) never errors — it cannot know",
+  );
+  assert.equal(isSharedRoomMissing("", true, [room]), false, "no code → no error");
 });
 
 console.log(`\nAll ${passed} logic checks passed.`);

@@ -27,3 +27,34 @@ export function readJSONFile(file: File): Promise<unknown> {
     reader.readAsText(file);
   });
 }
+
+/**
+ * Copy text to the clipboard with a graceful fallback.
+ * Uses the async Clipboard API when available (secure contexts), otherwise
+ * falls back to a hidden textarea + execCommand so copying still works on
+ * plain-HTTP classroom LANs. Resolves true when the copy succeeded.
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      /* fall through to the legacy path */
+    }
+  }
+  try {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(area);
+    return ok;
+  } catch {
+    return false;
+  }
+}

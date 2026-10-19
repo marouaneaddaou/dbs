@@ -9,6 +9,7 @@ import type {
   QuizRoom,
 } from "@/types/quiz";
 import { generateRoomCode, uid } from "@/lib/storage";
+import { normalizeCode } from "@/lib/voting";
 
 export { normalizeCode } from "@/lib/voting";
 
@@ -381,4 +382,46 @@ export function hardestQuestions(rows: QuizResultRow[], limit = 5): QuestionDiff
       return a.text.localeCompare(b.text);
     })
     .slice(0, Math.max(0, limit));
+}
+
+/* ------------------------------------------------------------------ */
+/* Room sharing                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Direct join link for one specific room: `<origin>/quiz/?code=CODE`.
+ * The origin is passed in explicitly (normally `window.location.origin`) so
+ * the link works on localhost, a classroom LAN and any deployed domain — and
+ * so this stays a pure function tests can assert on. `trailingSlash: true`
+ * in next.config.mjs means the path keeps its trailing slash.
+ */
+export function buildQuizShareUrl(code: string, origin: string): string {
+  const base = origin.replace(/\/+$/, "");
+  return `${base}/quiz/?code=${encodeURIComponent(normalizeCode(code))}`;
+}
+
+/**
+ * WhatsApp share URL. Omitting the phone number opens WhatsApp's share
+ * picker with the message pre-filled; the message is URL-encoded as required
+ * by the wa.me scheme.
+ */
+export function buildWhatsAppShareUrl(message: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
+/**
+ * True when a shared link's room is missing from a browser that *stores*
+ * quiz rooms (`roomsKeyPresent` — the admin's own device, where the room
+ * was deleted). Participants' devices never write the quiz-rooms key, so
+ * their links never error out here: without local data the app cannot know
+ * whether the room exists (it lives on the teacher's device), and the
+ * existing "teacher isn't hosting" connection screen covers that case.
+ */
+export function isSharedRoomMissing(
+  code: string,
+  roomsKeyPresent: boolean,
+  rooms: QuizRoom[],
+): boolean {
+  if (!code || !roomsKeyPresent) return false;
+  return !findQuizByCode(rooms, code);
 }

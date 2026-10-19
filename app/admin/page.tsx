@@ -19,6 +19,7 @@ import {
   Play,
   Plus,
   RotateCcw,
+  Share2,
   Sparkles,
   Trash2,
   Trophy,
@@ -35,6 +36,7 @@ import { removeQuizHistory } from "@/lib/quiz";
 import { logoutAdmin } from "@/lib/admin-auth";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { QuizHistoryModal } from "@/components/quiz/QuizHistoryModal";
+import { QuizShareModal } from "@/components/quiz/QuizShareModal";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -96,6 +98,7 @@ function AdminPageContent() {
   const [createOpen, setCreateOpen] = useState(false);
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [historyFor, setHistoryFor] = useState<QuizRoom | null>(null);
+  const [shareFor, setShareFor] = useState<QuizRoom | null>(null);
 
   function handleLogout() {
     logoutAdmin();
@@ -536,6 +539,15 @@ function AdminPageContent() {
                       ],
                       actions: (
                         <>
+                          <Button
+                            variant="gold"
+                            size="sm"
+                            icon={<Share2 className="h-4 w-4" />}
+                            onClick={() => setShareFor(room)}
+                            aria-label={`Teilen / Share Room ${room.code}`}
+                          >
+                            Teilen / Share Room
+                          </Button>
                           <IconBtn
                             label="Copy code"
                             icon={<Copy className="h-4 w-4" />}
@@ -661,6 +673,12 @@ function AdminPageContent() {
         onClose={() => setHistoryFor(null)}
         roomCode={historyFor?.code ?? ""}
         roomTitle={historyFor?.title || "Quiz results"}
+      />
+
+      <QuizShareModal
+        open={!!shareFor}
+        onClose={() => setShareFor(null)}
+        room={shareFor}
       />
 
       <ConfirmDialog
