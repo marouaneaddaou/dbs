@@ -82,22 +82,50 @@ export function validateRoom(room: QuizRoom): QuestionValidation {
 }
 
 /**
- * Points for a single answer.
- * Base points for correct answers, plus an optional speed bonus that scales
- * with how quickly the player answered relative to the time limit.
+ * Maximum speed bonus as a share of a question's base points. A correct answer
+ * submitted instantly earns base + 50%; one submitted at the deadline earns the
+ * base alone. The 100-point base itself is never reduced.
+ */
+export const SPEED_BONUS_RATE = 0.5;
+
+/** Maximum points for one question: base points plus the full speed bonus. */
+export function maxPointsFor(question: QuizQuestion): number {
+  const base = Math.max(0, question.points);
+  return base + Math.round(base * SPEED_BONUS_RATE);
+}
+
+/**
+ * Points for a single answer: the question's base points for a correct answer
+ * plus a speed bonus scaled by the time actually left when it is submitted.
+ *
+ * `elapsedMs` is the participant's own response time, recorded on their
+ * device at submission (not when results are inspected). Wrong answers always
+ * score 0. Without a timer there is no time pressure, so a correct answer
+ * scores the base points alone. The result stays within
+ * [base, base + 50%] and never increases as `elapsedMs` grows — faster
+ * correct answers always earn at least as much as slower ones.
  */
 export function pointsForAnswer(question: QuizQuestion, answerId: string, elapsedMs: number): number {
   const answer = question.answers.find((a) => a.id === answerId);
   if (!answer || !answer.correct) return 0;
-  let points = question.points;
-  if (question.speedBonus && question.timeLimitSec && question.timeLimitSec > 0) {
-    const ratio = Math.max(0, 1 - elapsedMs / (question.timeLimitSec * 1000));
-    points += Math.round(question.points * 0.5 * ratio);
-  }
-  return points;
+  const base = Math.max(0, question.points);
+  const limitMs = question.timeLimitSec && question.timeLimitSec > 0 ? question.timeLimitSec * 1000 : null;
+  if (limitMs === null) return base;
+  const elapsed = Number.isFinite(elapsedMs) ? Math.min(Math.max(0, elapsedMs), limitMs) : limitMs;
+  const remaining = limitMs - elapsed;
+  return base + Math.round(base * SPEED_BONUS_RATE * (remaining / limitMs));
 }
 
-/** Rank players: highest points wins; ties share the same rank. */
+/** Total response time spent on correct answers only (the ranking tiebreaker). */
+function correctAnswerTimeMs(responses: QuizResponse[]): number {
+  return responses.reduce((sum, r) => (r.correct ? sum + Math.max(0, r.elapsedMs || 0) : sum), 0);
+}
+
+/**
+ * Rank players: highest total points first; ties break on correct answers,
+ * then on total response time across correct answers (faster ranks higher).
+ * Players still identical after all tiebreakers share the same rank.
+ */
 export function computeScores(
   room: QuizRoom,
   players: QuizPlayer[],
@@ -111,7 +139,7 @@ export function computeScores(
     if (list) list.push(response);
   }
 
-  const scores: QuizPlayerScore[] = players.map((player) => {
+  const rows = players.map((player) => {
     const list = byPlayer.get(player.id) ?? [];
     const correct = list.filter((r) => r.correct).length;
     const incorrect = list.filter((r) => !r.correct).length;
@@ -121,7 +149,8 @@ export function computeScores(
     const accuracy = answered > 0 ? Math.round((correct / answered) * 1000) / 10 : 0;
     // Total time comes only from valid recorded answer times.
     const totalTimeMs = list.reduce((sum, r) => sum + Math.max(0, r.elapsedMs || 0), 0);
-    return {
+    const correctTimeMs = correctAnswerTimeMs(list);
+    const score: QuizPlayerScore = {
       playerId: player.id,
       name: player.name,
       points,
@@ -132,22 +161,23 @@ export function computeScores(
       totalTimeMs,
       rank: 0,
     };
+    return { score, correctTimeMs };
   });
 
-  const sorted = scores.sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.correct !== a.correct) return b.correct - a.correct;
-    return a.name.localeCompare(b.name);
+  rows.sort((a, b) => {
+    if (b.score.points !== a.score.points) return b.score.points - a.score.points;
+    if (b.score.correct !== a.score.correct) return b.score.correct - a.score.correct;
+    if (a.correctTimeMs !== b.correctTimeMs) return a.correctTimeMs - b.correctTimeMs;
+    return a.score.name.localeCompare(b.score.name);
   });
 
   let rank = 0;
-  let prevPoints = Number.NaN;
-  let prevCorrect = Number.NaN;
-  return sorted.map((score, index) => {
-    if (score.points !== prevPoints || score.correct !== prevCorrect) {
+  let prevKey = "";
+  return rows.map(({ score, correctTimeMs }, index) => {
+    const key = `${score.points}|${score.correct}|${correctTimeMs}`;
+    if (key !== prevKey) {
       rank = index + 1;
-      prevPoints = score.points;
-      prevCorrect = score.correct;
+      prevKey = key;
     }
     return { ...score, rank };
   });
@@ -175,6 +205,7 @@ export function buildHistoryEntry(
     responses: responses.map((r) => ({ ...r })),
     // Copy the questions so later edits to the room never rewrite history.
     questions: room.questions.map((q) => ({ ...q, answers: q.answers.map((a) => ({ ...a })) })),
+    scoring: "speed",
   };
 }
 
@@ -233,7 +264,7 @@ export interface QuizResultRow {
   questions: QuizQuestion[];
   /** This participant's recorded responses. */
   responses: QuizResponse[];
-  /** Sum of base question points for the run (speed bonuses excluded). */
+  /** Maximum points available for this run (base + speed bonus per question when speed-scored). */
   maxPoints: number;
 }
 
@@ -244,7 +275,12 @@ export function flattenQuizResults(history: QuizHistoryMap): QuizResultRow[] {
     if (!Array.isArray(runs)) continue;
     for (const run of runs) {
       const questions = Array.isArray(run.questions) ? run.questions : [];
-      const maxPoints = questions.reduce((sum, q) => sum + Math.max(0, q.points || 0), 0);
+      // Speed-scored runs can reach base points + the speed bonus per question;
+      // legacy runs (saved before speed scoring) used the sum of base points.
+      const maxPoints =
+        run.scoring === "speed"
+          ? questions.reduce((sum, q) => sum + maxPointsFor(q), 0)
+          : questions.reduce((sum, q) => sum + Math.max(0, q.points || 0), 0);
       const byPlayer = new Map<string, QuizResponse[]>();
       for (const response of run.responses ?? []) {
         const list = byPlayer.get(response.playerId) ?? [];
@@ -283,29 +319,33 @@ export function flattenQuizResults(history: QuizHistoryMap): QuizResultRow[] {
   return rows;
 }
 
-/** Final score as a percentage of the available base points; null when unknown. */
+/** Final score as a percentage of the run's available points; null when unknown. */
 export function scorePercent(row: Pick<QuizResultRow, "points" | "maxPoints">): number | null {
   if (!row.maxPoints || row.maxPoints <= 0) return null;
   return Math.round((row.points / row.maxPoints) * 1000) / 10;
 }
 
-/** Cross-run leaderboard ordering. Ties share a rank (points → correct → time). */
+/**
+ * Cross-run leaderboard ordering: points → correct answers → total response
+ * time on correct answers (faster first). Ties after all three share a rank.
+ */
 export function rankQuizResults(rows: QuizResultRow[]): QuizResultRow[] {
   const sorted = [...rows].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     if (b.correct !== a.correct) return b.correct - a.correct;
+    const timeA = correctAnswerTimeMs(a.responses);
+    const timeB = correctAnswerTimeMs(b.responses);
+    if (timeA !== timeB) return timeA - timeB;
     // Fallback only for display order among fully tied rows: faster first, then name.
-    if (a.totalTimeMs !== b.totalTimeMs) return a.totalTimeMs - b.totalTimeMs;
     return a.name.localeCompare(b.name);
   });
   let rank = 0;
-  let prevPoints = Number.NaN;
-  let prevCorrect = Number.NaN;
+  let prevKey = "";
   return sorted.map((row, index) => {
-    if (row.points !== prevPoints || row.correct !== prevCorrect) {
+    const key = `${row.points}|${row.correct}|${correctAnswerTimeMs(row.responses)}`;
+    if (key !== prevKey) {
       rank = index + 1;
-      prevPoints = row.points;
-      prevCorrect = row.correct;
+      prevKey = key;
     }
     return { ...row, rank };
   });

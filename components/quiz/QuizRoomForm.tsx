@@ -20,7 +20,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Field, Input, Select, Switch, Textarea } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import { uid } from "@/lib/storage";
-import { validateRoom } from "@/lib/quiz";
+import { SPEED_BONUS_RATE, validateRoom } from "@/lib/quiz";
 import { normalizeCode } from "@/lib/voting";
 import { cn } from "@/lib/cn";
 
@@ -195,7 +195,12 @@ export function QuizRoomForm({
     );
   }
 
-  const totalPoints = questions.reduce((sum, q) => sum + Math.max(1, Math.floor(q.points) || 1), 0);
+  // Base points for every correct answer plus the speed bonus (only reachable
+  // while the question's timer is running).
+  const maxTotalPoints = questions.reduce((sum, q) => {
+    const bonus = q.timerEnabled && q.timeLimitSec > 0 ? Math.round(q.points * SPEED_BONUS_RATE) : 0;
+    return sum + Math.max(0, q.points) + bonus;
+  }, 0);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
@@ -258,7 +263,7 @@ export function QuizRoomForm({
         <Card>
           <CardHeader
             title="Questions"
-            subtitle={`${questions.length} question(s) · ${totalPoints} total points`}
+            subtitle={`${questions.length} question(s) · up to ${maxTotalPoints.toLocaleString("en-US")} points total`}
             icon={<ListChecks className="h-5 w-5" />}
             action={
               <Button size="sm" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setQuestions((p) => [...p, newQuestion()])}>
@@ -336,15 +341,6 @@ export function QuizRoomForm({
                   </Button>
 
                   <div className="grid gap-3 pt-2 sm:grid-cols-3">
-                    <Field label="Points">
-                      <Input
-                        type="number"
-                        min={1}
-                        value={question.points}
-                        onChange={(e) => update(question.id, { points: Number(e.target.value) })}
-                        className="h-9"
-                      />
-                    </Field>
                     <Field label="Timer (seconds)">
                       <Input
                         type="number"
@@ -355,7 +351,7 @@ export function QuizRoomForm({
                         className="h-9 disabled:opacity-40"
                       />
                     </Field>
-                    <div className="flex items-end">
+                    <div className="flex items-end sm:col-span-2">
                       <Switch
                         checked={question.timerEnabled}
                         onChange={(v) => update(question.id, { timerEnabled: v })}
@@ -363,12 +359,11 @@ export function QuizRoomForm({
                       />
                     </div>
                   </div>
-                  <Switch
-                    checked={question.speedBonus}
-                    onChange={(v) => update(question.id, { speedBonus: v })}
-                    label="Speed bonus"
-                    description="Faster correct answers earn up to 50% extra points."
-                  />
+                  <p className="text-xs text-gray-500">
+                    Speed bonus: a correct answer keeps its full {question.points} points and earns up to{" "}
+                    {Math.round(question.points * SPEED_BONUS_RATE)} more — the less time used, the higher the
+                    bonus. Wrong answers and unanswered questions score 0.
+                  </p>
                 </div>
               </div>
             ))}
@@ -382,7 +377,11 @@ export function QuizRoomForm({
           <CardBody className="space-y-3 text-sm text-gray-500">
             <SummaryRow label="Room code" value={editing ? initialRoom?.code ?? "" : codeInput || "—"} />
             <SummaryRow label="Questions" value={String(questions.length)} />
-            <SummaryRow label="Total points" value={String(totalPoints)} />
+            <SummaryRow
+              label="Points per question"
+              value={`Base + up to ${Math.round((questions[0]?.points ?? 100) * SPEED_BONUS_RATE)} speed bonus`}
+            />
+            <SummaryRow label="Max points" value={maxTotalPoints.toLocaleString("en-US")} />
             <SummaryRow
               label="Answers revealed"
               value={correctVisibility === "afterEach" ? "After each question" : "At the end"}

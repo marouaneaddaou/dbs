@@ -4,7 +4,7 @@ import { buildContentsOrder } from "../lib/randomization";
 import type { BoxConfig, BoxContent } from "../types/boxes";
 import { castVote, computeResults, createEmptyRoom, isVotingOpen, validateBallot } from "../lib/voting";
 import type { VotingRoom, VotingRoomRecord } from "../types/voting";
-import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildRoomShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing } from "../lib/quiz";
+import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildRoomShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing, maxPointsFor } from "../lib/quiz";
 import type { QuizHistoryMap, QuizPlayer, QuizQuestion, QuizResponse, QuizRoom } from "../types/quiz";
 
 let passed = 0;
@@ -191,14 +191,36 @@ function quizQuestion(): QuizQuestion {
   };
 }
 
-ok("points: correct only, with speed bonus scaling", () => {
-  const q = quizQuestion();
-  assert.equal(pointsForAnswer(q, "a2", 0), 0);
-  const instant = pointsForAnswer(q, "a1", 0);
-  const slow = pointsForAnswer(q, "a1", 20000);
-  assert.equal(instant, 150, "instant gives full bonus");
-  assert.equal(slow, 100, "no bonus at deadline");
-  assert.ok(instant > slow);
+ok("points: 100-point base kept, plus a speed bonus so faster answers earn more", () => {
+  const q = quizQuestion(); // 100 base points, 20-second timer
+  assert.equal(q.points, 100, "fixture keeps the 100-point base");
+  assert.equal(pointsForAnswer(q, "a2", 0), 0, "wrong answer → 0");
+  assert.equal(pointsForAnswer(q, "a2", 9000), 0, "wrong answer mid-timer → 0");
+  assert.equal(pointsForAnswer(q, "a2", 19999), 0, "wrong answer at the deadline → 0");
+  assert.equal(pointsForAnswer(q, "a1", 0), 150, "instant correct → 100 base + 50 bonus");
+  assert.equal(pointsForAnswer(q, "a1", 2000), 145, "correct after 2s of 20s → 100 + 45");
+  assert.equal(pointsForAnswer(q, "a1", 10000), 125, "correct after 10s of 20s → 100 + 25");
+  assert.equal(pointsForAnswer(q, "a1", 18000), 105, "correct after 18s of 20s → 100 + 5");
+  assert.equal(pointsForAnswer(q, "a1", 20000), 100, "correct at the deadline → base only, never less");
+  assert.equal(pointsForAnswer(q, "a1", 25000), 100, "past the deadline → base only");
+  assert.equal(pointsForAnswer(q, "a1", -500), 150, "negative elapsed → full bonus");
+  // Sweep the whole timer: the 100-point base is never touched, the total
+  // never exceeds base + 50%, and a slower correct answer never outscores
+  // a faster one.
+  let previous = maxPointsFor(q) + 1;
+  for (let elapsed = 0; elapsed <= 20000; elapsed += 100) {
+    const points = pointsForAnswer(q, "a1", elapsed);
+    assert.ok(points >= q.points && points <= maxPointsFor(q), `within base..max at ${elapsed}ms`);
+    assert.ok(points <= previous, `never more points for a slower answer (${elapsed}ms)`);
+    previous = points;
+  }
+});
+
+ok("points: no timer → full base points for a correct answer only", () => {
+  const q = { ...quizQuestion(), timeLimitSec: null };
+  assert.equal(pointsForAnswer(q, "a1", 9999), 100, "no timer → full base points for correct");
+  assert.equal(pointsForAnswer(q, "a2", 0), 0, "wrong → 0 regardless of timer");
+  assert.equal(pointsForAnswer(q, "a2", 5000), 0, "wrong late → 0 regardless of timer");
 });
 
 ok("scores rank, count correct/incorrect/unanswered and accuracy", () => {
@@ -236,11 +258,52 @@ ok("tied players share the same rank", () => {
   ];
   const responses: QuizResponse[] = [
     { id: "r1", playerId: "p1", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 1000, points: 148, at: 0 },
-    { id: "r2", playerId: "p2", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 2000, points: 148, at: 0 },
+    { id: "r2", playerId: "p2", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 1000, points: 148, at: 0 },
   ];
   const scores = computeScores(room, players, responses);
   assert.equal(scores[0].rank, 1);
-  assert.equal(scores[1].rank, 1, "identical points + correct share rank 1");
+  assert.equal(scores[1].rank, 1, "identical points + correct + time share rank 1");
+});
+
+ok("tiebreakers: points → correct answers → faster correct-answer time", () => {
+  const room: QuizRoom = {
+    ...createQuizRoom(),
+    title: "t",
+    questions: [{ ...quizQuestion(), id: "q1" }, { ...quizQuestion(), id: "q2", text: "3+3?" }],
+  };
+  const players: QuizPlayer[] = [
+    { id: "p1", name: "Fast", joinedAt: 0 },
+    { id: "p2", name: "Slow", joinedAt: 0 },
+    { id: "p3", name: "TopA", joinedAt: 0 },
+    { id: "p4", name: "TopB", joinedAt: 0 },
+    { id: "p5", name: "Many", joinedAt: 0 },
+    { id: "p6", name: "Bob", joinedAt: 0 },
+  ];
+  const responses: QuizResponse[] = [
+    // Same score, same correct count — the faster correct time ranks first.
+    { id: "r1", playerId: "p2", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 8000, points: 600, at: 0 },
+    { id: "r2", playerId: "p1", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 2000, points: 600, at: 0 },
+    { id: "r6", playerId: "p6", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 1000, points: 600, at: 0 },
+    // Identical score + correct count + correct time → shared rank.
+    { id: "r3", playerId: "p3", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 3000, points: 900, at: 0 },
+    { id: "r4", playerId: "p4", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 3000, points: 900, at: 0 },
+    // Same 600 points as the trio but TWO correct answers — and far slower:
+    // correct count is the FIRST tiebreaker, so Many still ranks ahead of them.
+    { id: "r5", playerId: "p5", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 9000, points: 300, at: 0 },
+    { id: "r7", playerId: "p5", questionId: "q2", answerId: "a1", correct: true, elapsedMs: 1000, points: 300, at: 0 },
+  ];
+  const scores = computeScores(room, players, responses);
+  assert.deepEqual(
+    scores.map((s) => `${s.name}:${s.points}:${s.correct}`),
+    ["TopA:900:1", "TopB:900:1", "Many:600:2", "Bob:600:1", "Fast:600:1", "Slow:600:1"],
+    "points desc, then correct count, then faster correct time",
+  );
+  assert.equal(scores[0].rank, 1);
+  assert.equal(scores[1].rank, 1, "identical points + correct + time share rank 1");
+  assert.equal(scores[2].rank, 3, "more correct answers outrank a faster but less correct peer");
+  assert.equal(scores[3].rank, 4, "fastest of the 1-correct trio ranks first among them");
+  assert.equal(scores[4].rank, 5);
+  assert.equal(scores[5].rank, 6, "slowest correct answer ranks last at equal points");
 });
 
 ok("players with no answers get zero accuracy and zero time", () => {
@@ -264,6 +327,7 @@ ok("history entries are stored per quiz, capped and removable", () => {
   assert.equal(entry.roomCode, "QUIZ1");
   assert.equal(entry.finishedAt, 123);
   assert.equal(entry.scores[0].points, 140);
+  assert.equal(entry.scoring, "speed", "new runs are marked as speed-scored");
   map = addHistoryEntry(map, entry);
   assert.equal(map.QUIZ1.length, 1);
   assert.equal(map.QUIZ1[0].scores[0].name, "Ann");
@@ -303,19 +367,21 @@ ok("flattenQuizResults builds rows; legacy entries without questions still work"
     { id: "p2", name: "Ben", joinedAt: 0 },
   ];
   const responses: QuizResponse[] = [
-    { id: "r1", playerId: "p1", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 1000, points: 100, at: 0 },
+    { id: "r1", playerId: "p1", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 0, points: 150, at: 0 },
     { id: "r2", playerId: "p1", questionId: "q2", answerId: "a2", correct: false, elapsedMs: 2000, points: 0, at: 0 },
-    { id: "r3", playerId: "p2", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 3000, points: 100, at: 0 },
+    { id: "r3", playerId: "p2", questionId: "q1", answerId: "a1", correct: true, elapsedMs: 3000, points: 143, at: 0 },
   ];
   const map: QuizHistoryMap = { FLAT: [buildHistoryEntry(room, players, responses, 999)] };
   const rows = flattenQuizResults(map);
   assert.equal(rows.length, 2, "one row per participant");
   const ann = rows.find((r) => r.name === "Ann")!;
   assert.equal(ann.completed, true, "completedAt marks the row completed");
-  assert.equal(ann.points, 100);
+  assert.equal(ann.points, 150);
   assert.equal(ann.correct, 1);
   assert.equal(ann.incorrect, 1);
   assert.equal(ann.unanswered, 0);
+  assert.equal(ann.maxPoints, 300, "speed-scored runs max at base + 50% bonus per question");
+  assert.equal(scorePercent(ann), 50, "percent of the base + bonus maximum");
   assert.equal(ann.responses.length, 2, "row carries the participant's responses");
   assert.equal(ann.questions.length, 2, "row carries the question snapshot");
   const ben = rows.find((r) => r.name === "Ben")!;
@@ -327,6 +393,10 @@ ok("flattenQuizResults builds rows; legacy entries without questions still work"
   assert.equal(legacyRows[0].questions.length, 0, "legacy rows have no snapshot");
   assert.equal(legacyRows[0].maxPoints, 0);
   assert.equal(scorePercent(legacyRows[0]), null, "no max points → no percentage");
+  // Entry with questions but saved before speed scoring (no marker) → base points.
+  const { scoring: _marker, ...preSpeed } = map.FLAT[0];
+  const preSpeedRows = flattenQuizResults({ FLAT: [{ ...preSpeed }] });
+  assert.equal(preSpeedRows[0].maxPoints, 200, "pre-speed runs use summed question points");
 });
 
 ok("rankQuizResults shares ranks on ties; scorePercent uses base points", () => {

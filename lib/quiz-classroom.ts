@@ -17,7 +17,7 @@
  * - WebRTC payloads are encrypted peer-to-peer; the free PeerJS signaling
  *   server only brokers the initial connection and never sees quiz data.
  * - This is a classroom-trust model, not cryptographic secrecy against a
- *   malicious student running their own client: timing (speed bonus) is
+ *   malicious student running their own client: timing (speed scoring) is
  *   reported by the student's device and cannot be fully trusted.
  *
  * This module is pure (no DOM, no PeerJS import) so it can run in Node tests.
@@ -105,6 +105,8 @@ export interface StudentAnswerState {
   correct?: boolean;
   /** The correct option for this question — sent only after the student answered it. */
   correctAnswerId?: string | null;
+  /** Points this answer earned (speed scoring, host-computed); 0 for wrong/timeout. */
+  points?: number;
 }
 
 /** Shared, post-reveal facts (safe for every participant once revealed). */
@@ -146,7 +148,15 @@ export type HostMessage =
   | { type: "kicked"; reason: "removed" | "reset" }
   | { type: "late" }
   /** Live feedback for the student's own submission (never the full key). */
-  | { type: "answered"; questionId: string; answerId: string; correctAnswerId: string; correct: boolean };
+  | {
+      type: "answered";
+      questionId: string;
+      answerId: string;
+      correctAnswerId: string;
+      correct: boolean;
+      /** Points earned for this question under speed scoring. */
+      points: number;
+    };
 
 export type StudentMessage =
   | { type: "join"; studentId: string; name: string }
@@ -232,8 +242,16 @@ export class HostSession {
 
   /* ------------------------------ queries ------------------------------ */
 
+  /**
+   * Current participant list for the UI. Removed participants are excluded —
+   * they stay in `studentsById` (as status "removed") only so their identity
+   * can never rejoin, but they are gone from the list, the counts and the
+   * leaderboard as soon as the teacher removes them.
+   */
   listStudents(): ClassroomStudent[] {
-    return [...this.studentsById.values()].map((s) => ({ ...s }));
+    return [...this.studentsById.values()]
+      .filter((s) => s.status !== "removed")
+      .map((s) => ({ ...s }));
   }
 
   activeStudents(): ClassroomStudent[] {
@@ -312,6 +330,7 @@ export class HostSession {
       elapsedMs: response.elapsedMs,
       correct: response.correct,
       correctAnswerId: this.correctAnswerIdFor(response.questionId),
+      points: response.points,
     };
   }
 
@@ -456,14 +475,16 @@ export class HostSession {
     };
     if (existingIndex >= 0) this.responses[existingIndex] = response;
     else this.responses.push(response);
-    // Quizizz-style live feedback: tell this student how THEIR pick scored and
-    // which option is correct for this question (never the rest of the key).
+    // Quizizz-style live feedback: tell this student how THEIR pick scored,
+    // which option is correct for this question (never the rest of the key)
+    // and how many points the submission earned.
     this.transport.send(token, {
       type: "answered",
       questionId: question.id,
       answerId: answer.id,
       correctAnswerId: this.correctAnswerIdFor(question.id),
       correct: !!answer.correct,
+      points: response.points,
     });
     this.changed();
   }

@@ -135,7 +135,8 @@ the network (see the next section). Those limits apply to it as well:
 - **PeerJS uses a free public signaling server and STUN only (no TURN).** Most classroom networks connect
   fine, but restrictive/symmetric NATs or very strict firewalls can block the direct peer-to-peer link —
   students would see "Can't reach the room yet" with automatic retries.
-- **Timing (speed bonus) is client-reported** from each student's device clock. Points are honest for a
+- **Response time (speed bonus) is client-reported** from each student's device clock — it decides how much
+  of the up-to-50% speed bonus on top of the 100-point base a correct answer earns. Points are honest for a
   normal classroom, but they are not server-verified.
 - **Classroom-trust model, not cryptographic secrecy.** Questions travel without any correctness data, and
   the answer key never leaves the teacher's device before the reveal — but a technically skilled student
@@ -162,7 +163,9 @@ The flow teachers actually use:
    password gate only protects the host controls). They land in the lobby and wait.
 4. **Start** — the lobby closes; late joiners are politely refused with the code prompt.
 5. **Everyone answers independently** and at their own pace on their own screen (per-question timers are
-   optional). The teacher's screen shows live per-student progress and per-question answer counts — but
+   optional; a correct answer always keeps its full base points and earns up to **50% more by speed bonus**
+   — the faster it is submitted, the higher the bonus — while wrong answers and timeouts score 0). The
+   teacher's screen shows a live leaderboard plus per-student progress and per-question answer counts — but
    **no correctness info is ever sent to students** (`stripAnswerKey()` in `lib/quiz-classroom.ts` removes
    every `correct` flag before any question leaves the host).
 6. **Reveal** happens automatically only when **all active students have finished** — or immediately when
@@ -180,8 +183,8 @@ Under the hood (`lib/quiz-classroom.ts`):
   (kept in `sessionStorage`) and resumes at the right question with their recorded answers.
 - The host periodically persists a snapshot to `dbs_quiz_sessions_v1` — refreshing the teacher page
   restores lobby/progress/results and the admin dashboard status badges.
-- Students who open the page after **Start** get a `late` message; removed students get `kicked` and
-  cannot re-answer.
+- Students who open the page after **Start** get a `late` message; removed students get `kicked`, drop out
+  of the participant list immediately and cannot re-answer (also after a refresh).
 
 Protocol tests live in `scripts/classroom-test.ts` and drive the full flow (join → start → staggered
 finishes → reveal gating → remove-to-reveal → history → snapshot restore) with a fake transport:
@@ -220,7 +223,9 @@ cycle is exhausted, a new shuffled cycle starts automatically.
 ### Quiz Rooms (`/quiz`, `/quiz/create`, `/quiz/room`)
 
 - Add any number of questions with multiple answers and exactly one correct answer each.
-- Points per question, optional timers, optional speed bonuses (up to +50%).
+- Optional per-question timers. Scoring keeps the full base points (100 by default) for every correct
+  answer and adds a speed bonus of up to 50% — `base × (1 + 0.5 × remaining / total time)` — so faster
+  correct answers score more; wrong answers and timeouts earn 0.
 - Reorder / edit / delete questions.
 - Room code is chosen manually by the admin when creating the quiz — never auto-generated; a code already
   used by another quiz is rejected. The code stays unchanged for the life of the room.
@@ -231,8 +236,10 @@ cycle is exhausted, a new shuffled cycle starts automatically.
 - **Quiz Completed** screen with an animated podium (gold/silver/bronze, tie-aware) plus a full table:
   rank, points, correct, incorrect, missed, accuracy and total time taken — plus per-question difficulty
   on the host screen and each student's personal answer review after the reveal.
-- Scores are calculated only from real submitted answers; wrong answers score zero, unanswered questions are
-  never counted as correct, and the optional speed bonus (up to +50%) applies only when enabled per question.
+- Scores are calculated only from real submitted answers: wrong answers and timeouts score zero, unanswered
+  questions are never counted as correct, and every correct answer keeps its full base points plus a
+  speed bonus scaled by its own response time (up to +50%). The leaderboard ranks by total points, then
+  correct answers, then whoever answered correctly fastest — exact ties share a rank.
 - Every finished run is **saved to history** (`dbs_quiz_history_v1`) and can be reviewed from the quiz list
   after a refresh — even after restarting the session.
 - After a reveal the teacher can start a **new session with the same code** (fresh lobby), go back to the

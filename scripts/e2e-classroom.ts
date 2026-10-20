@@ -110,6 +110,11 @@ async function run(): Promise<void> {
     await teacher.getByRole("button", { name: "Start quiz" }).click();
     await waitFor(teacher, "Per-question progress", 15_000);
     check("teacher: quiz started (progress monitor visible)", true);
+    check(
+      "teacher: live leaderboard card is shown during play",
+      (await teacher.getByText("Leaderboard", { exact: false }).count()) > 0 &&
+        (await teacher.getByText("Updates after every answer", { exact: false }).count()) > 0,
+    );
 
     await waitFor(studentA, "Question 1 of 3", 30_000);
     check("student A: question flow begins with progress indicator", true);
@@ -118,6 +123,8 @@ async function run(): Promise<void> {
     // The results review uses the label "Correct answer:"; the live question
     // screen must never show it (nor any per-option correctness marking).
     check("student A: no correctness info pre-reveal", !aBody.includes("Correct answer:"));
+    check("student A: score pill shows the running total above the question", aBody.includes("Your score:"));
+    check("student A: speed-scoring hint visible on the question meta", aBody.includes("faster = more"));
 
     /* -------------------- timer bar + live countdown ----------------------- */
     const timerBar = studentA.locator('[aria-label="Question timer"]');
@@ -146,6 +153,11 @@ async function run(): Promise<void> {
       (await studentA.getByRole("button", { name: /wrong choice 1a/ }).getAttribute("class")) ?? "";
     check("feedback: correct pick turns green", aRightCls.includes("bg-emerald-500"));
     check("feedback: wrong choices fade out after a correct pick", aWrongCls.includes("opacity-0"));
+    const aAfterAnswer = await studentA.innerText("body");
+    check(
+      "feedback: earned speed points shown for the correct answer",
+      /pts — correct!/.test(aAfterAnswer) && aAfterAnswer.includes("Your score:"),
+    );
     await studentA.getByRole("button", { name: "Next", exact: true }).click();
     log("A answered question 1 → Next");
     await waitFor(studentA, "Question 2 of 3", 15_000);
@@ -180,6 +192,7 @@ async function run(): Promise<void> {
       "student A: no reveal while B is unfinished",
       !aMidBody.includes("Results revealed") && !aMidBody.includes("Top 3"),
     );
+    check("student A: finished screen still shows the running total", aMidBody.includes("Your score:"));
 
     /* --------------------------- B finishes → reveal ------------------------ */
     log("student B answers everything (wrong pick on Q1 to verify red/green feedback)");
@@ -214,6 +227,7 @@ async function run(): Promise<void> {
     check("student A: sees the shared leaderboard", aResult.includes("StudentB"));
     check("student A: sees answer key after reveal", aResult.includes("Correct answer"));
     check("student A: podium visible", aResult.includes("Top 3"));
+    check("student A: reveal shows per-question earned points", /pts ✓/.test(aResult));
     check(
       "no answer was lost across refresh — nothing shows Unanswered",
       !aResult.includes("Unanswered"),

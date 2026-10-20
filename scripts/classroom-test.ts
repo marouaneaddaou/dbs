@@ -221,6 +221,13 @@ ok("A finishes first — no reveal while B is still active", () => {
   assert.strictEqual(aFb[2].questionId, "q3");
   assert.strictEqual(aFb[2].correct, true);
   assert.strictEqual(aFb[2].correctAnswerId, "q3_right", "feedback carries the key for that question only");
+  // Base + speed bonus: submitted 1000ms into a 20s timer → 100 + round(50 × 19/20) = 148.
+  assert.strictEqual(aFb[2].points, 148, "answered feedback carries the base + speed-bonus points");
+
+  // The live leaderboard (shown on the host screen) already reflects the answers.
+  const liveBoard = session.finalLeaderboard();
+  assert.strictEqual(liveBoard[0].playerId, "stu_A", "leaderboard updates after every answer");
+  assert.strictEqual(liveBoard[0].points, 444, "3 correct × 148 points");
 
   session.handleRaw(TA2, { type: "complete", studentId: "stu_A" });
   assert.strictEqual(session.phase, "playing", "phase must stay playing after A alone finishes");
@@ -242,9 +249,12 @@ ok("B completes (wrong + unanswered included) → reveal goes to everyone", () =
 
   const bFb = answeredMessages(transport, TB);
   assert.strictEqual(bFb.length, 2, "unanswered (null) marker sends no feedback message");
+  const bFbQ1 = bFb.find((m) => m.questionId === "q1")!;
+  assert.strictEqual(bFbQ1.points, 148, "correct pick earns base points + its own speed bonus");
   const bFbQ2 = bFb.find((m) => m.questionId === "q2")!;
   assert.strictEqual(bFbQ2.correct, false, "wrong pick is reported as incorrect");
   assert.strictEqual(bFbQ2.correctAnswerId, "q2_right", "still reveals the key for that question");
+  assert.strictEqual(bFbQ2.points, 0, "wrong answers never earn speed points");
 
   session.handleRaw(TB, { type: "complete", studentId: "stu_B" });
 
@@ -268,16 +278,31 @@ ok("B completes (wrong + unanswered included) → reveal goes to everyone", () =
   assert.strictEqual(bRow.unanswered, 1);
   assert.strictEqual(bRow.accuracy, 50);
   assert.ok(aRow.points > bRow.points, "A must outscore B");
+  assert.strictEqual(aRow.points, 444, "A: 3 correct answers × 148 points each (100 base + 48 bonus)");
+  assert.strictEqual(bRow.points, 148, "B: only the correct answer scored — wrong and timeout are 0");
 
   // Answer key + personalized responses.
   assert.strictEqual(aReveal.answerKey.length, 3);
   assert.strictEqual(aReveal.answerKey[0].correctAnswerId, "q1_right");
   assert.ok(aReveal.yourResponses.every((r) => r.correct), "A answered everything correctly");
+  const aPointsSum = aReveal.yourResponses.reduce((sum, r) => sum + r.points, 0);
+  assert.strictEqual(aPointsSum, aRow.points, "per-question points add up to the participant's total");
+  const bQ1 = bReveal.yourResponses.find((r) => r.questionId === "q1")!;
   const bQ2 = bReveal.yourResponses.find((r) => r.questionId === "q2")!;
   const bQ3 = bReveal.yourResponses.find((r) => r.questionId === "q3")!;
+  assert.strictEqual(bQ1.points, 148, "reveal shows the points earned per question");
   assert.strictEqual(bQ2.correct, false);
+  assert.strictEqual(bQ2.points, 0, "wrong answer reveals 0 points");
   assert.strictEqual(bQ3.answerId, null);
   assert.strictEqual(bQ3.correct, false);
+  assert.strictEqual(bQ3.points, 0, "unanswered question reveals 0 points");
+
+  // Every state message handed to a student carries their recorded points.
+  const aState = stateMessage(aMsg)!.state;
+  assert.ok(
+    aState.answers.length === 3 && aState.answers.every((ans) => ans.points === 148),
+    "state answers carry each question's points",
+  );
 
   // Every message that ever left the host before the reveal was key-free.
   for (const entry of transport.ordered) {
@@ -357,13 +382,39 @@ ok("removing the last unfinished student reveals to the rest", () => {
   assert.ok(isRevealState(t2.lastFor(S1)!), "remaining student gets the reveal");
   const reveal = stateMessage(t2.lastFor(S1)!)!.state.reveal as StudentReveal;
   assert.strictEqual(reveal.leaderboard.length, 1, "removed student is out of the leaderboard");
+
+  // The list updates immediately, others stay untouched, and the persisted
+  // snapshot drops the removed student so he cannot come back after refresh.
+  assert.strictEqual(
+    s2.listStudents().find((p) => p.id === "stu_2"),
+    undefined,
+    "removed participant disappears from the list immediately",
+  );
+  assert.strictEqual(
+    s2.listStudents().find((p) => p.id === "stu_1")?.name,
+    "StudentOne",
+    "other participants stay in the list",
+  );
+  const persisted = t2.sessions[t2.sessions.length - 1];
+  assert.ok(persisted.players.every((p) => p.id !== "stu_2"), "persisted snapshot drops the removed participant");
+  const afterRefresh = new HostSession(room, new FakeTransport(), persisted);
+  assert.strictEqual(
+    afterRefresh.listStudents().find((p) => p.id === "stu_2"),
+    undefined,
+    "removed participant stays gone after a page refresh",
+  );
 });
 
 ok("rejoining after removal is refused with kicked", () => {
   t2.clear();
   s2.handleRaw(S2, join("stu_2", "StudentTwo"));
   assert.strictEqual(t2.lastFor(S2)?.type, "kicked");
-  assert.strictEqual(s2.listStudents().filter((p) => p.status === "removed").length, 1);
+  assert.strictEqual(
+    s2.listStudents().find((p) => p.id === "stu_2"),
+    undefined,
+    "removed student is not part of the participant list",
+  );
+  assert.strictEqual(s2.progress().removed, 1, "removal is still recorded in session progress");
 });
 
 /* ================================ scenario 3 ================================ */

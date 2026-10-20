@@ -8,11 +8,11 @@ export interface QuizQuestion {
   id: string;
   text: string;
   answers: QuizAnswer[];
-  /** Points awarded for a correct answer. */
+  /** Base points for a correct answer (100 by default); speed scoring adds up to 50% on top. */
   points: number;
   /** Time limit in seconds, or null when the timer is disabled. */
   timeLimitSec: number | null;
-  /** Award extra points for answering quickly. */
+  /** Legacy flag — kept for storage compatibility; the speed bonus is always applied when a timer is set. */
   speedBonus: boolean;
 }
 
@@ -90,7 +90,7 @@ export interface QuizPlayerScore {
   incorrect: number;
   unanswered: number;
   accuracy: number;
-  /** Sum of the valid recorded answer times, in milliseconds. */
+  /** Sum of the valid recorded answer times, in milliseconds (all answers). */
   totalTimeMs: number;
   rank: number;
 }
@@ -116,6 +116,13 @@ export interface QuizHistoryEntry {
    * scores and response verdicts still work without it.
    */
   questions?: QuizQuestion[];
+  /**
+   * Which scoring system produced this run: "speed" = base points + up to a
+   * 50% speed bonus scaled by the time left when each answer was submitted.
+   * Omitted on legacy entries (saved before this marker), whose percentages
+   * are computed against the base points alone.
+   */
+  scoring?: "speed";
 }
 
 /** Per-quiz map of saved results, newest first. */

@@ -149,7 +149,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           setPhase("playing");
           break;
         case "answered": {
-          // Live Quizizz-style feedback for our own submission.
+          // Live Quizizz-style feedback for our own submission (incl. points).
           setAnswers((prev) => ({
             ...prev,
             [msg.questionId]: {
@@ -158,6 +158,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
               elapsedMs: prev[msg.questionId]?.elapsedMs ?? 0,
               correct: msg.correct,
               correctAnswerId: msg.correctAnswerId,
+              points: msg.points,
             },
           }));
           break;
@@ -373,6 +374,8 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
   const submitted = current ? answers[current.id] !== undefined : false;
   const canProceed = current !== null && (pickedId !== null || submitted);
   const isLast = index + 1 >= total;
+  // Running total of points earned so far (host-confirmed points only).
+  const totalScore = Object.values(answers).reduce((sum, a) => sum + (a.points ?? 0), 0);
 
   // Per-question reset: fresh timer, fresh locks, restore any saved pick.
   useEffect(() => {
@@ -657,6 +660,10 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             <span className="font-semibold text-ink-900">all classmates finish</span> (or your teacher ends the
             quiz).
           </p>
+          <p className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm text-gray-500">
+            Your score:{" "}
+            <span className="font-extrabold text-gold-600">{totalScore.toLocaleString("en-US")}</span> pts
+          </p>
           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
             Waiting for the rest of the class…
@@ -758,11 +765,19 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
         ) : null}
 
         {/* Overall quiz progress — thin line under the timer */}
-        <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-violet-400 to-lime-400 transition-all duration-300"
             style={{ width: `${((index + (submitted ? 1 : 0)) / total) * 100}%` }}
           />
+        </div>
+
+        {/* Running total — updated with every confirmed answer */}
+        <div className="mb-4 flex justify-end">
+          <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-white/80">
+            Your score:{" "}
+            <span className="font-extrabold text-lime-300">{totalScore.toLocaleString("en-US")}</span> pts
+          </span>
         </div>
 
         {/* Question card — large, centered, dark purple */}
@@ -770,7 +785,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           {/* meta row: points · counter pill · editing chip */}
           <div className="flex flex-wrap items-center justify-center gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr]">
             <span className="whitespace-nowrap rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white/80 sm:justify-self-start">
-              {current.points} pts{current.speedBonus ? " · speed bonus" : ""}
+              {current.points} pts + speed bonus · faster = more
             </span>
             <span className="rounded-full border border-white/15 bg-white/10 px-3.5 py-1 text-xs font-extrabold tracking-wide text-white">
               Question {index + 1} of {total}
@@ -836,10 +851,24 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             })}
           </div>
 
-          <p className="mt-5 text-center text-xs text-white/50">
+          {/* Points earned for this question — host-confirmed with the answer */}
+          {feedback !== null ? (
+            <p
+              className={cn(
+                "mt-5 text-center text-sm font-extrabold tracking-wide",
+                feedback.correct ? "text-lime-300" : "text-rose-300",
+              )}
+            >
+              {feedback.correct
+                ? `+${(feedback.points ?? 0).toLocaleString("en-US")} pts — correct!`
+                : "0 pts — not correct"}
+            </p>
+          ) : null}
+
+          <p className={cn("text-center text-xs text-white/50", feedback !== null ? "mt-2" : "mt-5")}>
             {allowEditing
-              ? "Your answer is checked instantly — green means correct, red means wrong — and you can revise until you finish. Full results appear when everyone finishes."
-              : "Your answer is checked instantly — green means correct, red means wrong. Full results appear when everyone finishes."}
+              ? "Your answer is checked instantly — green means correct, red means wrong — and you can revise until you finish. Correct answers always keep their full points and earn up to 50% more by speed. Full results appear when everyone finishes."
+              : "Your answer is checked instantly — green means correct, red means wrong. Correct answers always keep their full points and earn up to 50% more by speed — the faster, the more. Full results appear when everyone finishes."}
           </p>
         </div>
       </div>

@@ -8,6 +8,45 @@
 
  ✓ Starting...
  ✓ Ready in 4.6s
+ ○ Compiling / ...
+ ✓ Compiled / in 11.6s (709 modules)
+ GET / 200 in 2701ms
+ GET / 200 in 192ms
+ GET / 200 in 167ms
+ GET / 200 in 173ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 2.4s (795 modules)
+ GET /admin/ 200 in 3094ms
+ ○ Compiling /admin/results ...
+ ✓ Compiled /admin/results in 993ms (798 modules)
+ GET /admin/results/ 200 in 1341ms
+ ○ Compiling /boxes ...
+ ✓ Compiled /boxes in 1183ms (849 modules)
+ GET /boxes/ 200 in 1522ms
+ ○ Compiling /quiz ...
+ ✓ Compiled /quiz in 791ms (860 modules)
+ GET /quiz/ 200 in 1136ms
+ ○ Compiling /quiz/create ...
+ ✓ Compiled /quiz/create in 956ms (881 modules)
+ GET /quiz/create/ 200 in 1283ms
+ ○ Compiling /quiz/join ...
+ ✓ Compiled /quiz/join in 800ms (888 modules)
+ GET /quiz/join/ 200 in 1133ms
  ○ Compiling /quiz/room ...
- ✓ Compiled /quiz/room in 10.2s (851 modules)
- GET /quiz/room/?code=123&host=1 200 in 11168ms
+ ✓ Compiled /quiz/room in 3s (980 modules)
+ GET /quiz/room/ 200 in 3398ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 3.3s (995 modules)
+ GET /settings/ 200 in 3715ms
+ ○ Compiling /votes ...
+ ✓ Compiled /votes in 1014ms (1004 modules)
+ GET /votes/ 200 in 1363ms
+ ○ Compiling /votes/create ...
+ ✓ Compiled /votes/create in 1163ms (1021 modules)
+ GET /votes/create/ 200 in 1491ms
+ ○ Compiling /votes/room ...
+ ✓ Compiled /votes/room in 1237ms (1039 modules)
+ GET /votes/room/ 200 in 1575ms
+ ○ Compiling /voting ...
+ ✓ Compiled /voting in 1089ms (1047 modules)
+ GET /voting/ 200 in 1481ms

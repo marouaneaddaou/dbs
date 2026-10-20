@@ -548,6 +548,17 @@ function HostSessionScreen({ code }: { code: string }) {
         <div className="mt-6 space-y-6">
           <Card>
             <CardHeader
+              title="Leaderboard"
+              subtitle="Updates after every answer — sorted by points, then correct, then speed"
+              icon={<Crown className="h-5 w-5" />}
+            />
+            <CardBody>
+              <LeaderboardTable rows={session.finalLeaderboard()} />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
               title="Students"
               subtitle="Everyone answers independently on their own device"
               icon={<Users className="h-5 w-5" />}
