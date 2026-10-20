@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Gift, Plus, Save, Trash2, UserPlus, Users, Wand2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Gift, Plus, Save, UserPlus, Users, Wand2, X } from "lucide-react";
 import type { BoxConfig, BoxContent, BoxContentType } from "@/types/boxes";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { GiftBox } from "@/components/GiftBox";
 import { useToast } from "@/components/ui/Toast";
-import { normalizeNames, parseNameList } from "@/lib/randomization";
+import { emptyBoxNumbers } from "@/lib/boxes";
+import { normalizeNames, parseBoxList, parseNameList } from "@/lib/randomization";
 import { uid } from "@/lib/storage";
 
 const CONTENT_TYPES: { value: BoxContentType; label: string }[] = [
@@ -29,6 +29,8 @@ const SAMPLE_CONTENTS = [
   "Swap seats with someone",
 ];
 
+const SAMPLE_TYPES: BoxContentType[] = ["question", "challenge", "gift", "task", "text", "challenge"];
+
 export function BoxSetup({
   config,
   onChange,
@@ -40,17 +42,73 @@ export function BoxSetup({
 }) {
   const toast = useToast();
   const [pasteText, setPasteText] = useState("");
+  const [pasteBoxes, setPasteBoxes] = useState("");
   const [newName, setNewName] = useState("");
-  const [newContent, setNewContent] = useState("");
-  const [newContentType, setNewContentType] = useState<BoxContentType>("gift");
+  /** Entries trimmed by a box-count decrease, so changing the count back restores them. */
+  const spareSlots = useRef<Record<number, BoxContent>>({});
+
+  // Keep the stored contents in 1:1 sync with the box count (also fixes
+  // older configs whose content pool had a different size).
+  useEffect(() => {
+    if (config.contents.length !== config.boxCount) {
+      patch({ contents: syncContents(config.contents, config.boxCount) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function patch(partial: Partial<BoxConfig>) {
     onChange({ ...config, ...partial, updatedAt: Date.now() });
   }
 
+  /** Exactly `count` entries: trim extras (stashed for undo) and pad missing boxes with empty ones. */
+  function syncContents(list: BoxContent[], count: number): BoxContent[] {
+    const next = list.slice(0, count);
+    for (let i = list.length - 1; i >= count; i -= 1) {
+      spareSlots.current[i] = list[i];
+    }
+    while (next.length < count) {
+      const i = next.length;
+      const spare = spareSlots.current[i];
+      if (spare) {
+        next.push(spare);
+        delete spareSlots.current[i];
+      } else {
+        next.push({ id: uid("content"), type: "text", text: "" });
+      }
+    }
+    return next;
+  }
+
   function setBoxCount(value: number) {
     const clamped = Math.max(1, Math.min(200, Math.floor(value) || 1));
-    patch({ boxCount: clamped });
+    patch({ boxCount: clamped, contents: syncContents(config.contents, clamped) });
+  }
+
+  function updateBox(index: number, partial: Partial<BoxContent>) {
+    const next = syncContents(config.contents, config.boxCount);
+    next[index] = { ...next[index], ...partial };
+    patch({ contents: next });
+  }
+
+  function fillFromPaste() {
+    const values = parseBoxList(pasteBoxes);
+    if (values.length === 0) {
+      toast.error("Paste at least one line — one box per line.");
+      return;
+    }
+    const count = Math.max(config.boxCount, values.length);
+    const next = syncContents(config.contents, count);
+    values.forEach((text, i) => {
+      next[i] = { ...next[i], text };
+    });
+    patch({ boxCount: count, contents: next });
+    setPasteBoxes("");
+    const filled = next.filter((c) => c.text.trim()).length;
+    toast.success(
+      filled === count
+        ? `Filled all ${count} boxes from the list.`
+        : `Filled ${filled} of ${count} boxes from the list — the rest are still empty.`,
+    );
   }
 
   function addNames() {
@@ -86,34 +144,17 @@ export function BoxSetup({
     patch({ participants: config.participants.filter((_, i) => i !== index) });
   }
 
-  function addContent() {
-    const text = newContent.trim();
-    if (!text) {
-      toast.error("Enter some content for the box.");
-      return;
-    }
-    const content: BoxContent = { id: uid("content"), type: newContentType, text };
-    patch({ contents: [...config.contents, content] });
-    setNewContent("");
-  }
-
   function addSampleContents() {
-    const next = SAMPLE_CONTENTS.map((text, i) => ({
-      id: uid("content"),
-      type: (["question", "challenge", "gift", "task", "text", "challenge"] as BoxContentType[])[i] ?? "text",
-      text,
-    }));
-    patch({ contents: [...config.contents, ...next] });
-    toast.success("Added 6 example contents.");
+    const next = syncContents(config.contents, config.boxCount);
+    const count = Math.min(SAMPLE_CONTENTS.length, config.boxCount);
+    for (let i = 0; i < count; i += 1) {
+      next[i] = { ...next[i], type: SAMPLE_TYPES[i] ?? "text", text: SAMPLE_CONTENTS[i] };
+    }
+    patch({ contents: next });
+    toast.success(`Filled ${count} example box${count === 1 ? "" : "es"}.`);
   }
 
-  function updateContent(id: string, partial: Partial<BoxContent>) {
-    patch({ contents: config.contents.map((c) => (c.id === id ? { ...c, ...partial } : c)) });
-  }
-
-  function removeContent(id: string) {
-    patch({ contents: config.contents.filter((c) => c.id !== id) });
-  }
+  const emptyBoxes = emptyBoxNumbers(config);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -163,9 +204,9 @@ export function BoxSetup({
                   +
                 </Button>
                 <span className="text-sm text-gray-400">
-                  {config.boxCount > config.contents.length && config.contents.length > 0
-                    ? "Contents will cycle to fill all boxes."
-                    : "any positive number"}
+                  {emptyBoxes.length > 0
+                    ? `${emptyBoxes.length} box(es) still empty below.`
+                    : "every box has content"}
                 </span>
               </div>
             </div>
@@ -243,87 +284,79 @@ export function BoxSetup({
           </CardBody>
         </Card>
 
-        {/* Contents */}
+        {/* Contents — one input field per box */}
         <Card>
           <CardHeader
             title="Box contents"
-            subtitle={`${config.contents.length} content item(s). Repeated to fill every box.`}
+            subtitle={`${config.boxCount} box${config.boxCount === 1 ? "" : "es"} — one input field per box.`}
             icon={<Wand2 className="h-5 w-5" />}
           />
           <CardBody className="space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Select
-                value={newContentType}
-                onChange={(e) => setNewContentType(e.target.value as BoxContentType)}
-                className="sm:w-40"
-              >
-                {CONTENT_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </Select>
-              <Input
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addContent();
-                  }
-                }}
-                placeholder="Write a question, challenge, task or gift..."
-                className="flex-1"
+            <Field
+              label="Paste a list — one box per line"
+              hint={'Optional "Box N:" prefixes are stripped. Lines fill Box 1, Box 2, … in order.'}
+            >
+              <Textarea
+                value={pasteBoxes}
+                onChange={(e) => setPasteBoxes(e.target.value)}
+                placeholder={
+                  "Box 1: Der Vorname\nBox 2: Die Gitarre\nBox 3: Das Buch\nBox 4: Die Schule\nBox 5: Der Lehrer\nBox 6: Die Tasche"
+                }
+                className="min-h-[150px]"
               />
-              <Button variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={addContent}>
-                Add
+            </Field>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={fillFromPaste}>
+                Fill boxes from list
               </Button>
+              <Button size="sm" variant="ghost" onClick={() => setPasteBoxes("")} disabled={!pasteBoxes}>
+                Clear
+              </Button>
+              {emptyBoxes.length === config.boxCount ? (
+                <Button size="sm" variant="ghost" onClick={addSampleContents}>
+                  Use examples
+                </Button>
+              ) : null}
             </div>
 
-            {config.contents.length === 0 ? (
-              <EmptyState
-                icon={<Wand2 className="h-6 w-6" />}
-                title="No box contents yet"
-                description="Add questions, challenges, tasks, gifts or plain text. Empty boxes will simply be revealed as empty."
-                action={
-                  <Button variant="outline" size="sm" onClick={addSampleContents}>
-                    Add 6 examples
-                  </Button>
-                }
-              />
-            ) : (
-              <ul className="space-y-2">
-                {config.contents.map((content) => (
-                  <li key={content.id} className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2 sm:flex-row sm:items-center">
-                    <Select
-                      value={content.type}
-                      onChange={(e) => updateContent(content.id, { type: e.target.value as BoxContentType })}
-                      className="sm:w-36"
-                    >
-                      {CONTENT_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </Select>
-                    <Input
-                      value={content.text}
-                      onChange={(e) => updateContent(content.id, { text: e.target.value })}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeContent(content.id)}
-                      aria-label="Remove content"
-                      className="text-gray-400 hover:text-brand-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="space-y-2">
+              {Array.from({ length: config.boxCount }, (_, i) => (
+                <li
+                  key={i}
+                  className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2 sm:flex-row sm:items-center"
+                >
+                  <span className="w-16 shrink-0 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Box {i + 1}
+                  </span>
+                  <Select
+                    value={config.contents[i]?.type ?? "text"}
+                    onChange={(e) => updateBox(i, { type: e.target.value as BoxContentType })}
+                    className="sm:w-36"
+                    aria-label={`Box ${i + 1} type`}
+                  >
+                    {CONTENT_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </Select>
+                  <Input
+                    value={config.contents[i]?.text ?? ""}
+                    onChange={(e) => updateBox(i, { text: e.target.value })}
+                    placeholder={`Content for box ${i + 1}`}
+                    aria-label={`Box ${i + 1} content`}
+                    className="flex-1"
+                  />
+                </li>
+              ))}
+            </ul>
+
+            {emptyBoxes.length > 0 ? (
+              <p className="text-xs text-amber-600">
+                {emptyBoxes.length} of {config.boxCount} box{config.boxCount === 1 ? "" : "es"} still empty — every
+                box needs content before starting.
+              </p>
+            ) : null}
           </CardBody>
         </Card>
       </div>
@@ -353,6 +386,13 @@ export function BoxSetup({
           size="lg"
           icon={<Save className="h-5 w-5" />}
           onClick={() => {
+            if (emptyBoxes.length > 0) {
+              const labels = emptyBoxes.map((n) => `Box ${n}`).join(", ");
+              toast.error(
+                `${labels} ${emptyBoxes.length === 1 ? "is" : "are"} still empty — every box needs content before starting.`,
+              );
+              return;
+            }
             if (config.participants.length === 0) {
               toast.error("Add at least one participant before playing.");
               return;

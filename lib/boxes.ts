@@ -177,3 +177,10 @@ export function createEmptyConfig(): BoxConfig {
     updatedAt: now,
   };
 }
+
+/** Box numbers (1-based) that have no content yet — used for validation. */
+export function emptyBoxNumbers(config: BoxConfig): number[] {
+  return Array.from({ length: config.boxCount }, (_, i) => i + 1).filter(
+    (n) => !(config.contents[n - 1]?.text.trim() ?? ""),
+  );
+}

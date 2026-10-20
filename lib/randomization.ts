@@ -40,6 +40,19 @@ export function parseNameList(text: string): string[] {
 }
 
 /**
+ * Split a pasted box list — one box per line.
+ * Optional labels like "Box 1:", "1." or "Box 2 -" are stripped so only the
+ * content remains. Blank lines are skipped; a labelled-but-empty line keeps
+ * its position as an empty entry (validation flags it).
+ */
+export function parseBoxList(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0)
+    .map((line) => line.replace(/^\s*(?:box\s*\d+\s*[:.\-–]?|\d+\s*[:.\-–])\s*/i, "").trim());
+}
+
+/**
  * Build the content assigned to each box for one round.
  * The number of boxes may differ from the number of contents, so we repeat and
  * shuffle the content pool to fill exactly `boxCount` boxes.

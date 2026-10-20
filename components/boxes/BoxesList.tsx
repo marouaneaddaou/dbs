@@ -2,6 +2,7 @@
 
 import { Boxes, Copy, Gift, Play, Plus, Settings2, Trash2, Users } from "lucide-react";
 import type { BoxConfig, BoxGame } from "@/types/boxes";
+import { emptyBoxNumbers } from "@/lib/boxes";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -41,6 +42,7 @@ export function BoxesList({
       {configs.map((config) => {
         const game = games[config.id];
         const status = game?.status ?? "idle";
+        const hasEmptyBox = emptyBoxNumbers(config).length > 0;
         return (
           <div
             key={config.id}
@@ -75,6 +77,8 @@ export function BoxesList({
                 className="flex-1"
                 icon={<Play className="h-4 w-4" />}
                 onClick={() => onOpen(config.id, true)}
+                disabled={hasEmptyBox}
+                title={hasEmptyBox ? "Fill every box with content first" : undefined}
               >
                 Play
               </Button>

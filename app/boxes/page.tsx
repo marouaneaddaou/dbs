@@ -5,7 +5,7 @@ import { Boxes, Info, Plus, Settings2, Trophy } from "lucide-react";
 import type { BoxConfig, BoxGame } from "@/types/boxes";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { uid } from "@/lib/storage";
-import { createEmptyConfig, createGame } from "@/lib/boxes";
+import { createEmptyConfig, createGame, emptyBoxNumbers } from "@/lib/boxes";
 import { useLocalStorage } from "@/lib/hooks";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminGate } from "@/components/admin/AdminGate";
@@ -179,6 +179,7 @@ function BoxesPageContent() {
   }
 
   const game = games[config.id];
+  const hasEmptyBox = emptyBoxNumbers(config).length > 0;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -214,7 +215,8 @@ function BoxesPageContent() {
             }
             setStage("play");
           }}
-          disabled={config.participants.length === 0}
+          disabled={config.participants.length === 0 || hasEmptyBox}
+          title={hasEmptyBox ? "Fill every box with content first" : undefined}
           className={cn(
             "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
             stage === "play" ? "bg-brand-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-900",

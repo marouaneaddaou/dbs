@@ -7,46 +7,45 @@
    - Network:      http://192.168.1.2:3000
 
  ✓ Starting...
- ✓ Ready in 4.6s
+ ✓ Ready in 4.4s
  ○ Compiling / ...
- ✓ Compiled / in 11.6s (709 modules)
- GET / 200 in 2701ms
- GET / 200 in 192ms
- GET / 200 in 167ms
- GET / 200 in 173ms
+ ✓ Compiled / in 9.1s (709 modules)
+ GET / 200 in 202ms
+ GET / 200 in 298ms
+ GET / 200 in 225ms
  ○ Compiling /admin ...
- ✓ Compiled /admin in 2.4s (795 modules)
- GET /admin/ 200 in 3094ms
+ ✓ Compiled /admin in 2.6s (795 modules)
+ GET /admin/ 200 in 3580ms
  ○ Compiling /admin/results ...
- ✓ Compiled /admin/results in 993ms (798 modules)
- GET /admin/results/ 200 in 1341ms
+ ✓ Compiled /admin/results in 1526ms (812 modules)
+ GET /admin/results/ 200 in 1886ms
  ○ Compiling /boxes ...
- ✓ Compiled /boxes in 1183ms (849 modules)
- GET /boxes/ 200 in 1522ms
+ ✓ Compiled /boxes in 986ms (863 modules)
+ GET /boxes/ 200 in 1328ms
  ○ Compiling /quiz ...
- ✓ Compiled /quiz in 791ms (860 modules)
- GET /quiz/ 200 in 1136ms
+ ✓ Compiled /quiz in 766ms (874 modules)
+ GET /quiz/ 200 in 1055ms
  ○ Compiling /quiz/create ...
- ✓ Compiled /quiz/create in 956ms (881 modules)
- GET /quiz/create/ 200 in 1283ms
+ ✓ Compiled /quiz/create in 858ms (895 modules)
+ GET /quiz/create/ 200 in 1146ms
  ○ Compiling /quiz/join ...
- ✓ Compiled /quiz/join in 800ms (888 modules)
- GET /quiz/join/ 200 in 1133ms
+ ✓ Compiled /quiz/join in 705ms (902 modules)
+ GET /quiz/join/ 200 in 970ms
  ○ Compiling /quiz/room ...
- ✓ Compiled /quiz/room in 3s (980 modules)
- GET /quiz/room/ 200 in 3398ms
+ ✓ Compiled /quiz/room in 2.4s (980 modules)
+ GET /quiz/room/ 200 in 2718ms
  ○ Compiling /settings ...
- ✓ Compiled /settings in 3.3s (995 modules)
- GET /settings/ 200 in 3715ms
+ ✓ Compiled /settings in 4.3s (1009 modules)
+ GET /settings/ 200 in 4685ms
  ○ Compiling /votes ...
- ✓ Compiled /votes in 1014ms (1004 modules)
- GET /votes/ 200 in 1363ms
+ ✓ Compiled /votes in 874ms (1018 modules)
+ GET /votes/ 200 in 1136ms
  ○ Compiling /votes/create ...
- ✓ Compiled /votes/create in 1163ms (1021 modules)
- GET /votes/create/ 200 in 1491ms
+ ✓ Compiled /votes/create in 1076ms (1035 modules)
+ GET /votes/create/ 200 in 1360ms
  ○ Compiling /votes/room ...
- ✓ Compiled /votes/room in 1237ms (1039 modules)
- GET /votes/room/ 200 in 1575ms
+ ✓ Compiled /votes/room in 1010ms (1053 modules)
+ GET /votes/room/ 200 in 1295ms
  ○ Compiling /voting ...
- ✓ Compiled /voting in 1089ms (1047 modules)
- GET /voting/ 200 in 1481ms
+ ✓ Compiled /voting in 897ms (1061 modules)
+ GET /voting/ 200 in 1138ms

@@ -200,7 +200,12 @@ WebRTC — and asserts the reveal gating end to end.
 
 - Choose any positive number of boxes (1–200).
 - Add, edit, remove or bulk-paste participant names.
-- Add, edit and remove box contents of types **question, challenge, task, gift or text**.
+- Box contents are entered **one field per box** — the setup shows exactly as many labelled fields as
+  there are boxes (**Box 1** … **Box N**), and the fields follow the box-count control. Alternatively,
+  paste a whole list into the textarea — one box per line, with optional `Box 1:`-style labels that are
+  stripped automatically (the lines fill Box 1, Box 2, … in order; pasting more lines than boxes raises
+  the box count). Empty boxes are flagged and block starting the game, and everything saves to
+  localStorage as you type.
 - Preview the grid, then start / pause / resume / repeat / reset.
 - The grid shows an animated gift-box unboxing; each reveal is recorded in history.
 

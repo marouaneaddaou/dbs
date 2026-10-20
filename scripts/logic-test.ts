@@ -1,6 +1,6 @@
 import assert from "node:assert";
-import { createGame, startGame, drawParticipant, openBox, repeatRound, resetGame, remainingThisCycle } from "../lib/boxes";
-import { buildContentsOrder } from "../lib/randomization";
+import { createGame, startGame, drawParticipant, openBox, repeatRound, resetGame, remainingThisCycle, emptyBoxNumbers } from "../lib/boxes";
+import { buildContentsOrder, parseBoxList } from "../lib/randomization";
 import type { BoxConfig, BoxContent } from "../types/boxes";
 import { castVote, computeResults, createEmptyRoom, isVotingOpen, validateBallot } from "../lib/voting";
 import type { VotingRoom, VotingRoomRecord } from "../types/voting";
@@ -109,6 +109,45 @@ console.log("Randomization");
 ok("buildContentsOrder fills exactly boxCount", () => {
   const order = buildContentsOrder(contents, 7);
   assert.equal(order.length, 7);
+});
+
+console.log("Box content entry (one item per box)");
+ok("parseBoxList: optional Box N labels are stripped, order kept, blank lines skipped", () => {
+  const parsed = parseBoxList(
+    ["Box 1: Der Vorname", "Box 2: Die Gitarre", "3. Das Buch", "plain line", "", "   "].join("\n"),
+  );
+  assert.deepEqual(parsed, ["Der Vorname", "Die Gitarre", "Das Buch", "plain line"]);
+});
+
+ok("parseBoxList: a labelled-but-empty line keeps its position so validation can flag it", () => {
+  assert.deepEqual(parseBoxList("Box 1: A\nBox 2:\nBox 3: C"), ["A", "", "C"]);
+});
+
+ok("6 boxes / 6 entries: a round uses every entry exactly once; empty boxes are flagged", () => {
+  const six: BoxContent[] = Array.from({ length: 6 }, (_, i) => ({
+    id: `s${i}`,
+    type: "text",
+    text: `item ${i + 1}`,
+  }));
+  const cfg: BoxConfig = {
+    id: "cfg6",
+    name: "six",
+    boxCount: 6,
+    participants: ["Alice"],
+    contents: six,
+    createdAt: 0,
+    updatedAt: 0,
+  };
+  const g = startGame(createGame(cfg), cfg);
+  assert.equal(g.contentsOrder.length, 6);
+  assert.deepEqual(
+    g.contentsOrder.map((c) => c.text).sort(),
+    six.map((c) => c.text).sort(),
+    "each of the 6 entries appears exactly once",
+  );
+  assert.deepEqual(emptyBoxNumbers(cfg), [], "filled boxes pass validation");
+  const partial: BoxConfig = { ...cfg, contents: six.slice(0, 4) };
+  assert.deepEqual(emptyBoxNumbers(partial), [5, 6], "boxes without content are flagged");
 });
 
 console.log("Voting");

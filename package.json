@@ -9,7 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "tsx scripts/logic-test.ts && tsx scripts/classroom-test.ts",
-    "test:e2e": "tsx scripts/e2e-classroom.ts"
+    "test:e2e": "tsx scripts/e2e-classroom.ts",
+    "test:e2e:boxes": "tsx scripts/e2e-boxes.ts"
   },
   "dependencies": {
     "lucide-react": "^0.454.0",
