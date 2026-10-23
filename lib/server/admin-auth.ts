@@ -76,5 +76,5 @@ export function getAdminCookieMaxAge(): number {
 export function getAdminPassword(): string {
   const pwd = process.env.ADMIN_PASSWORD;
   if (pwd && pwd.trim().length > 0) return pwd.trim();
-  return "123456";
+  return "1234";
 }

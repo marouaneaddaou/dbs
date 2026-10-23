@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -39,7 +39,7 @@ import { cn } from "@/lib/cn";
 
 const IDENTITY_KEY = "dbs_quiz_identity_v1";
 
-/** Quizizz-style answer-card palette (yellow-green, purple, orange, teal — cycled for >4 options). */
+/** Quizizz-style answer-card palette (yellow-green, purple, orange, teal â€” cycled for >4 options). */
 const OPTION_STYLES = [
   { card: "bg-lime-500 hover:bg-lime-400" },
   { card: "bg-violet-500 hover:bg-violet-400" },
@@ -309,7 +309,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
         if (cancelled || terminalRef.current) return;
         const type = err.type ?? "";
         if (type === "peer-unavailable") {
-          // Teacher's device is not hosting right now — keep retrying gently.
+          // Teacher's device is not hosting right now â€” keep retrying gently.
           setReachable(false);
           setConnState("connecting");
           scheduleRetry();
@@ -390,7 +390,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
   }, [index, phase, quiz?.code]);
 
   // Countdown deadline for the current question only (null until the reset
-  // above binds the timer to this index — prevents stale fires on question
+  // above binds the timer to this index â€” prevents stale fires on question
   // changes).
   const deadline =
     timer.index === index && current?.timeLimitSec && current.timeLimitSec > 0
@@ -409,7 +409,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
         conn.send(msg);
         return;
       } catch {
-        /* connection dropped mid-send — queue below */
+        /* connection dropped mid-send â€” queue below */
       }
     }
     outboxRef.current.push(msg);
@@ -465,14 +465,14 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
     // Never overwrite an already submitted answer on expiry.
     if (answers[current.id] !== undefined) return;
     recordAnswer(current, null); // save as unanswered
-    goNext(); // auto-advance — navigation stays per-student
+    goNext(); // auto-advance â€” navigation stays per-student
   };
 
   // Live countdown tick for the bar (200ms + CSS transition = smooth).
   useEffect(() => {
     if (deadline === null) return;
+    setNow(Date.now());
     const tick = () => setNow(Date.now());
-    tick();
     const interval = window.setInterval(tick, 200);
     return () => window.clearInterval(interval);
   }, [deadline]);
@@ -488,7 +488,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
 
   /* --------------------------------- screens -------------------------------- */
   if (!hydrated || !studentId) {
-    return <StudentSkeleton text="Preparing your seat…" />;
+    return <StudentSkeleton text="Preparing your seatâ€¦" />;
   }
 
   if (!name.trim()) {
@@ -497,7 +497,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
         <Card className="border-gold-200 bg-gold-50/40">
           <CardHeader
             title="What's your name?"
-            subtitle={`Room ${code} — your teacher will see this name.`}
+            subtitle={`Room ${code} â€” your teacher will see this name.`}
             icon={<LogIn className="h-5 w-5" />}
           />
           <CardBody className="space-y-4">
@@ -598,12 +598,12 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             )}
           </span>
           <h1 className="mt-4 text-xl font-bold text-ink-900">
-            {reachable ? "Connecting to your teacher…" : "Can't reach the room yet"}
+            {reachable ? "Connecting to your teacherâ€¦" : "Can't reach the room yet"}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
             {reachable
               ? `Joining room ${code} as ${name}.`
-              : `Room ${code} isn't hosting right now. Make sure your teacher has the room open on their screen — or ask for a new code if this room was deleted. We keep retrying automatically.`}
+              : `Room ${code} isn't hosting right now. Make sure your teacher has the room open on their screen â€” or ask for a new code if this room was deleted. We keep retrying automatically.`}
           </p>
           <div className="mt-5 flex justify-center gap-3">
             <Button variant="secondary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => retryNowRef.current()}>
@@ -628,7 +628,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">You&apos;re in!</h1>
           <p className="mt-2 text-sm text-gray-500">
             Welcome, <span className="font-semibold text-ink-900">{name}</span>. Waiting for your teacher to start
-            the quiz — stay on this screen.
+            the quiz â€” stay on this screen.
           </p>
           <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
             <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Room code</p>
@@ -666,7 +666,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           </p>
           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
-            Waiting for the rest of the class…
+            Waiting for the rest of the classâ€¦
           </div>
         </div>
       </StudentShell>
@@ -684,13 +684,13 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
   if (finished && !reveal) {
     return (
       <StudentShell code={code} quizTitle={quiz.title} connState={connState}>
-        <StudentSkeleton text="Finalizing results…" />
+        <StudentSkeleton text="Finalizing resultsâ€¦" />
       </StudentShell>
     );
   }
 
   if (!current) {
-    return <StudentShell code={code} quizTitle={quiz.title} connState={connState}><StudentSkeleton text="Loading question…" /></StudentShell>;
+    return <StudentShell code={code} quizTitle={quiz.title} connState={connState}><StudentSkeleton text="Loading questionâ€¦" /></StudentShell>;
   }
 
   // Answer grid adapts to the actual number of choices (2, 3, 4, or more).
@@ -741,7 +741,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
       }
     >
       <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-7">
-        {/* Countdown timer bar — very top, above the question card */}
+        {/* Countdown timer bar â€” very top, above the question card */}
         {deadline !== null ? (
           <div className="mb-3 flex items-center gap-3" aria-label="Question timer">
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
@@ -764,7 +764,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           </div>
         ) : null}
 
-        {/* Overall quiz progress — thin line under the timer */}
+        {/* Overall quiz progress â€” thin line under the timer */}
         <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-violet-400 to-lime-400 transition-all duration-300"
@@ -772,7 +772,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           />
         </div>
 
-        {/* Running total — updated with every confirmed answer */}
+        {/* Running total â€” updated with every confirmed answer */}
         <div className="mb-4 flex justify-end">
           <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-white/80">
             Your score:{" "}
@@ -780,12 +780,12 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           </span>
         </div>
 
-        {/* Question card — large, centered, dark purple */}
+        {/* Question card â€” large, centered, dark purple */}
         <div className="rounded-3xl border border-white/10 bg-[#2f1863]/85 px-5 py-6 shadow-2xl shadow-violet-950/50 sm:px-8 sm:py-8">
-          {/* meta row: points · counter pill · editing chip */}
+          {/* meta row: points Â· counter pill Â· editing chip */}
           <div className="flex flex-wrap items-center justify-center gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr]">
             <span className="whitespace-nowrap rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white/80 sm:justify-self-start">
-              {current.points} pts + speed bonus · faster = more
+              {current.points} pts + speed bonus Â· faster = more
             </span>
             <span className="rounded-full border border-white/15 bg-white/10 px-3.5 py-1 text-xs font-extrabold tracking-wide text-white">
               Question {index + 1} of {total}
@@ -803,14 +803,14 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             {current.text}
           </p>
 
-          {/* Answer cards — colorful, adaptive count, Quizizz-style feedback */}
+          {/* Answer cards â€” colorful, adaptive count, Quizizz-style feedback */}
           <div className={cn("mt-6 grid gap-3", answerCols)}>
             {current.answers.map((answer, i) => {
               const style = OPTION_STYLES[i % OPTION_STYLES.length];
               const isSelected = pickedId === answer.id;
               const locked = !allowEditing && (pickedId !== null || submitted);
               // Live feedback (host-validated): green key, red wrong pick,
-              // everything else fades out — only after this answer is recorded.
+              // everything else fades out â€” only after this answer is recorded.
               const isKey = feedback !== null && answer.id === feedback.correctAnswerId;
               const isWrongPick = isSelected && feedback !== null && feedback.correct === false;
               const faded = feedback !== null && !isKey && !isWrongPick;
@@ -851,7 +851,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             })}
           </div>
 
-          {/* Points earned for this question — host-confirmed with the answer */}
+          {/* Points earned for this question â€” host-confirmed with the answer */}
           {feedback !== null ? (
             <p
               className={cn(
@@ -860,15 +860,15 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
               )}
             >
               {feedback.correct
-                ? `+${(feedback.points ?? 0).toLocaleString("en-US")} pts — correct!`
-                : "0 pts — not correct"}
+                ? `+${(feedback.points ?? 0).toLocaleString("en-US")} pts â€” correct!`
+                : "0 pts â€” not correct"}
             </p>
           ) : null}
 
           <p className={cn("text-center text-xs text-white/50", feedback !== null ? "mt-2" : "mt-5")}>
             {allowEditing
-              ? "Your answer is checked instantly — green means correct, red means wrong — and you can revise until you finish. Correct answers always keep their full points and earn up to 50% more by speed. Full results appear when everyone finishes."
-              : "Your answer is checked instantly — green means correct, red means wrong. Correct answers always keep their full points and earn up to 50% more by speed — the faster, the more. Full results appear when everyone finishes."}
+              ? "Your answer is checked instantly â€” green means correct, red means wrong â€” and you can revise until you finish. Correct answers always keep their full points and earn up to 50% more by speed. Full results appear when everyone finishes."
+              : "Your answer is checked instantly â€” green means correct, red means wrong. Correct answers always keep their full points and earn up to 50% more by speed â€” the faster, the more. Full results appear when everyone finishes."}
           </p>
         </div>
       </div>
@@ -898,7 +898,7 @@ function StudentResults({
             <Crown className="h-7 w-7" />
           </span>
           <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink-900">Results revealed!</h1>
-          <p className="text-sm text-gray-500">Everyone finished — here are the final standings.</p>
+          <p className="text-sm text-gray-500">Everyone finished â€” here are the final standings.</p>
           {mine ? (
             <div className="mt-4 grid w-full max-w-xs grid-cols-3 gap-2 rounded-2xl bg-white p-4 ring-1 ring-emerald-200">
               <div>
@@ -927,7 +927,7 @@ function StudentResults({
               name: row.name,
               points: row.points,
               rank: row.rank,
-              subtitle: `${row.correct} correct · ${row.accuracy}%`,
+              subtitle: `${row.correct} correct Â· ${row.accuracy}%`,
             }))}
           />
         </CardBody>
@@ -943,13 +943,13 @@ function StudentResults({
       <Card>
         <CardHeader
           title="Your answers"
-          subtitle="Correct answers and points — now public"
+          subtitle="Correct answers and points â€” now public"
           icon={<CheckCircle2 className="h-5 w-5" />}
         />
         <CardBody className="space-y-3">
           {quiz.questions.map((q, i) => {
             const correctId = correctByQuestion.get(q.id) ?? null;
-            const correctText = q.answers.find((a) => a.id === correctId)?.text ?? "—";
+            const correctText = q.answers.find((a) => a.id === correctId)?.text ?? "â€”";
             const yours = reveal.yourResponses.find((r) => r.questionId === q.id) ?? null;
             const yourId = yours?.answerId ?? null;
             const yourText = q.answers.find((a) => a.id === yourId)?.text ?? null;
@@ -974,11 +974,11 @@ function StudentResults({
                   </p>
                   <span className="shrink-0 text-xs font-semibold">
                     {isCorrect ? (
-                      <span className="text-emerald-600">+{yours?.points ?? 0} pts ✓</span>
+                      <span className="text-emerald-600">+{yours?.points ?? 0} pts âœ“</span>
                     ) : isUnanswered ? (
                       <span className="text-gray-400">Unanswered</span>
                     ) : (
-                      <span className="text-brand-600">✗ 0 pts</span>
+                      <span className="text-brand-600">âœ— 0 pts</span>
                     )}
                   </span>
                 </div>
@@ -1126,7 +1126,7 @@ function StudentShell({
                 </>
               ) : (
                 <>
-                  <WifiOff className="h-3 w-3" /> Offline — retrying
+                  <WifiOff className="h-3 w-3" /> Offline â€” retrying
                 </>
               )}
             </span>
@@ -1137,3 +1137,4 @@ function StudentShell({
     </div>
   );
 }
+

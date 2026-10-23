@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
@@ -85,3 +85,4 @@ export function CountdownTimer({
     </div>
   );
 }
+
