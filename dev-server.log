@@ -49,3 +49,4 @@
  ○ Compiling /voting ...
  ✓ Compiled /voting in 897ms (1061 modules)
  GET /voting/ 200 in 1138ms
+ GET /boxes/ 200 in 92ms

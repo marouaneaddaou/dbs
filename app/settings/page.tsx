@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   Boxes,
+  Cloud,
   Database,
   Download,
   FileJson,
   HardDrive,
   Info,
+  RefreshCw,
   Trophy,
   Upload,
   Vote,
@@ -34,6 +36,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { downloadJSON, readJSONFile } from "@/lib/io";
+import { useSharedSync } from "@/lib/shared/use-shared-sync";
 
 interface Counts {
   boxConfigs: number;
@@ -61,6 +64,7 @@ function SettingsPageContent() {
   const toast = useToast();
   const [counts, setCounts] = useState<Counts | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const sync = useSharedSync();
 
   function refresh() {
     const meta = getMeta();
@@ -91,6 +95,61 @@ function SettingsPageContent() {
       />
 
       <div className="space-y-6">
+        <Card>
+          <CardHeader
+            title="Shared storage (cross-device)"
+            subtitle={sync.enabled ? "Synced via Vercel Blob" : "Not connected"}
+            icon={<Cloud className="h-5 w-5" />}
+          />
+          <CardBody className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone={sync.enabled ? (sync.conflict ? "info" : "success") : "neutral"}>
+                {sync.enabled ? (sync.conflict ? "Conflict" : "Connected") : "Offline / not logged in"}
+              </Badge>
+              {sync.revision > 0 ? <Badge tone="neutral">Revision {sync.revision}</Badge> : null}
+              {sync.lastSyncedAt ? (
+                <Badge tone="neutral">Last sync {new Date(sync.lastSyncedAt).toLocaleTimeString()}</Badge>
+              ) : null}
+            </div>
+            {sync.error ? <p className="text-sm text-brand-600">{sync.error}</p> : null}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<RefreshCw className={`h-4 w-4 ${sync.syncing ? "animate-spin" : ""}`} />}
+                disabled={!sync.enabled || sync.syncing}
+                onClick={() => sync.pull()}
+              >
+                Pull from shared
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<Upload className="h-4 w-4" />}
+                disabled={!sync.enabled || sync.syncing}
+                onClick={() => sync.forcePush()}
+              >
+                Push local to shared
+              </Button>
+              {sync.enabled ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={<Download className="h-4 w-4" />}
+                  onClick={() => {
+                    window.open("/api/shared/backup", "_blank");
+                  }}
+                >
+                  Download shared backup
+                </Button>
+              ) : null}
+            </div>
+            <p className="text-xs text-gray-500">
+              Admin login required. If both devices have data, pushing/pulling may overwrite — use backups first.
+            </p>
+          </CardBody>
+        </Card>
+
         <Card>
           <CardHeader
             title="Storage overview"

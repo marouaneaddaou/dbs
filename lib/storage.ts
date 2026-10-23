@@ -59,6 +59,11 @@ export function writeJSON<T>(key: string, value: T): boolean {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
     touchMeta();
+    try {
+      window.dispatchEvent(new Event("dbs-storage-written"));
+    } catch {
+      /* ignore */
+    }
     return true;
   } catch {
     // Quota exceeded or storage disabled.

@@ -22,13 +22,14 @@ export function AdminLogin({
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!password) {
       setError("Enter the admin password.");
       return;
     }
-    if (loginAdmin(password)) {
+    const ok = await loginAdmin(password);
+    if (ok) {
       setPassword("");
       setError(null);
       return;

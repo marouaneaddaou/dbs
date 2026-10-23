@@ -6,6 +6,7 @@ import { castVote, computeResults, createEmptyRoom, isVotingOpen, validateBallot
 import type { VotingRoom, VotingRoomRecord } from "../types/voting";
 import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildRoomShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing, maxPointsFor } from "../lib/quiz";
 import type { QuizHistoryMap, QuizPlayer, QuizQuestion, QuizResponse, QuizRoom } from "../types/quiz";
+import { BOX_GROUP_IDS, BOX_GROUPS, GROUP_BOX_COUNT, createGroupConfig, withGroupParticipants } from "../lib/box-groups";
 
 let passed = 0;
 function ok(name: string, fn: () => void) {
@@ -571,6 +572,95 @@ ok("isSharedRoomMissing only fires on quiz-managing browsers", () => {
     "participant device (no quiz-rooms key) never errors — it cannot know",
   );
   assert.equal(isSharedRoomMissing("", true, [room]), false, "no code → no error");
+});
+
+console.log("Preconfigured box groups");
+ok("four groups with the expected names and roster sizes", () => {
+  assert.deepEqual(
+    BOX_GROUPS.map((group) => [group.label, group.names.length]),
+    [
+      ["Gruppe A: 10:00 Uhr", 21],
+      ["Gruppe B: 13:00 Uhr", 23],
+      ["Gruppe C: 16:00 Uhr", 19],
+      ["Gruppe D: 18:30 Uhr", 19],
+    ],
+  );
+  assert.equal(BOX_GROUPS[0].names[0], "Mohammed Ali");
+  assert.equal(BOX_GROUPS[0].names[20], "Yassin");
+  assert.equal(BOX_GROUPS[3].names[0], "Fatima Zahra El");
+  assert.equal(BOX_GROUPS[3].names[18], "Nasser");
+});
+
+ok("each group has a unique stable config id and no repeated name inside it", () => {
+  assert.equal(new Set(BOX_GROUPS.map((group) => group.id)).size, BOX_GROUPS.length);
+  assert.equal(BOX_GROUP_IDS.size, BOX_GROUPS.length);
+  for (const group of BOX_GROUPS) {
+    assert.equal(new Set(group.names).size, group.names.length, `${group.label} has a duplicate name`);
+  }
+});
+
+ok("a group config loads participants only and leaves every box empty", () => {
+  const configs = BOX_GROUPS.map((group) => createGroupConfig(group, 1));
+  configs.forEach((config, index) => {
+    const group = BOX_GROUPS[index];
+    assert.deepEqual(config.participants, [...group.names]);
+    assert.equal(config.boxCount, GROUP_BOX_COUNT);
+    assert.equal(config.contents.length, GROUP_BOX_COUNT);
+    assert.ok(config.contents.every((content) => content.text === ""));
+    assert.ok(config.contents.every((content) => !group.names.includes(content.text)));
+  });
+});
+
+ok("switching groups replaces participants without touching box questions", () => {
+  const groupA = BOX_GROUPS[0];
+  const groupB = BOX_GROUPS[1];
+  const questions = ["Question 1", "Question 2", "Question 3", "Question 4", "Question 5", "Question 6"];
+  const initial = createGroupConfig(groupA, 1);
+  const withQuestions = {
+    ...initial,
+    contents: initial.contents.map((content, index) => ({ ...content, text: questions[index] })),
+  };
+
+  const switched = withGroupParticipants(withQuestions, groupB);
+  assert.deepEqual(switched.participants, [...groupB.names]);
+  assert.deepEqual(
+    switched.contents.map((content) => content.text),
+    questions,
+  );
+  assert.ok(!switched.participants.some((name) => !groupB.names.includes(name)));
+  assert.ok(!switched.participants.includes(groupA.names[0]));
+});
+
+ok("legacy name-filled group configs are cleaned without losing typed questions", () => {
+  const group = BOX_GROUPS[0];
+  const legacy = {
+    ...createGroupConfig(group, 1),
+    boxCount: group.names.length,
+    contents: group.names.map((text, index) => ({
+      id: `${group.id}-legacy-${index + 1}`,
+      type: "text" as const,
+      text,
+    })),
+  };
+
+  const fullyAutomatic = withGroupParticipants(legacy, group);
+  assert.equal(fullyAutomatic.boxCount, GROUP_BOX_COUNT);
+  assert.equal(fullyAutomatic.contents.length, GROUP_BOX_COUNT);
+  assert.ok(fullyAutomatic.contents.every((content) => content.text === ""));
+
+  const partlyEdited = {
+    ...legacy,
+    contents: legacy.contents.map((content, index) =>
+      index === 0 ? { ...content, text: "My own question" } : content,
+    ),
+  };
+  const migrated = withGroupParticipants(partlyEdited, group);
+  assert.equal(migrated.contents[0].text, "My own question");
+  assert.ok(
+    migrated.contents.every(
+      (content, index) => content.text === "My own question" || content.text !== group.names[index],
+    ),
+  );
 });
 
 console.log(`\nAll ${passed} logic checks passed.`);

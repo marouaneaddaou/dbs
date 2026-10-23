@@ -10,9 +10,12 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx scripts/logic-test.ts && tsx scripts/classroom-test.ts",
     "test:e2e": "tsx scripts/e2e-classroom.ts",
-    "test:e2e:boxes": "tsx scripts/e2e-boxes.ts"
+    "test:e2e:boxes": "tsx scripts/e2e-boxes.ts",
+    "test:e2e:groups": "tsx scripts/e2e-box-groups.ts",
+    "test:e2e:modifier": "tsx scripts/e2e-modifier.ts"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.2",
     "lucide-react": "^0.454.0",
     "next": "15.5.28",
     "peerjs": "^1.5.5",

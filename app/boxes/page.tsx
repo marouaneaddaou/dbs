@@ -6,11 +6,19 @@ import type { BoxConfig, BoxGame } from "@/types/boxes";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { uid } from "@/lib/storage";
 import { createEmptyConfig, createGame, emptyBoxNumbers } from "@/lib/boxes";
+import {
+  BOX_GROUPS,
+  BOX_GROUP_IDS,
+  createGroupConfig,
+  withGroupParticipants,
+  type BoxGroup,
+} from "@/lib/box-groups";
 import { useLocalStorage } from "@/lib/hooks";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { BoxGroups } from "@/components/boxes/BoxGroups";
 import { BoxesList } from "@/components/boxes/BoxesList";
 import { BoxSetup } from "@/components/boxes/BoxSetup";
 import { BoxPlay } from "@/components/boxes/BoxPlay";
@@ -47,8 +55,34 @@ function BoxesPageContent() {
     [configs, selectedId],
   );
 
+  const manualConfigs = useMemo(
+    () => configs.filter((c) => !BOX_GROUP_IDS.has(c.id)),
+    [configs],
+  );
+
   function updateConfig(next: BoxConfig) {
     setConfigs((prev) => prev.map((c) => (c.id === next.id ? next : c)));
+  }
+
+  function handleOpenGroup(group: BoxGroup) {
+    const existing = configs.find((c) => c.id === group.id);
+    const next = existing ? withGroupParticipants(existing, group) : createGroupConfig(group);
+
+    if (next !== existing) {
+      setConfigs((prev) => {
+        if (!existing) return [next, ...prev];
+        return prev.map((c) => (c.id === group.id ? next : c));
+      });
+      setGames((prev) => {
+        if (!(group.id in prev)) return prev;
+        const updated = { ...prev };
+        delete updated[group.id];
+        return updated;
+      });
+    }
+
+    setSelectedId(group.id);
+    setStage("setup");
   }
 
   function handleNew() {
@@ -157,8 +191,10 @@ function BoxesPageContent() {
           </p>
         </div>
 
+        <BoxGroups groups={BOX_GROUPS} onOpen={handleOpenGroup} />
+
         <BoxesList
-          configs={configs}
+          configs={manualConfigs}
           games={games}
           onNew={handleNew}
           onOpen={handleOpen}

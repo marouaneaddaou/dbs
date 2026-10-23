@@ -20,6 +20,7 @@ import {
   Plus,
   RotateCcw,
   Share2,
+  Smartphone,
   Sparkles,
   Trash2,
   Trophy,
@@ -35,6 +36,7 @@ import { normalizeCode, isRoomExpired } from "@/lib/voting";
 import { buildQuizShareUrl, removeQuizHistory } from "@/lib/quiz";
 import { logoutAdmin } from "@/lib/admin-auth";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { ModifierModal } from "@/components/admin/ModifierModal";
 import { QuizHistoryModal } from "@/components/quiz/QuizHistoryModal";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
@@ -95,11 +97,12 @@ function AdminPageContent() {
   );
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [modifierOpen, setModifierOpen] = useState(false);
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [historyFor, setHistoryFor] = useState<QuizRoom | null>(null);
 
-  function handleLogout() {
-    logoutAdmin();
+  async function handleLogout() {
+    await logoutAdmin();
     toast.success("Logged out of the admin area.");
     router.push("/");
   }
@@ -264,7 +267,14 @@ function AdminPageContent() {
         description="Create, open, edit and manage every game saved in this browser — box games, voting rooms and quizzes — from one place."
         icon={<LayoutDashboard className="h-6 w-6" />}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              variant="gold"
+              icon={<Smartphone className="h-4 w-4" />}
+              onClick={() => setModifierOpen(true)}
+            >
+              Modifier / Sync
+            </Button>
             <Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>
               Create room
             </Button>
@@ -685,6 +695,8 @@ function AdminPageContent() {
           />
         </div>
       </Modal>
+
+      <ModifierModal open={modifierOpen} onClose={() => setModifierOpen(false)} />
 
       <QuizHistoryModal
         open={!!historyFor}
