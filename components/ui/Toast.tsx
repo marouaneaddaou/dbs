@@ -82,7 +82,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                     type="button"
                     onClick={() => remove(item.id)}
                     className="text-gray-400 transition-colors hover:text-gray-700"
-                    aria-label="Dismiss"
+                    aria-label="Ausblenden"
                   >
                     <X className="h-4 w-4" />
                   </button>

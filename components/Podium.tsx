@@ -13,19 +13,19 @@ export interface PodiumEntry {
 const MEDALS: Record<number, { emoji: string; label: string; block: string; text: string }> = {
   1: {
     emoji: "🥇",
-    label: "1st · Gold",
+    label: "1. Platz · Gold",
     block: "from-gold-200 to-gold-50 border-gold-300",
     text: "text-gold-700",
   },
   2: {
     emoji: "🥈",
-    label: "2nd · Silver",
+    label: "2. Platz · Silber",
     block: "from-gray-200 to-gray-50 border-gray-300",
     text: "text-gray-600",
   },
   3: {
     emoji: "🥉",
-    label: "3rd · Bronze",
+    label: "3. Platz · Bronze",
     block: "from-orange-200 to-orange-50 border-orange-300",
     text: "text-orange-700",
   },
@@ -88,13 +88,13 @@ export function Podium({ entries }: { entries: PodiumEntry[] }) {
             <p className={cn("text-xs font-medium", medal.text)}>{medal.label}</p>
             {tied ? (
               <span className="mt-0.5 rounded-full bg-gold-50 px-2 py-0.5 text-[10px] font-semibold text-gold-700 ring-1 ring-gold-200">
-                Tie
+                Gleichstand
               </span>
             ) : null}
             {entry.subtitle ? (
               <p className="mt-0.5 max-w-full truncate text-[11px] text-gray-500">{entry.subtitle}</p>
             ) : null}
-            <p className="mb-2 mt-1 text-sm font-bold text-ink-900">{entry.points} pts</p>
+            <p className="mb-2 mt-1 text-sm font-bold text-ink-900">{entry.points} Pkt.</p>
             <div
               className={cn(
                 "flex w-full items-start justify-center rounded-t-xl border border-b-0 bg-gradient-to-b pt-2",
@@ -103,14 +103,14 @@ export function Podium({ entries }: { entries: PodiumEntry[] }) {
               )}
             >
               <span className="text-xs font-bold text-gray-500">
-                {slot === "centre" ? "1st" : slot === "left" ? "2nd" : "3rd"}
+                {slot === "centre" ? "1." : slot === "left" ? "2." : "3."}
               </span>
             </div>
           </div>
         );
       })}
       {hasTies ? (
-        <p className="sr-only">Some winners are tied on the same score.</p>
+        <p className="sr-only">Mehrere Gewinner haben denselben Punktestand.</p>
       ) : null}
     </div>
   );

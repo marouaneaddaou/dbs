@@ -8,7 +8,7 @@ export interface SharedStateResult {
   etag?: string | null;
 }
 
-function isBlobConfigured(): boolean {
+export function isBlobConfigured(): boolean {
   return !!process.env.BLOB_READ_WRITE_TOKEN;
 }
 

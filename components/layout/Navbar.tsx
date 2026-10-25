@@ -10,16 +10,16 @@ import { DbsLogo } from "@/components/layout/DbsLogo";
 
 /** Pages every visitor sees. */
 const publicLinks = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/", label: "Start", icon: Home },
   { href: "/quiz", label: "Quiz", icon: Trophy },
-  { href: "/votes", label: "Votes", icon: Vote },
+  { href: "/votes", label: "Abstimmungen", icon: Vote },
 ];
 
 /** Admin-only pages — rendered only with an active admin session. */
 const adminLinks = [
   { href: "/admin", label: "Admin", icon: ShieldCheck },
-  { href: "/boxes", label: "Boxes", icon: Boxes },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/boxes", label: "Boxen", icon: Boxes },
+  { href: "/settings", label: "Einstellungen", icon: Settings },
 ];
 
 export function Navbar() {
@@ -66,7 +66,7 @@ export function Navbar() {
           type="button"
           className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 md:hidden"
           onClick={() => setOpen((v) => !v)}
-          aria-label="Toggle menu"
+          aria-label="Menü öffnen oder schließen"
         >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>

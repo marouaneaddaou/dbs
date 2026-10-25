@@ -26,11 +26,11 @@ export function BoxesList({
     return (
       <EmptyState
         icon={<Boxes className="h-7 w-7" />}
-        title="No box games yet"
-        description="Create your first game: set the number of boxes, add participants, and fill the boxes with questions, challenges or gifts."
+        title="Noch keine Boxspiele"
+        description="Erstelle dein erstes Spiel: Lege die Anzahl der Boxen fest, füge Teilnehmende hinzu und fülle die Boxen mit Fragen, Aufgaben oder Geschenken."
         action={
           <Button icon={<Plus className="h-4 w-4" />} onClick={onNew}>
-            Create your first game
+            Erstes Spiel erstellen
           </Button>
         }
       />
@@ -55,19 +55,25 @@ export function BoxesList({
               <Badge
                 tone={status === "running" ? "success" : status === "paused" ? "warning" : "neutral"}
               >
-                {status === "idle" ? "not started" : status}
+                {status === "idle"
+                  ? "nicht gestartet"
+                  : status === "running"
+                    ? "läuft"
+                    : status === "paused"
+                      ? "pausiert"
+                      : "beendet"}
               </Badge>
             </div>
-            <h3 className="mt-4 truncate text-lg font-semibold text-ink-900">{config.name || "Untitled game"}</h3>
+            <h3 className="mt-4 truncate text-lg font-semibold text-ink-900">{config.name || "Unbenanntes Spiel"}</h3>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
               <span className="inline-flex items-center gap-1.5">
-                <Boxes className="h-3.5 w-3.5" /> {config.boxCount} boxes
+                <Boxes className="h-3.5 w-3.5" /> {config.boxCount} Boxen
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" /> {config.participants.length} names
+                <Users className="h-3.5 w-3.5" /> {config.participants.length} Namen
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Gift className="h-3.5 w-3.5" /> {config.contents.length} contents
+                <Gift className="h-3.5 w-3.5" /> {config.contents.length} Inhalte
               </span>
             </div>
 
@@ -78,30 +84,30 @@ export function BoxesList({
                 icon={<Play className="h-4 w-4" />}
                 onClick={() => onOpen(config.id, true)}
                 disabled={hasEmptyBox}
-                title={hasEmptyBox ? "Fill every box with content first" : undefined}
+                title={hasEmptyBox ? "Bitte fülle zuerst jede Box mit Inhalt" : undefined}
               >
-                Play
+                Spielen
               </Button>
               <Button
                 size="sm"
                 variant="secondary"
                 icon={<Settings2 className="h-4 w-4" />}
                 onClick={() => onOpen(config.id, false)}
-                aria-label="Edit"
+                aria-label="Bearbeiten"
               />
               <Button
                 size="sm"
                 variant="secondary"
                 icon={<Copy className="h-4 w-4" />}
                 onClick={() => onDuplicate(config.id)}
-                aria-label="Duplicate"
+                aria-label="Duplizieren"
               />
               <Button
                 size="sm"
                 variant="danger"
                 icon={<Trash2 className="h-4 w-4" />}
                 onClick={() => onDelete(config.id)}
-                aria-label="Delete"
+                aria-label="Löschen"
               />
             </div>
           </div>

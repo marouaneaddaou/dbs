@@ -25,7 +25,7 @@ export default function QuizJoinPage() {
 
   return (
     <div className="mx-auto flex min-h-[40vh] max-w-md flex-col items-center justify-center px-4 text-center">
-      <p className="text-sm text-gray-500">Opening the quiz join page…</p>
+      <p className="text-sm text-gray-500">Beitrittsseite für das Quiz wird geöffnet…</p>
     </div>
   );
 }

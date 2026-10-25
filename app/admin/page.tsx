@@ -59,8 +59,8 @@ interface PendingAction {
 export default function AdminPage() {
   return (
     <AdminGate
-      title="Admin login"
-      description="Enter the admin password to open the control center for boxes, quizzes and votes."
+      title="Admin-Anmeldung"
+      description="Gib das Admin-Passwort ein, um das Kontrollzentrum für Boxen, Quizze und Abstimmungen zu öffnen."
     >
       <AdminPageContent />
     </AdminGate>
@@ -103,7 +103,7 @@ function AdminPageContent() {
 
   async function handleLogout() {
     await logoutAdmin();
-    toast.success("Logged out of the admin area.");
+    toast.success("Du wurdest aus dem Admin-Bereich abgemeldet.");
     router.push("/");
   }
 
@@ -114,8 +114,8 @@ function AdminPageContent() {
 
   function copyCode(code: string) {
     navigator.clipboard?.writeText(code).then(
-      () => toast.success(`Copied code ${code}.`),
-      () => toast.error("Could not copy to clipboard."),
+      () => toast.success(`Code ${code} kopiert.`),
+      () => toast.error("Kopieren in die Zwischenablage ist fehlgeschlagen."),
     );
   }
 
@@ -125,7 +125,7 @@ function AdminPageContent() {
     // Prefer the native share sheet (Web Share API) when the browser offers it.
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share({ title, text: `Join the quiz "${title}" — room code ${room.code}`, url });
+        await navigator.share({ title, text: `Tritt dem Quiz „${title}“ bei – Raumcode ${room.code}`, url });
         return;
       } catch (err) {
         // User dismissed the share sheet — leave everything untouched.
@@ -135,18 +135,18 @@ function AdminPageContent() {
     }
     // Fallback: copy the link and confirm.
     const ok = await copyToClipboard(url);
-    if (ok) toast.success(`Share link copied — ${url}`);
-    else toast.error("Could not copy the share link.");
+    if (ok) toast.success(`Freigabelink kopiert – ${url}`);
+    else toast.error("Der Freigabelink konnte nicht kopiert werden.");
   }
 
   /* ----------------------------- Voting actions ---------------------------- */
 
   function votingStatus(record: VotingRoomRecord): { label: string; tone: "neutral" | "success" | "warning" | "gold" } {
     const { room } = record;
-    if (room.status === "draft") return { label: "draft", tone: "neutral" };
-    if (isRoomExpired(room)) return { label: "expired", tone: "warning" };
-    if (room.status === "open") return { label: "open", tone: "success" };
-    return { label: "closed", tone: "neutral" };
+    if (room.status === "draft") return { label: "Entwurf", tone: "neutral" };
+    if (isRoomExpired(room)) return { label: "Abgelaufen", tone: "warning" };
+    if (room.status === "open") return { label: "Offen", tone: "success" };
+    return { label: "Geschlossen", tone: "neutral" };
   }
 
   function toggleVotingStatus(record: VotingRoomRecord) {
@@ -166,7 +166,7 @@ function AdminPageContent() {
           : r,
       ),
     );
-    toast.success(reopening ? `Room ${code} reopened.` : `Room ${code} closed.`);
+    toast.success(reopening ? `Raum ${code} wieder geöffnet.` : `Raum ${code} geschlossen.`);
   }
 
   function resetVotes(record: VotingRoomRecord) {
@@ -174,30 +174,30 @@ function AdminPageContent() {
     setVotingRooms((prev) =>
       prev.map((r) => (normalizeCode(r.room.code) === normalizeCode(code) ? { ...r, votes: [] } : r)),
     );
-    toast.success(`Votes for ${code} cleared.`);
+    toast.success(`Stimmen für ${code} gelöscht.`);
   }
 
   function deleteVoting(record: VotingRoomRecord) {
     const code = record.room.code;
     setVotingRooms((prev) => prev.filter((r) => normalizeCode(r.room.code) !== normalizeCode(code)));
-    toast.success("Voting room removed.");
+    toast.success("Abstimmungsraum entfernt.");
   }
 
   /* ------------------------------ Quiz actions ----------------------------- */
 
   function quizStatus(room: QuizRoom): { label: string; tone: "neutral" | "gold" | "success" } {
-    if (room.status === "draft") return { label: "draft", tone: "neutral" };
+    if (room.status === "draft") return { label: "Entwurf", tone: "neutral" };
     const session = quizSessions[room.code];
     if (session) {
       const map: Record<string, string> = {
-        lobby: "in lobby",
-        question: "in progress",
-        reveal: "revealing",
-        finished: "finished",
+        lobby: "In der Lobby",
+        question: "Läuft",
+        reveal: "Auflösung",
+        finished: "Beendet",
       };
-      return { label: map[session.session.status] ?? "published", tone: "success" };
+      return { label: map[session.session.status] ?? "Veröffentlicht", tone: "success" };
     }
-    return { label: "published", tone: "gold" };
+    return { label: "Veröffentlicht", tone: "gold" };
   }
 
   function toggleQuizStatus(room: QuizRoom) {
@@ -205,7 +205,7 @@ function AdminPageContent() {
     setQuizRooms((prev) =>
       prev.map((r) => (r.code === room.code ? { ...r, status: publishing ? "published" : "draft" } : r)),
     );
-    toast.success(publishing ? `Quiz ${room.code} published.` : `Quiz ${room.code} set to draft.`);
+    toast.success(publishing ? `Quiz ${room.code} veröffentlicht.` : `Quiz ${room.code} als Entwurf gespeichert.`);
   }
 
   function resetQuizSession(room: QuizRoom) {
@@ -214,7 +214,7 @@ function AdminPageContent() {
       delete next[room.code];
       return next;
     });
-    toast.success(`Session for ${room.code} reset.`);
+    toast.success(`Sitzung für ${room.code} zurückgesetzt.`);
   }
 
   function deleteQuiz(room: QuizRoom) {
@@ -225,17 +225,17 @@ function AdminPageContent() {
       return next;
     });
     setQuizHistory((prev) => removeQuizHistory(prev, room.code));
-    toast.success("Quiz and its results history removed.");
+    toast.success("Quiz und Ergebnisverlauf entfernt.");
   }
 
   /* ------------------------------ Box actions ------------------------------ */
 
   function boxStatus(config: BoxConfig): { label: string; tone: "success" | "warning" | "neutral" } {
     const status = boxGames[config.id]?.status ?? "idle";
-    if (status === "running") return { label: "running", tone: "success" };
-    if (status === "paused") return { label: "paused", tone: "warning" };
-    if (status === "finished") return { label: "finished", tone: "neutral" };
-    return { label: "not started", tone: "neutral" };
+    if (status === "running") return { label: "Läuft", tone: "success" };
+    if (status === "paused") return { label: "Pausiert", tone: "warning" };
+    if (status === "finished") return { label: "Beendet", tone: "neutral" };
+    return { label: "Nicht gestartet", tone: "neutral" };
   }
 
   function resetBoxGame(config: BoxConfig) {
@@ -244,7 +244,7 @@ function AdminPageContent() {
       delete next[config.id];
       return next;
     });
-    toast.success(`Progress for “${config.name || "Untitled"}” cleared.`);
+    toast.success(`Fortschritt für „${config.name || "Ohne Titel"}“ zurückgesetzt.`);
   }
 
   function deleteBox(config: BoxConfig) {
@@ -254,7 +254,7 @@ function AdminPageContent() {
       delete next[config.id];
       return next;
     });
-    toast.success("Game removed.");
+    toast.success("Spiel entfernt.");
   }
 
   const loading = !hydrated;
@@ -262,9 +262,9 @@ function AdminPageContent() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <PageHeader
-        eyebrow="Control center"
-        title="Admin Dashboard"
-        description="Create, open, edit and manage every game saved in this browser — box games, voting rooms and quizzes — from one place."
+        eyebrow="Kontrollzentrum"
+        title="Admin-Dashboard"
+        description="Erstelle, öffne, bearbeite und verwalte alle Spiele – Boxen, Abstimmungen und Quizze – an einem Ort. Gespeicherte Inhalte werden über den gemeinsamen Speicher synchronisiert; ungespeicherte Entwürfe verfallen nach 24 Stunden."
         icon={<LayoutDashboard className="h-6 w-6" />}
         action={
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -273,13 +273,13 @@ function AdminPageContent() {
               icon={<Smartphone className="h-4 w-4" />}
               onClick={() => setModifierOpen(true)}
             >
-              Modifier / Sync
+              Synchronisierung
             </Button>
             <Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>
-              Create room
+              Raum erstellen
             </Button>
             <Button variant="secondary" icon={<LogOut className="h-4 w-4" />} onClick={handleLogout}>
-              Logout
+              Abmelden
             </Button>
           </div>
         }
@@ -287,33 +287,33 @@ function AdminPageContent() {
 
       {/* Summary */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat icon={<Boxes className="h-4 w-4" />} label="Box games" value={boxConfigs.length} />
-        <Stat icon={<Vote className="h-4 w-4" />} label="Voting rooms" value={votingRooms.length} />
-        <Stat icon={<Trophy className="h-4 w-4" />} label="Quizzes" value={quizRooms.length} />
-        <Stat icon={<BarChart3 className="h-4 w-4" />} label="Ballots cast" value={totalVotes} />
+        <Stat icon={<Boxes className="h-4 w-4" />} label="Box-Spiele" value={boxConfigs.length} />
+        <Stat icon={<Vote className="h-4 w-4" />} label="Abstimmungen" value={votingRooms.length} />
+        <Stat icon={<Trophy className="h-4 w-4" />} label="Quizze" value={quizRooms.length} />
+        <Stat icon={<BarChart3 className="h-4 w-4" />} label="Abgegebene Stimmen" value={totalVotes} />
       </section>
 
       {/* Create cards */}
       <section className="mt-8 grid gap-4 md:grid-cols-3">
         <CreateCard
           icon={<Boxes className="h-5 w-5" />}
-          title="Create Game"
-          description="Random box reveal game with fair no-repeat cycles. No code required."
-          actionLabel="Go to Random Boxes"
+          title="Spiel erstellen"
+          description="Zufallsboxen-Spiel mit fairen Durchläufen ohne Wiederholung. Kein Code erforderlich."
+          actionLabel="Zu den Zufallsboxen"
           onClick={() => router.push("/boxes")}
         />
         <CreateCard
           icon={<Vote className="h-5 w-5" />}
-          title="Create Voting Room"
-          description="Polls with single or multiple choice, deadlines and live tallies."
-          actionLabel="New voting room"
+          title="Abstimmung erstellen"
+          description="Umfragen mit Einzel- oder Mehrfachauswahl, Fristen und Live-Ergebnissen."
+          actionLabel="Neue Abstimmung"
           onClick={() => router.push("/votes/create")}
         />
         <CreateCard
           icon={<Trophy className="h-5 w-5" />}
-          title="Create Quiz Room"
-          description="Timed quizzes with speed bonuses and an animated winners' podium."
-          actionLabel="New quiz"
+          title="Quiz erstellen"
+          description="Zeitgesteuerte Quizze mit Tempo-Bonus und animiertem Siegerpodest."
+          actionLabel="Neues Quiz"
           onClick={() => router.push("/quiz/create")}
         />
       </section>
@@ -325,62 +325,62 @@ function AdminPageContent() {
         <div className="mt-8 space-y-8">
           {/* Box games */}
           <Card>
-            <CardHeader title="Box games" subtitle={`${boxConfigs.length} saved`} icon={<Boxes className="h-5 w-5" />} />
+            <CardHeader title="Box-Spiele" subtitle={`${boxConfigs.length} gespeichert`} icon={<Boxes className="h-5 w-5" />} />
             <CardBody className="p-0">
               {boxConfigs.length === 0 ? (
                 <div className="p-5">
                   <EmptyState
                     icon={<Boxes className="h-7 w-7" />}
-                    title="No box games"
-                    description="Create a Random Boxes game to see it listed here."
+                    title="Keine Box-Spiele"
+                    description="Erstelle ein Zufallsboxen-Spiel, damit es hier erscheint."
                   />
                 </div>
               ) : (
                 <RoomTable
-                  headers={["Game", "Status", "Details", "Actions"]}
+                  headers={["Spiel", "Status", "Details", "Aktionen"]}
                   rows={boxConfigs.map((config) => {
                     const status = boxStatus(config);
                     return {
                       key: config.id,
                       cells: [
                         <div key="name">
-                          <p className="font-medium text-ink-900">{config.name || "Untitled game"}</p>
+                          <p className="font-medium text-ink-900">{config.name || "Unbenanntes Spiel"}</p>
                           <p className="mt-0.5 font-mono text-xs text-gray-400">{config.id.slice(0, 14)}…</p>
                         </div>,
                         <Badge key="status" tone={status.tone}>
                           {status.label}
                         </Badge>,
                         <div key="meta" className="text-xs text-gray-500">
-                          {config.boxCount} boxes · {config.participants.length} names · {config.contents.length}{" "}
-                          contents
+                          {config.boxCount} Boxen · {config.participants.length} Namen · {config.contents.length}{" "}
+                          Inhalte
                         </div>,
                       ],
                       actions: (
                         <>
                           <IconBtn
-                            label="Edit"
+                            label="Bearbeiten"
                             icon={<Pencil className="h-4 w-4" />}
                             onClick={() => router.push(`/boxes?config=${config.id}`)}
                           />
                           <IconBtn
-                            label="Play"
+                            label="Starten"
                             icon={<Play className="h-4 w-4" />}
                             onClick={() => router.push(`/boxes?config=${config.id}&play=1`)}
                           />
                           <IconBtn
-                            label="Reset progress"
+                            label="Fortschritt zurücksetzen"
                             icon={<RotateCcw className="h-4 w-4" />}
                             onClick={() =>
                               setPending({
-                                title: "Reset game progress?",
-                                description: `“${config.name || "Untitled game"}” will start again from a fresh cycle. Contents and names are kept.`,
-                                confirmLabel: "Reset progress",
+                                title: "Spielfortschritt zurücksetzen?",
+                                description: `„${config.name || "Unbenanntes Spiel"}“ startet mit einem neuen Durchlauf. Inhalte und Namen bleiben erhalten.`,
+                                confirmLabel: "Fortschritt zurücksetzen",
                                 action: () => resetBoxGame(config),
                               })
                             }
                           />
                           <IconBtn
-                            label="Export"
+                            label="Exportieren"
                             icon={<Download className="h-4 w-4" />}
                             onClick={() =>
                               downloadJSON(`box-game-${config.id}.json`, {
@@ -391,14 +391,14 @@ function AdminPageContent() {
                             }
                           />
                           <IconBtn
-                            label="Delete"
+                            label="Löschen"
                             tone="danger"
                             icon={<Trash2 />}
                             onClick={() =>
                               setPending({
-                                title: "Delete this game?",
-                                description: `“${config.name || "Untitled game"}” and its progress will be removed from this browser.`,
-                                confirmLabel: "Delete",
+                                title: "Dieses Spiel löschen?",
+                                description: `„${config.name || "Unbenanntes Spiel"}“ und der zugehörige Fortschritt werden dauerhaft entfernt.`,
+                                confirmLabel: "Löschen",
                                 action: () => deleteBox(config),
                               })
                             }
@@ -415,8 +415,8 @@ function AdminPageContent() {
           {/* Voting rooms */}
           <Card>
             <CardHeader
-              title="Voting rooms"
-              subtitle={`${votingRooms.length} saved`}
+              title="Abstimmungen"
+              subtitle={`${votingRooms.length} gespeichert`}
               icon={<Vote className="h-5 w-5" />}
             />
             <CardBody className="p-0">
@@ -424,13 +424,13 @@ function AdminPageContent() {
                 <div className="p-5">
                   <EmptyState
                     icon={<Vote className="h-7 w-7" />}
-                    title="No voting rooms"
-                    description="Create a poll to see it listed here with its code."
+                    title="Keine Abstimmungen"
+                    description="Erstelle eine Umfrage, damit sie hier mit ihrem Code erscheint."
                   />
                 </div>
               ) : (
                 <RoomTable
-                  headers={["Code", "Title", "Status", "Details", "Actions"]}
+                  headers={["Code", "Titel", "Status", "Details", "Aktionen"]}
                   rows={votingRooms.map((record) => {
                     const status = votingStatus(record);
                     const open = record.room.status === "open";
@@ -441,51 +441,51 @@ function AdminPageContent() {
                           {record.room.code}
                         </span>,
                         <span key="title" className="text-sm text-gray-700">
-                          {record.room.title || "Untitled poll"}
+                          {record.room.title || "Unbenannte Abstimmung"}
                         </span>,
                         <Badge key="status" tone={status.tone}>
                           {status.label}
                         </Badge>,
                         <div key="meta" className="text-xs text-gray-500">
-                          {record.room.questions.length} question(s) · {record.votes.length} vote(s)
+                          {record.room.questions.length} Fragen · {record.votes.length} Stimmen
                         </div>,
                       ],
                       actions: (
                         <>
                           <IconBtn
-                            label="Copy code"
+                            label="Code kopieren"
                             icon={<Copy className="h-4 w-4" />}
                             onClick={() => copyCode(record.room.code)}
                           />
                           <IconBtn
-                            label="Open"
+                            label="Öffnen"
                             icon={<ExternalLink className="h-4 w-4" />}
                             onClick={() => router.push(`/votes/room?code=${record.room.code}&host=1`)}
                           />
                           <IconBtn
-                            label="Edit"
+                            label="Bearbeiten"
                             icon={<Pencil className="h-4 w-4" />}
                             onClick={() => router.push(`/votes/create?edit=${record.room.code}`)}
                           />
                           <IconBtn
-                            label={open ? "Close poll" : "Reopen poll"}
+                            label={open ? "Umfrage schließen" : "Umfrage wieder öffnen"}
                             icon={open ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
                             onClick={() => toggleVotingStatus(record)}
                           />
                           <IconBtn
-                            label="Reset votes"
+                            label="Stimmen zurücksetzen"
                             icon={<RotateCcw className="h-4 w-4" />}
                             onClick={() =>
                               setPending({
-                                title: "Clear all votes?",
-                                description: `Every ballot for room ${record.room.code} will be permanently deleted. The questions stay.`,
-                                confirmLabel: "Clear votes",
+                                title: "Alle Stimmen löschen?",
+                                description: `Alle abgegebenen Stimmen für Raum ${record.room.code} werden dauerhaft gelöscht. Die Fragen bleiben erhalten.`,
+                                confirmLabel: "Stimmen löschen",
                                 action: () => resetVotes(record),
                               })
                             }
                           />
                           <IconBtn
-                            label="Export"
+                            label="Exportieren"
                             icon={<Download className="h-4 w-4" />}
                             onClick={() =>
                               downloadJSON(`voting-room-${record.room.code}.json`, {
@@ -496,14 +496,14 @@ function AdminPageContent() {
                             }
                           />
                           <IconBtn
-                            label="Delete"
+                            label="Löschen"
                             tone="danger"
                             icon={<Trash2 />}
                             onClick={() =>
                               setPending({
-                                title: "Delete this room?",
-                                description: `Room ${record.room.code} and its ${record.votes.length} vote(s) will be removed.`,
-                                confirmLabel: "Delete",
+                                title: "Diesen Raum löschen?",
+                                description: `Raum ${record.room.code} und seine ${record.votes.length} Stimmen werden entfernt.`,
+                                confirmLabel: "Löschen",
                                 action: () => deleteVoting(record),
                               })
                             }
@@ -520,13 +520,13 @@ function AdminPageContent() {
           {/* Quizzes */}
           <Card>
             <CardHeader
-              title="Quizzes"
-              subtitle={`${quizRooms.length} saved`}
+              title="Quizze"
+              subtitle={`${quizRooms.length} gespeichert`}
               icon={<Trophy className="h-5 w-5" />}
               action={
                 <Link href="/admin/results">
                   <Button variant="secondary" size="sm" icon={<BarChart3 className="h-4 w-4" />}>
-                    All results
+                    Alle Ergebnisse
                   </Button>
                 </Link>
               }
@@ -536,13 +536,13 @@ function AdminPageContent() {
                 <div className="p-5">
                   <EmptyState
                     icon={<Trophy className="h-7 w-7" />}
-                    title="No quizzes"
-                    description="Create a quiz to see it listed here with its code."
+                    title="Keine Quizze"
+                    description="Erstelle ein Quiz, damit es hier mit seinem Code erscheint."
                   />
                 </div>
               ) : (
                 <RoomTable
-                  headers={["Code", "Title", "Status", "Details", "Actions"]}
+                  headers={["Code", "Titel", "Status", "Details", "Aktionen"]}
                   rows={quizRooms.map((room) => {
                     const status = quizStatus(room);
                     const hasSession = Boolean(quizSessions[room.code]);
@@ -554,15 +554,15 @@ function AdminPageContent() {
                           {room.code}
                         </span>,
                         <span key="title" className="text-sm text-gray-700">
-                          {room.title || "Untitled quiz"}
+                          {room.title || "Unbenanntes Quiz"}
                         </span>,
                         <Badge key="status" tone={status.tone}>
                           {status.label}
                         </Badge>,
                         <div key="meta" className="text-xs text-gray-500">
-                          {room.questions.length} question(s)
-                          {hasSession ? " · session saved" : ""}
-                          {runCount > 0 ? ` · ${runCount} result(s)` : ""}
+                          {room.questions.length} Fragen
+                          {hasSession ? " · Sitzung gespeichert" : ""}
+                          {runCount > 0 ? ` · ${runCount} Ergebnis${runCount === 1 ? "" : "se"}` : ""}
                         </div>,
                       ],
                       actions: (
@@ -572,53 +572,53 @@ function AdminPageContent() {
                             size="sm"
                             icon={<Share2 className="h-4 w-4" />}
                             onClick={() => shareRoom(room)}
-                            aria-label={`Share Room ${room.code}`}
+                            aria-label={`Raum ${room.code} teilen`}
                           >
-                            Share Room
+                            Raum teilen
                           </Button>
                           <IconBtn
-                            label="Copy code"
+                            label="Code kopieren"
                             icon={<Copy className="h-4 w-4" />}
                             onClick={() => copyCode(room.code)}
                           />
                           <IconBtn
-                            label="Host"
+                            label="Hosten"
                             icon={<ExternalLink className="h-4 w-4" />}
                             onClick={() => router.push(`/quiz/room?code=${room.code}&host=1`)}
                           />
                           <IconBtn
-                            label="Edit"
+                            label="Bearbeiten"
                             icon={<Pencil className="h-4 w-4" />}
                             onClick={() => router.push(`/quiz/create?edit=${room.code}`)}
                           />
                           {runCount > 0 ? (
                             <IconBtn
-                              label="View results"
+                              label="Ergebnisse ansehen"
                               icon={<History className="h-4 w-4" />}
                               onClick={() => setHistoryFor(room)}
                             />
                           ) : null}
                           <IconBtn
-                            label={room.status === "draft" ? "Publish" : "Unpublish"}
+                            label={room.status === "draft" ? "Veröffentlichen" : "Zurückziehen"}
                             icon={room.status === "draft" ? <Sparkles className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                             onClick={() => toggleQuizStatus(room)}
                           />
                           {hasSession ? (
                             <IconBtn
-                              label="Reset session"
+                              label="Sitzung zurücksetzen"
                               icon={<RotateCcw className="h-4 w-4" />}
                               onClick={() =>
                                 setPending({
-                                  title: "Reset the session?",
-                                  description: `Players and results for quiz ${room.code} will be cleared. The quiz itself stays.`,
-                                  confirmLabel: "Reset session",
+                                  title: "Sitzung zurücksetzen?",
+                                  description: `Spieler und Ergebnisse des Quiz ${room.code} werden gelöscht. Das Quiz selbst bleibt erhalten.`,
+                                  confirmLabel: "Sitzung zurücksetzen",
                                   action: () => resetQuizSession(room),
                                 })
                               }
                             />
                           ) : null}
                           <IconBtn
-                            label="Export"
+                            label="Exportieren"
                             icon={<Download className="h-4 w-4" />}
                             onClick={() =>
                               downloadJSON(`quiz-${room.code}.json`, {
@@ -629,14 +629,14 @@ function AdminPageContent() {
                             }
                           />
                           <IconBtn
-                            label="Delete"
+                            label="Löschen"
                             tone="danger"
                             icon={<Trash2 />}
                             onClick={() =>
                               setPending({
-                                title: "Delete this quiz?",
-                                description: `Quiz ${room.code}, its saved session and results history will be removed.`,
-                                confirmLabel: "Delete",
+                                title: "Dieses Quiz löschen?",
+                                description: `Quiz ${room.code}, die gespeicherte Sitzung und der Ergebnisverlauf werden entfernt.`,
+                                confirmLabel: "Löschen",
                                 action: () => deleteQuiz(room),
                               })
                             }
@@ -652,8 +652,9 @@ function AdminPageContent() {
 
           <p className="flex items-start gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
             <Users className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-500" />
-            Room codes are local identifiers stored in this browser only. They do not sync across devices —
-            share a JSON export instead, or use the Settings page for a full backup.
+            Gespeicherte Räume werden über den gemeinsamen Speicher synchronisiert und bleiben dauerhaft
+            erhalten. Ungespeicherte Entwürfe verfallen nach 24 Stunden. Backups und die Verwaltung des
+            Serverspeichers findest du in den Einstellungen.
           </p>
         </div>
       )}
@@ -662,14 +663,14 @@ function AdminPageContent() {
       <Modal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        title="Create something"
-        description="Pick what you want to set up. Everything is saved locally in this browser."
+        title="Etwas erstellen"
+        description="Wähle, was du einrichten möchtest. Gespeicherte Inhalte werden serverseitig synchronisiert; Entwürfe verfallen nach 24 Stunden."
       >
         <div className="grid gap-3">
           <CreateOption
             icon={<Boxes className="h-5 w-5" />}
-            title="Random box game"
-            description="Gift & challenge reveal game — no code needed."
+            title="Zufallsboxen-Spiel"
+            description="Geschenk- und Aufgaben-Spiel – kein Code erforderlich."
             onClick={() => {
               setCreateOpen(false);
               router.push("/boxes");
@@ -677,8 +678,8 @@ function AdminPageContent() {
           />
           <CreateOption
             icon={<Vote className="h-5 w-5" />}
-            title="Voting room"
-            description="A poll with a shareable local code."
+            title="Abstimmung"
+            description="Eine Umfrage mit teilbarem Raumcode."
             onClick={() => {
               setCreateOpen(false);
               router.push("/votes/create");
@@ -686,8 +687,8 @@ function AdminPageContent() {
           />
           <CreateOption
             icon={<Trophy className="h-5 w-5" />}
-            title="Quiz room"
-            description="A timed quiz with a winners' podium."
+            title="Quiz"
+            description="Ein zeitgesteuertes Quiz mit Siegerpodest."
             onClick={() => {
               setCreateOpen(false);
               router.push("/quiz/create");
@@ -702,7 +703,7 @@ function AdminPageContent() {
         open={!!historyFor}
         onClose={() => setHistoryFor(null)}
         roomCode={historyFor?.code ?? ""}
-        roomTitle={historyFor?.title || "Quiz results"}
+        roomTitle={historyFor?.title || "Quiz-Ergebnisse"}
       />
 
       <ConfirmDialog

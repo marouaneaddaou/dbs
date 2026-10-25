@@ -20,10 +20,10 @@ export function readJSONFile(file: File): Promise<unknown> {
       try {
         resolve(JSON.parse(String(reader.result)));
       } catch (err) {
-        reject(new Error("That file is not valid JSON."));
+        reject(new Error("Diese Datei ist keine gültige JSON-Datei."));
       }
     };
-    reader.onerror = () => reject(new Error("Could not read the file."));
+    reader.onerror = () => reject(new Error("Die Datei konnte nicht gelesen werden."));
     reader.readAsText(file);
   });
 }

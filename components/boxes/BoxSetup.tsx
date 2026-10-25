@@ -13,20 +13,20 @@ import { normalizeNames, parseBoxList, parseNameList } from "@/lib/randomization
 import { uid } from "@/lib/storage";
 
 const CONTENT_TYPES: { value: BoxContentType; label: string }[] = [
-  { value: "gift", label: "Gift" },
-  { value: "question", label: "Question" },
-  { value: "challenge", label: "Challenge" },
-  { value: "task", label: "Task" },
-  { value: "text", label: "Text / Note" },
+  { value: "gift", label: "Geschenk" },
+  { value: "question", label: "Frage" },
+  { value: "challenge", label: "Herausforderung" },
+  { value: "task", label: "Aufgabe" },
+  { value: "text", label: "Text / Notiz" },
 ];
 
 const SAMPLE_CONTENTS = [
-  "Tell us your funniest story 😄",
-  "Do 10 push-ups right now!",
-  "You win a small prize 🎁",
-  "Sing the chorus of your favourite song",
-  "Compliment the person on your left",
-  "Swap seats with someone",
+  "Erzähl uns deine lustigste Geschichte 😄",
+  "Mach jetzt 10 Liegestütze!",
+  "Du gewinnst einen kleinen Preis 🎁",
+  "Sing den Refrain deines Lieblingslieds",
+  "Mach der Person links von dir ein Kompliment",
+  "Tausche den Platz mit jemandem",
 ];
 
 const SAMPLE_TYPES: BoxContentType[] = ["question", "challenge", "gift", "task", "text", "challenge"];
@@ -57,7 +57,16 @@ export function BoxSetup({
   }, []);
 
   function patch(partial: Partial<BoxConfig>) {
-    onChange({ ...config, ...partial, updatedAt: Date.now() });
+    const now = Date.now();
+    const next = { ...config, ...partial, updatedAt: now };
+    if (next.saveState === "draft") next.draftUpdatedAt = now;
+    onChange(next);
+  }
+
+  function saveGame() {
+    const now = Date.now();
+    onChange({ ...config, saveState: "saved", savedAt: now, updatedAt: now });
+    toast.success("Spiel gespeichert. Es bleibt dauerhaft erhalten.");
   }
 
   /** Exactly `count` entries: trim extras (stashed for undo) and pad missing boxes with empty ones. */
@@ -93,7 +102,7 @@ export function BoxSetup({
   function fillFromPaste() {
     const values = parseBoxList(pasteBoxes);
     if (values.length === 0) {
-      toast.error("Paste at least one line — one box per line.");
+      toast.error("Füge mindestens eine Zeile ein – eine Box pro Zeile.");
       return;
     }
     const count = Math.max(config.boxCount, values.length);
@@ -106,28 +115,28 @@ export function BoxSetup({
     const filled = next.filter((c) => c.text.trim()).length;
     toast.success(
       filled === count
-        ? `Filled all ${count} boxes from the list.`
-        : `Filled ${filled} of ${count} boxes from the list — the rest are still empty.`,
+        ? `Alle ${count} Boxen wurden aus der Liste gefüllt.`
+        : `${filled} von ${count} Boxen wurden aus der Liste gefüllt – die übrigen sind noch leer.`,
     );
   }
 
   function addNames() {
     const parsed = parseNameList(pasteText);
     if (parsed.length === 0) {
-      toast.error("Type or paste at least one name.");
+      toast.error("Gib mindestens einen Namen ein oder füge ihn ein.");
       return;
     }
     const merged = normalizeNames([...config.participants, ...parsed]);
     patch({ participants: merged });
     setPasteText("");
-    toast.success(`Added ${merged.length - config.participants.length} participant(s).`);
+    toast.success(`${merged.length - config.participants.length} Teilnehmende hinzugefügt.`);
   }
 
   function addSingleName() {
     const name = newName.trim();
     if (!name) return;
     if (config.participants.some((p) => p.toLowerCase() === name.toLowerCase())) {
-      toast.error("That name is already in the list.");
+      toast.error("Dieser Name steht bereits auf der Liste.");
       return;
     }
     patch({ participants: [...config.participants, name] });
@@ -151,7 +160,7 @@ export function BoxSetup({
       next[i] = { ...next[i], type: SAMPLE_TYPES[i] ?? "text", text: SAMPLE_CONTENTS[i] };
     }
     patch({ contents: next });
-    toast.success(`Filled ${count} example box${count === 1 ? "" : "es"}.`);
+    toast.success(`${count} Beispielboxen wurden gefüllt.`);
   }
 
   const emptyBoxes = emptyBoxNumbers(config);
@@ -161,29 +170,29 @@ export function BoxSetup({
       <div className="space-y-6">
         <Card>
           <CardHeader
-            title="Game setup"
-            subtitle="Name the game and choose how many boxes to hide."
+            title="Spieleinrichtung"
+            subtitle="Benenne das Spiel und lege fest, wie viele Boxen versteckt werden."
             icon={<Gift className="h-5 w-5" />}
           />
           <CardBody className="space-y-5">
-            <Field label="Game name">
+            <Field label="Spielname">
               <Input
                 value={config.name}
                 onChange={(e) => patch({ name: e.target.value })}
-                placeholder="e.g. Birthday prizes"
+                placeholder="z. B. Geburtstagsgewinne"
               />
             </Field>
 
             <div>
               <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
-                Number of boxes
+                Anzahl der Boxen
               </p>
               <div className="flex items-center gap-3">
                 <Button
                   variant="secondary"
                   size="icon"
                   onClick={() => setBoxCount(config.boxCount - 1)}
-                  aria-label="Decrease boxes"
+                  aria-label="Boxen verringern"
                 >
                   −
                 </Button>
@@ -199,14 +208,14 @@ export function BoxSetup({
                   variant="secondary"
                   size="icon"
                   onClick={() => setBoxCount(config.boxCount + 1)}
-                  aria-label="Increase boxes"
+                  aria-label="Boxen erhöhen"
                 >
                   +
                 </Button>
                 <span className="text-sm text-gray-400">
                   {emptyBoxes.length > 0
-                    ? `${emptyBoxes.length} box(es) still empty below.`
-                    : "every box has content"}
+                    ? `Noch ${emptyBoxes.length} leere Box(en) unten.`
+                    : "Jede Box hat Inhalt"}
                 </span>
               </div>
             </div>
@@ -216,8 +225,8 @@ export function BoxSetup({
         {/* Participants */}
         <Card>
           <CardHeader
-            title="Participants"
-            subtitle={`${config.participants.length} name(s) in the draw.`}
+            title="Teilnehmende"
+            subtitle={`${config.participants.length} Name(n) in der Ziehung.`}
             icon={<Users className="h-5 w-5" />}
           />
           <CardBody className="space-y-4">
@@ -225,15 +234,15 @@ export function BoxSetup({
               <Textarea
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
-                placeholder="Paste names separated by new lines or commas&#10;Alice&#10;Bob&#10;Charlie"
+                placeholder="Namen durch Zeilen oder Kommas getrennt einfügen&#10;Anna&#10;Ben&#10;Clara"
                 className="min-h-[88px]"
               />
               <div className="mt-2 flex gap-2">
                 <Button size="sm" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={addNames}>
-                  Add pasted names
+                   Eingefügte Namen hinzufügen
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setPasteText("")} disabled={!pasteText}>
-                  Clear
+                  Leeren
                 </Button>
               </div>
             </div>
@@ -248,16 +257,16 @@ export function BoxSetup({
                     addSingleName();
                   }
                 }}
-                placeholder="Add one name"
+                placeholder="Einen Namen hinzufügen"
               />
               <Button variant="secondary" icon={<UserPlus className="h-4 w-4" />} onClick={addSingleName}>
-                Add
+                Hinzufügen
               </Button>
             </div>
 
             {config.participants.length === 0 ? (
               <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-400">
-                No participants yet. Add at least one name to start drawing.
+                Noch keine Teilnehmenden. Füge mindestens einen Namen hinzu, um zu ziehen.
               </p>
             ) : (
               <ul className="grid gap-2 sm:grid-cols-2">
@@ -272,7 +281,7 @@ export function BoxSetup({
                       variant="ghost"
                       size="icon"
                       onClick={() => removeParticipant(index)}
-                      aria-label={`Remove ${name}`}
+                      aria-label={`${name} entfernen`}
                       className="text-gray-400 hover:text-brand-600"
                     >
                       <X className="h-4 w-4" />
@@ -287,14 +296,14 @@ export function BoxSetup({
         {/* Contents — one input field per box */}
         <Card>
           <CardHeader
-            title="Box contents"
-            subtitle={`${config.boxCount} box${config.boxCount === 1 ? "" : "es"} — one input field per box.`}
+            title="Boxinhalte"
+            subtitle={`${config.boxCount} Box(en) – ein Eingabefeld pro Box.`}
             icon={<Wand2 className="h-5 w-5" />}
           />
           <CardBody className="space-y-4">
             <Field
-              label="Paste a list — one box per line"
-              hint={'Optional "Box N:" prefixes are stripped. Lines fill Box 1, Box 2, … in order.'}
+              label="Liste einfügen – eine Box pro Zeile"
+              hint={'Optionale Präfixe wie „Box 1:“ werden entfernt. Die Zeilen füllen Box 1, Box 2, … der Reihe nach.'}
             >
               <Textarea
                 value={pasteBoxes}
@@ -307,14 +316,14 @@ export function BoxSetup({
             </Field>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={fillFromPaste}>
-                Fill boxes from list
+                Boxen aus Liste füllen
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setPasteBoxes("")} disabled={!pasteBoxes}>
-                Clear
+                Leeren
               </Button>
               {emptyBoxes.length === config.boxCount ? (
                 <Button size="sm" variant="ghost" onClick={addSampleContents}>
-                  Use examples
+                  Beispiele verwenden
                 </Button>
               ) : null}
             </div>
@@ -332,7 +341,7 @@ export function BoxSetup({
                     value={config.contents[i]?.type ?? "text"}
                     onChange={(e) => updateBox(i, { type: e.target.value as BoxContentType })}
                     className="sm:w-36"
-                    aria-label={`Box ${i + 1} type`}
+                    aria-label={`Typ von Box ${i + 1}`}
                   >
                     {CONTENT_TYPES.map((type) => (
                       <option key={type.value} value={type.value}>
@@ -343,8 +352,8 @@ export function BoxSetup({
                   <Input
                     value={config.contents[i]?.text ?? ""}
                     onChange={(e) => updateBox(i, { text: e.target.value })}
-                    placeholder={`Content for box ${i + 1}`}
-                    aria-label={`Box ${i + 1} content`}
+                    placeholder={`Inhalt für Box ${i + 1}`}
+                    aria-label={`Inhalt von Box ${i + 1}`}
                     className="flex-1"
                   />
                 </li>
@@ -353,8 +362,8 @@ export function BoxSetup({
 
             {emptyBoxes.length > 0 ? (
               <p className="text-xs text-amber-600">
-                {emptyBoxes.length} of {config.boxCount} box{config.boxCount === 1 ? "" : "es"} still empty — every
-                box needs content before starting.
+                {emptyBoxes.length} von {config.boxCount} Boxen sind noch leer – jede Box braucht vor dem
+                Start einen Inhalt.
               </p>
             ) : null}
           </CardBody>
@@ -364,7 +373,7 @@ export function BoxSetup({
       {/* Preview + actions */}
       <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
         <Card>
-          <CardHeader title="Preview" subtitle="How the grid will look." icon={<Gift className="h-5 w-5" />} />
+          <CardHeader title="Vorschau" subtitle="So sieht das Raster aus." icon={<Gift className="h-5 w-5" />} />
           <CardBody>
             {config.boxCount === 0 ? null : (
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
@@ -375,7 +384,7 @@ export function BoxSetup({
             )}
             {config.boxCount > 20 ? (
               <p className="mt-3 text-center text-xs text-gray-400">
-                Showing first 20 of {config.boxCount} boxes.
+                Die ersten 20 von {config.boxCount} Boxen werden angezeigt.
               </p>
             ) : null}
           </CardBody>
@@ -384,26 +393,37 @@ export function BoxSetup({
         <Button
           className="w-full"
           size="lg"
+          variant="secondary"
+          icon={<Save className="h-5 w-5" />}
+          onClick={saveGame}
+        >
+          Spiel speichern
+        </Button>
+        <Button
+          className="w-full"
+          size="lg"
           icon={<Save className="h-5 w-5" />}
           onClick={() => {
             if (emptyBoxes.length > 0) {
               const labels = emptyBoxes.map((n) => `Box ${n}`).join(", ");
               toast.error(
-                `${labels} ${emptyBoxes.length === 1 ? "is" : "are"} still empty — every box needs content before starting.`,
+                `${labels} ${emptyBoxes.length === 1 ? "ist" : "sind"} noch leer – jede Box braucht vor dem Start einen Inhalt.`,
               );
               return;
             }
             if (config.participants.length === 0) {
-              toast.error("Add at least one participant before playing.");
+              toast.error("Füge vor dem Spielen mindestens eine teilnehmende Person hinzu.");
               return;
             }
             onPlay();
           }}
         >
-          Start Game
+          Spiel starten
         </Button>
         <p className="text-center text-xs text-gray-400">
-          Your setup is saved automatically to this browser as you type.
+          {config.saveState === "saved"
+            ? "Dieses Spiel ist dauerhaft gespeichert."
+            : "Dieses Spiel ist ein Entwurf und läuft nach 24 Stunden ohne Änderungen ab. Nutze „Spiel speichern“, um es dauerhaft zu behalten."}
         </p>
       </div>
     </div>

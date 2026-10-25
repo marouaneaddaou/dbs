@@ -1,3 +1,5 @@
+import type { SaveTracking } from "@/types/persistence";
+
 export type BoxContentType = "question" | "challenge" | "task" | "gift" | "text";
 
 export interface BoxContent {
@@ -6,7 +8,7 @@ export interface BoxContent {
   text: string;
 }
 
-export interface BoxConfig {
+export interface BoxConfig extends SaveTracking {
   id: string;
   name: string;
   boxCount: number;

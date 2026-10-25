@@ -16,8 +16,8 @@ import { VotingRoomForm } from "@/components/voting/VotingRoomForm";
 export default function CreateVotingRoomPage() {
   return (
     <AdminGate
-      title="Admin login"
-      description="Enter the admin password to create or edit voting rooms."
+      title="Admin-Anmeldung"
+      description="Gib das Admin-Passwort ein, um Abstimmungsräume zu erstellen oder zu bearbeiten."
     >
       <CreateVotingRoomPageContent />
     </AdminGate>
@@ -58,19 +58,19 @@ function CreateVotingRoomPageContent() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <PageHeader
           backHref="/admin"
-          backLabel="Back to dashboard"
-          eyebrow="Not found"
-          title="That voting room doesn't exist"
-          description="The room you tried to edit isn't saved in this browser."
+          backLabel="Zurück zum Dashboard"
+          eyebrow="Nicht gefunden"
+          title="Dieser Abstimmungsraum existiert nicht"
+          description="Der Raum, den du bearbeiten wolltest, wurde nicht gefunden."
           icon={<Vote className="h-6 w-6" />}
         />
         <Card>
           <CardBody className="text-sm text-gray-500">
-            It may have been deleted, or it lives on another device.{" "}
+            Vielleicht wurde er gelöscht.{" "}
             <Link href="/votes/create" className="font-medium text-gold-600 hover:text-gold-700">
-              Create a new room
-            </Link>{" "}
-            instead.
+              Erstelle stattdessen einen neuen Raum
+            </Link>
+            .
           </CardBody>
         </Card>
       </div>
@@ -81,13 +81,13 @@ function CreateVotingRoomPageContent() {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <PageHeader
         backHref="/admin"
-        backLabel="Back to dashboard"
-        eyebrow={editing ? "Edit poll" : "New poll"}
-        title={editing ? "Edit voting room" : "Create a voting room"}
+        backLabel="Zurück zum Dashboard"
+        eyebrow={editing ? "Umfrage bearbeiten" : "Neue Umfrage"}
+        title={editing ? "Abstimmungsraum bearbeiten" : "Abstimmungsraum erstellen"}
         description={
           editing
-            ? `Update the room and save. Its code (${initialRecord?.room.code}) and votes are kept.`
-            : "Define your questions and options, choose the rules, then pick the room code to share with participants."
+            ? `Aktualisiere den Raum und speichere ihn. Der Code (${initialRecord?.room.code}) und die Stimmen bleiben erhalten.`
+            : "Lege Fragen und Optionen fest, wähle die Regeln und bestimme den Raumcode, den du mit den Teilnehmenden teilst."
         }
         icon={<Vote className="h-6 w-6" />}
       />

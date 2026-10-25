@@ -58,11 +58,11 @@ export function QuizRoomEntry() {
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <EmptyState
           icon={<AlertTriangle className="h-7 w-7" />}
-          title="No room code"
-          description="Enter a room code on the join page to open a quiz room."
+          title="Kein Raumcode"
+          description="Gib auf der Beitrittsseite einen Raumcode ein, um einen Quizraum zu öffnen."
           action={
             <Link href="/quiz" className="inline-flex items-center gap-1.5 text-sm font-medium text-gold-600 hover:text-gold-700">
-              <ArrowLeft className="h-4 w-4" /> Back to join page
+              <ArrowLeft className="h-4 w-4" /> Zurück zur Beitrittsseite
             </Link>
           }
         />
@@ -85,11 +85,11 @@ export function QuizRoomEntry() {
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <EmptyState
           icon={<AlertTriangle className="h-7 w-7 text-brand-500" />}
-          title="This quiz room no longer exists"
-          description={`Room ${code} isn't saved in this browser anymore — the quiz may have been deleted. Ask your teacher for a new link or code.`}
+          title="Dieser Quizraum existiert nicht mehr"
+          description={`Raum ${code} ist nicht mehr verfügbar – das Quiz wurde möglicherweise gelöscht. Bitte deine Lehrkraft um einen neuen Link oder Code.`}
           action={
             <Link href="/quiz" className="inline-flex items-center gap-1.5 text-sm font-medium text-gold-600 hover:text-gold-700">
-              <ArrowLeft className="h-4 w-4" /> Back to join page
+              <ArrowLeft className="h-4 w-4" /> Zurück zur Beitrittsseite
             </Link>
           }
         />
@@ -102,8 +102,8 @@ export function QuizRoomEntry() {
   if (host && !authed && teacherLogin) {
     return (
       <AdminLogin
-        title="Host login required"
-        description="Sign in with the admin password to open the host controls for this quiz."
+        title="Host-Anmeldung erforderlich"
+        description="Melde dich mit dem Admin-Passwort an, um die Host-Steuerung für dieses Quiz zu öffnen."
       />
     );
   }
@@ -115,13 +115,13 @@ export function QuizRoomEntry() {
       <QuizStudentView code={code} name={name} />
       {host && !authed ? (
         <p className="pb-10 text-center text-xs text-gray-400">
-          Teacher?{" "}
+          Lehrkraft?{" "}
           <button
             type="button"
             onClick={() => setTeacherLogin(true)}
             className="font-medium text-gold-600 underline underline-offset-2 transition-colors hover:text-gold-700"
           >
-            Sign in to host controls
+            Zur Host-Steuerung anmelden
           </button>
         </p>
       ) : null}

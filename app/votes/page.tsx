@@ -23,11 +23,11 @@ export default function VotesPage() {
     setError(null);
     const clean = normalizeCode(code);
     if (!clean) {
-      setError("Enter the room code you received.");
+      setError("Bitte gib den erhaltenen Raumcode ein.");
       return;
     }
     if (!name.trim()) {
-      setError("Enter a username to vote with.");
+      setError("Bitte gib einen Namen ein, mit dem du abstimmen möchtest.");
       return;
     }
     router.push(`/votes/room?code=${clean}&name=${encodeURIComponent(name.trim())}`);
@@ -36,38 +36,38 @@ export default function VotesPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <PageHeader
-        eyebrow="Polls & decisions"
-        title="Join a Vote"
-        description="Enter the room code from your host and a username — then cast your ballot."
+        eyebrow="Umfragen & Entscheidungen"
+        title="Abstimmung beitreten"
+        description="Gib den Raumcode deines Hosts und deinen Namen ein – dann gib deine Stimme ab."
         icon={<Vote className="h-6 w-6" />}
       />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader
-            title="Join a room"
-            subtitle="Use the code shared by your host."
+            title="Raum beitreten"
+            subtitle="Nutze den Code, den dein Host geteilt hat."
             icon={<KeyRound className="h-5 w-5" />}
           />
           <CardBody className="space-y-4">
-            <Field label="Room code">
+            <Field label="Raumcode">
               <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="e.g. K7QM2P"
+                placeholder="z. B. K7QM2P"
                 className="font-mono tracking-[0.3em]"
                 maxLength={12}
                 autoFocus
               />
             </Field>
-            <Field label="Your username">
+            <Field label="Dein Name">
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleJoin();
                 }}
-                placeholder="e.g. Alex"
+                placeholder="z. B. Alex"
               />
             </Field>
             {error ? (
@@ -76,26 +76,26 @@ export default function VotesPage() {
               </p>
             ) : null}
             <Button className="w-full" size="lg" icon={<LogIn className="h-4 w-4" />} onClick={handleJoin}>
-              Join & vote
+              Beitreten & abstimmen
             </Button>
             <p className="flex items-start gap-2 text-xs text-gray-400">
               <Vote className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Open a room link from your host if you have one — or enter the code exactly as shared.
+              Öffne den Raumlink deines Hosts, falls du einen hast – oder gib den Code genau wie geteilt ein.
             </p>
           </CardBody>
         </Card>
 
         <Card>
           <CardHeader
-            title="How it works"
-            subtitle="From joining to results."
+            title="So funktioniert es"
+            subtitle="Vom Beitritt bis zum Ergebnis."
             icon={<Users className="h-5 w-5" />}
           />
           <CardBody className="space-y-3 text-sm text-gray-500">
-            <p>1. Your host opens the voting room and shares its code or link.</p>
-            <p>2. Enter the code with your username to join.</p>
-            <p>3. Pick your option(s) and submit — the host’s settings decide if you can vote once or change your vote.</p>
-            <p>4. Live results with rankings and tie handling appear when the host allows it.</p>
+            <p>1. Dein Host öffnet den Abstimmungsraum und teilt Code oder Link.</p>
+            <p>2. Gib den Code und deinen Namen ein, um beizutreten.</p>
+            <p>3. Wähle deine Option(en) und sende ab – die Einstellungen des Hosts bestimmen, ob du einmal abstimmen oder deine Stimme ändern kannst.</p>
+            <p>4. Live-Ergebnisse mit Rangfolge und Gleichstand erscheinen, sobald der Host sie freigibt.</p>
           </CardBody>
         </Card>
       </div>

@@ -521,9 +521,9 @@ export class HostSession {
   /* ----------------------------- outbound ----------------------------- */
 
   start(): { ok: boolean; error?: string } {
-    if (this.phase !== "lobby") return { ok: false, error: "The session has already started." };
+    if (this.phase !== "lobby") return { ok: false, error: "Die Sitzung hat bereits begonnen." };
     const active = this.activeStudents();
-    if (active.length === 0) return { ok: false, error: "At least one student must join before you start." };
+    if (active.length === 0) return { ok: false, error: "Mindestens eine Person muss beitreten, bevor du startest." };
     this.phase = "playing";
     for (const studentId of this.tokenByStudent.keys()) {
       this.transport.send(this.tokenByStudent.get(studentId), { type: "started" });

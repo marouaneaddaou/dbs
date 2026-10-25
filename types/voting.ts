@@ -1,3 +1,5 @@
+import type { SaveTracking } from "@/types/persistence";
+
 export type VoteMode = "single" | "multiple";
 export type ResultsVisibility = "during" | "after";
 export type VotingStatus = "draft" | "open" | "closed";
@@ -13,7 +15,7 @@ export interface VotingQuestion {
   options: VotingOption[];
 }
 
-export interface VotingRoom {
+export interface VotingRoom extends SaveTracking {
   code: string;
   title: string;
   description: string;

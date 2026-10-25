@@ -144,13 +144,13 @@ export interface ImportResult {
 
 /** Import a JSON backup, forgivingly. Unknown keys are ignored. */
 export function importBackup(payload: unknown): ImportResult {
-  if (!isBrowser()) return { ok: false, imported: 0, error: "Not in browser" };
+  if (!isBrowser()) return { ok: false, imported: 0, error: "Nicht im Browser verfügbar" };
   if (!payload || typeof payload !== "object") {
-    return { ok: false, imported: 0, error: "Backup is not a valid object" };
+    return { ok: false, imported: 0, error: "Das Backup ist kein gültiges Objekt" };
   }
   const obj = payload as Partial<BackupPayload>;
   if (!obj.data || typeof obj.data !== "object") {
-    return { ok: false, imported: 0, error: "Backup has no data section" };
+    return { ok: false, imported: 0, error: "Das Backup enthält keinen Datenbereich" };
   }
   const validKeys = new Set<string>(Object.values(STORAGE_KEYS));
   let imported = 0;

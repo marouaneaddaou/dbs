@@ -21,33 +21,33 @@ export function ModifierModal({ open, onClose }: { open: boolean; onClose: () =>
   async function copyLink() {
     if (!link) return;
     const copied = await copyToClipboard(link);
-    if (copied) toast.success("Lien copié.");
-    else toast.error("Impossible de copier le lien.");
+    if (copied) toast.success("Link kopiert.");
+    else toast.error("Der Link konnte nicht kopiert werden.");
   }
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Modifier"
-      description="Open the existing Admin panel on your phone."
+      title="Auf dem Smartphone bearbeiten"
+      description="Öffne das bestehende Admin-Panel auf deinem Smartphone."
       size="md"
       footer={
         <Button variant="secondary" onClick={onClose}>
-          Close
+          Schließen
         </Button>
       }
     >
       <div className="space-y-5">
         <Field
-          label="Editing link"
-          hint="The link opens the real Admin panel and still requires the existing admin password. No password or storage credential is included in the URL."
+          label="Bearbeitungslink"
+          hint="Der Link öffnet das echte Admin-Panel und verlangt weiterhin das Admin-Passwort. Es werden weder Passwort noch Speicher-Zugangsdaten in der URL übertragen."
         >
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               readOnly
               value={link}
-              aria-label="Editing link"
+              aria-label="Bearbeitungslink"
               onFocus={(event) => event.currentTarget.select()}
               className="font-mono text-xs"
             />
@@ -59,7 +59,7 @@ export function ModifierModal({ open, onClose }: { open: boolean; onClose: () =>
               disabled={!link}
               className="shrink-0"
             >
-              Copier le lien
+              Link kopieren
             </Button>
           </div>
         </Field>
@@ -71,25 +71,26 @@ export function ModifierModal({ open, onClose }: { open: boolean; onClose: () =>
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:underline"
         >
           <ExternalLink className="h-4 w-4" />
-          Open the editing interface
+          Bearbeitungsoberfläche öffnen
         </a>
 
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
           <p className="flex items-center gap-2 font-semibold">
             <Smartphone className="h-4 w-4" />
-            Cross-device sync ready (server-backed)
+            Geräteübergreifende Synchronisierung bereit
           </p>
           <p className="mt-2">
-            Data can sync via shared storage when logged in as admin on both devices. Changes
-            push automatically and poll for updates. Use Settings &rarr; Shared storage for
-            manual push/pull/conflict handling.
+            Wenn du auf beiden Geräten als Admin angemeldet bist, werden die Daten über den
+            gemeinsamen Speicher synchronisiert. Änderungen werden automatisch übertragen und
+            regelmäßig abgerufen. Unter Einstellungen &rarr; Gemeinsamer Speicher kannst du
+            manuell laden, hochladen und Konflikte behandeln.
           </p>
           <p className="mt-2">
-            Back up first via{" "}
+            Erstelle vor der ersten Synchronisierung ein{" "}
             <Link href="/settings/" className="font-semibold underline">
-              Settings &rarr; backup / restore
-            </Link>{" "}
-            before first sync.
+              Backup unter Einstellungen &rarr; Backups
+            </Link>
+            .
           </p>
         </div>
       </div>

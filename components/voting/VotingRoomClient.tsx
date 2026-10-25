@@ -88,8 +88,8 @@ export function VotingRoomClient() {
   if (wantsHost && !adminAuthed) {
     return (
       <AdminLogin
-        title="Host login required"
-        description="Sign in with the admin password to open the creator controls for this voting room."
+        title="Host-Anmeldung erforderlich"
+        description="Melde dich mit dem Admin-Passwort an, um die Steuerung für diesen Abstimmungsraum zu öffnen."
       />
     );
   }
@@ -99,18 +99,18 @@ export function VotingRoomClient() {
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <EmptyState
           icon={<XCircle className="h-7 w-7" />}
-          title={code ? `No room found for “${code}”` : "Missing room code"}
+          title={code ? `Kein Raum für „${code}“ gefunden` : "Raumcode fehlt"}
           description={
             adminAuthed
-              ? "This code does not exist in this browser. Rooms are stored per-browser — import a JSON backup to open a room created elsewhere."
-              : "This code does not exist in this browser. Check the code or link with your host."
+              ? "Dieser Code existiert nicht. Prüfe den Code oder lade die Serverdaten neu. Falls du einen JSON-Export hast, kannst du den Raum auch darüber importieren."
+              : "Dieser Code existiert nicht. Prüfe den Code oder den Link bei deinem Host."
           }
           action={
             <div className="flex flex-col items-center gap-3">
               {adminAuthed ? (
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 shadow-sm transition-colors hover:border-brand-500 hover:text-brand-600">
                   <Upload className="h-4 w-4" />
-                  Import room JSON
+                  Raum-JSON importieren
                   <input
                     type="file"
                     accept="application/json,.json"
@@ -126,17 +126,17 @@ export function VotingRoomClient() {
                           incoming,
                           ...prev.filter((r) => r.room.code !== incoming.room.code),
                         ]);
-                        toast.success(`Imported room ${incoming.room.code}.`);
+                        toast.success(`Raum ${incoming.room.code} wurde importiert.`);
                         router.push(`/votes/room?code=${incoming.room.code}`);
                       } catch {
-                        toast.error("That file is not a valid voting room export.");
+                        toast.error("Diese Datei ist kein gültiger Abstimmungsraum-Export.");
                       }
                     }}
                   />
                 </label>
               ) : null}
               <Link href="/votes" className="text-sm font-medium text-gold-600 hover:text-gold-700">
-                Back to votes
+Zurück zu den Abstimmungen
               </Link>
             </div>
           }
@@ -176,26 +176,26 @@ export function VotingRoomClient() {
 
   function submit() {
     if (!open) {
-      toast.error("Voting is closed.");
+      toast.error("Die Abstimmung ist geschlossen.");
       return;
     }
     const result = castVote(room!, record!.votes, voter, answers);
     if (!result.ok) {
-      toast.error(result.error ?? "Could not submit your vote.");
+      toast.error(result.error ?? "Deine Stimme konnte nicht abgegeben werden.");
       return;
     }
     updateVotes(result.votes);
     writeSession("dbs_voter_name", voter.trim());
-    toast.success(hasVoted ? "Your vote was updated." : "Your vote was recorded.");
+    toast.success(hasVoted ? "Deine Stimme wurde aktualisiert." : "Deine Stimme wurde erfasst.");
   }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <PageHeader
         backHref={adminAuthed ? "/admin" : "/votes"}
-        backLabel={adminAuthed ? "Back to dashboard" : "Back to votes"}
-        eyebrow={`Room ${room.code}`}
-        title={room.title || "Untitled poll"}
+        backLabel={adminAuthed ? "Zurück zum Dashboard" : "Zurück zu den Abstimmungen"}
+        eyebrow={`Raum ${room.code}`}
+        title={room.title || "Unbenannte Umfrage"}
         description={room.description || undefined}
         icon={<Vote className="h-6 w-6" />}
         action={
@@ -209,10 +209,10 @@ export function VotingRoomClient() {
                   exportedAt: Date.now(),
                   record: { room, votes: record!.votes },
                 });
-                toast.success("Room exported as JSON.");
+                toast.success("Raum wurde als JSON exportiert.");
               }}
             >
-              Export
+              Exportieren
             </Button>
           ) : null
         }
@@ -220,14 +220,14 @@ export function VotingRoomClient() {
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <Badge tone={open ? "success" : expired ? "warning" : "neutral"}>
-          {open ? "Voting open" : expired ? "Deadline passed" : "Closed"}
+          {open ? "Abstimmung offen" : expired ? "Frist abgelaufen" : "Geschlossen"}
         </Badge>
-        <Badge tone="brand">{room.mode === "single" ? "Single choice" : "Multiple choice"}</Badge>
+        <Badge tone="brand">{room.mode === "single" ? "Einzelwahl" : "Mehrfachwahl"}</Badge>
         <Badge tone="neutral">
-          <Users className="h-3 w-3" /> {record.votes.length} voter(s)
+          <Users className="h-3 w-3" /> {record.votes.length} Stimmen
         </Badge>
         <Badge tone={resultsVisible ? "info" : "warning"} icon={resultsVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}>
-          {room.resultsVisibility === "during" ? "Results live" : "Results after closing"}
+          {room.resultsVisibility === "during" ? "Ergebnisse live" : "Ergebnisse nach dem Schließen"}
         </Badge>
       </div>
 
@@ -247,20 +247,20 @@ export function VotingRoomClient() {
         <div className="space-y-6">
           {open ? (
             <Card>
-              <CardHeader title="Your ballot" icon={<Vote className="h-5 w-5" />} />
+              <CardHeader title="Dein Stimmzettel" icon={<Vote className="h-5 w-5" />} />
               <CardBody className="space-y-6">
-                <Field label="Your username">
+                <Field label="Dein Name">
                   <Input
                     value={voter}
                     onChange={(e) => setVoter(e.target.value)}
-                    placeholder="Enter your name"
+                    placeholder="Gib deinen Namen ein"
                   />
                 </Field>
 
                 {room.questions.map((question, index) => (
                   <div key={question.id} className="rounded-2xl border border-gray-200 bg-gray-50/60 p-4">
                     <p className="mb-3 text-sm font-semibold text-ink-900">
-                      <span className="mr-2 text-gold-600">Q{index + 1}.</span>
+                      <span className="mr-2 text-gold-600">F{index + 1}.</span>
                       {question.text}
                     </p>
                     <div className="space-y-2">
@@ -298,13 +298,13 @@ export function VotingRoomClient() {
                 {hasVoted && !room.allowChange ? (
                   <p className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                     <Lock className="h-4 w-4" />
-                    You already voted and changes are disabled for this poll.
+                    Du hast bereits abgestimmt und Änderungen sind für diese Umfrage deaktiviert.
                   </p>
                 ) : null}
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button className="flex-1" icon={<LogIn className="h-4 w-4" />} onClick={submit} disabled={hasVoted && !room.allowChange}>
-                    {hasVoted ? "Update my vote" : "Submit vote"}
+                    {hasVoted ? "Stimme aktualisieren" : "Stimme abgeben"}
                   </Button>
                 </div>
               </CardBody>
@@ -314,11 +314,11 @@ export function VotingRoomClient() {
               <CardBody>
                 <EmptyState
                   icon={<Lock className="h-7 w-7" />}
-                  title="Voting is closed"
+                  title="Die Abstimmung ist geschlossen"
                   description={
                     resultsVisible
-                      ? "Here are the final results below."
-                      : "The creator has not enabled results for this poll."
+                      ? "Die finalen Ergebnisse findest du unten."
+                      : "Die Ergebnisse dieser Umfrage wurden noch nicht freigegeben."
                   }
                 />
               </CardBody>
@@ -330,7 +330,7 @@ export function VotingRoomClient() {
         <div className="space-y-6">
           {resultsVisible ? (
             <div className="space-y-4">
-              <h2 className="text-base font-semibold text-ink-900">Results</h2>
+              <h2 className="text-base font-semibold text-ink-900">Ergebnisse</h2>
               <QuestionResults results={results} />
             </div>
           ) : (
@@ -338,8 +338,8 @@ export function VotingRoomClient() {
               <CardBody>
                 <EmptyState
                   icon={<EyeOff className="h-6 w-6" />}
-                  title="Results are hidden"
-                  description="This poll reveals results only after voting closes."
+                  title="Ergebnisse sind verborgen"
+                  description="Diese Umfrage zeigt die Ergebnisse erst nach dem Schließen der Abstimmung."
                 />
               </CardBody>
             </Card>
@@ -351,8 +351,8 @@ export function VotingRoomClient() {
       {adminAuthed ? (
         <Card className="mt-8">
           <CardHeader
-            title="Creator controls"
-            subtitle="Available because you are signed in to the admin area."
+            title="Steuerung für Ersteller"
+            subtitle="Verfügbar, weil du im Admin-Bereich angemeldet bist."
             icon={<ShieldCheck className="h-5 w-5" />}
           />
           <CardBody className="flex flex-wrap gap-2">
@@ -363,10 +363,10 @@ export function VotingRoomClient() {
               icon={<Lock className="h-4 w-4" />}
               onClick={() => {
                 updateRoom({ status: "closed" });
-                toast.success("Poll closed.");
+                toast.success("Umfrage geschlossen.");
               }}
             >
-              Close poll
+              Umfrage schließen
             </Button>
           ) : (
             <Button
@@ -375,10 +375,10 @@ export function VotingRoomClient() {
               icon={<RefreshCw className="h-4 w-4" />}
               onClick={() => {
                 updateRoom({ status: "open", closesAt: null });
-                toast.success("Poll reopened (unlimited).");
+                toast.success("Umfrage wieder geöffnet (unbegrenzt).");
               }}
             >
-              Reopen poll
+              Umfrage wieder öffnen
             </Button>
           )}
           <Button
@@ -387,7 +387,7 @@ export function VotingRoomClient() {
             icon={<AlertTriangle className="h-4 w-4" />}
             onClick={() => setConfirmReset(true)}
           >
-            Reset votes
+            Stimmen zurücksetzen
           </Button>
           <Button
             size="sm"
@@ -401,11 +401,11 @@ export function VotingRoomClient() {
               })
             }
           >
-            Export JSON
+            JSON exportieren
           </Button>
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition-colors hover:border-brand-500 hover:text-brand-600">
             <Upload className="h-4 w-4" />
-            Import results
+            Ergebnisse importieren
             <input
               type="file"
               accept="application/json,.json"
@@ -421,9 +421,9 @@ export function VotingRoomClient() {
                     incoming,
                     ...prev.filter((r) => r.room.code !== incoming.room.code),
                   ]);
-                  toast.success("Results imported.");
+                  toast.success("Ergebnisse importiert.");
                 } catch {
-                  toast.error("Invalid voting room file.");
+                  toast.error("Ungültige Abstimmungsraum-Datei.");
                 }
               }}
             />
@@ -434,13 +434,13 @@ export function VotingRoomClient() {
 
       <ConfirmDialog
         open={confirmReset}
-        title="Reset all votes?"
-        description="This permanently deletes every ballot for this poll. The questions and settings are kept."
-        confirmLabel="Reset votes"
+        title="Alle Stimmen zurücksetzen?"
+        description="Alle abgegebenen Stimmen dieser Umfrage werden dauerhaft gelöscht. Fragen und Einstellungen bleiben erhalten."
+        confirmLabel="Stimmen zurücksetzen"
         onConfirm={() => {
           updateVotes([]);
           setConfirmReset(false);
-          toast.success("All votes cleared.");
+          toast.success("Alle Stimmen wurden gelöscht.");
         }}
         onCancel={() => setConfirmReset(false)}
       />

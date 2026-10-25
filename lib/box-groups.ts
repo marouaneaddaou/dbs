@@ -133,6 +133,7 @@ function emptyGroupContents(group: BoxGroup, count: number): BoxConfig["contents
 }
 
 export function createGroupConfig(group: BoxGroup, createdAt = Date.now()): BoxConfig {
+  const now = Date.now();
   return {
     id: group.id,
     name: group.label,
@@ -140,7 +141,10 @@ export function createGroupConfig(group: BoxGroup, createdAt = Date.now()): BoxC
     participants: [...group.names],
     contents: emptyGroupContents(group, GROUP_BOX_COUNT),
     createdAt,
-    updatedAt: Date.now(),
+    updatedAt: now,
+    saveState: "draft",
+    savedAt: null,
+    draftUpdatedAt: now,
   };
 }
 
@@ -177,11 +181,13 @@ export function withGroupParticipants(config: BoxConfig, group: BoxGroup): BoxCo
 
   if (!participantsChanged && !cleanedLegacy) return config;
 
+  const now = Date.now();
   return {
     ...config,
     participants: [...group.names],
     boxCount,
     contents,
-    updatedAt: Date.now(),
+    updatedAt: now,
+    ...(config.saveState === "draft" ? { draftUpdatedAt: now } : {}),
   };
 }

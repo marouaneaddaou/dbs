@@ -36,7 +36,24 @@ import {
 } from "@/lib/boxes";
 
 function contentLabel(type: string): string {
-  return type.charAt(0).toUpperCase() + type.slice(1);
+  const labels: Record<string, string> = {
+    gift: "Geschenk",
+    question: "Frage",
+    challenge: "Herausforderung",
+    task: "Aufgabe",
+    text: "Text",
+  };
+  return labels[type] ?? type;
+}
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    idle: "Nicht gestartet",
+    running: "Läuft",
+    paused: "Pausiert",
+    finished: "Beendet",
+  };
+  return labels[status] ?? status;
 }
 
 export function BoxPlay({
@@ -74,25 +91,25 @@ export function BoxPlay({
 
   function handleStart() {
     if (config.participants.length === 0) {
-      toast.error("Add participants first in the setup tab.");
+      toast.error("Füge zuerst in der Einrichtung Teilnehmende hinzu.");
       return;
     }
     setGame((prev) => startGame(prev, config));
-    toast.success("Game started. Draw the first participant.");
+    toast.success("Spiel gestartet. Ziehe die erste teilnehmende Person.");
   }
 
   function handleDraw() {
     if (game.status !== "running") {
-      toast.error("Start or resume the game first.");
+      toast.error("Starte oder setze das Spiel zuerst fort.");
       return;
     }
     if (exhausted) {
-      toast.error("All boxes are open. Use “Repeat round” to refill them.");
+      toast.error("Alle Boxen sind offen. Nutze „Runde wiederholen“, um sie neu zu füllen.");
       return;
     }
     const result = drawParticipant(game, config);
     if (!result.participant) {
-      toast.error("There are no participants to draw.");
+      toast.error("Es sind keine Teilnehmenden zum Ziehen vorhanden.");
       return;
     }
 
@@ -107,7 +124,7 @@ export function BoxPlay({
       setDrawing(false);
       setGame(result.game);
       if (result.newCycle) {
-        toast.toast(`New cycle started — everyone gets a fresh turn.`, "info");
+        toast.toast("Neuer Durchlauf gestartet – alle kommen wieder der Reihe nach dran.", "info");
       }
     }, 950);
     timers.current.push(interval, timeout);
@@ -118,7 +135,7 @@ export function BoxPlay({
     if (openingIndex !== null) return;
     const result = openBox(game, config, index);
     if (result.error || !result.selection) {
-      toast.error(result.error ?? "Could not open that box.");
+      toast.error(result.error ?? "Diese Box konnte nicht geöffnet werden.");
       return;
     }
     setOpeningIndex(index);
@@ -132,7 +149,7 @@ export function BoxPlay({
 
   function handleRepeatRound() {
     setGame((prev) => repeatRound(prev, config));
-    toast.success("Fresh contents shuffled into the boxes. The participant cycle is unchanged.");
+    toast.success("Die Boxen wurden mit neuen Inhalten gefüllt. Die Reihenfolge der Teilnehmenden bleibt gleich.");
   }
 
   function handleReset() {
@@ -140,7 +157,7 @@ export function BoxPlay({
     setConfirmReset(false);
     setReveal(null);
     setPreviewName(null);
-    toast.success("Game reset.");
+    toast.success("Spiel zurückgesetzt.");
   }
 
   return (
@@ -149,31 +166,31 @@ export function BoxPlay({
       <Card>
         <CardBody className="flex flex-wrap items-center gap-3">
           <Badge tone={game.status === "running" ? "success" : game.status === "paused" ? "warning" : "neutral"}>
-            {game.status === "idle" ? "Not started" : game.status}
+            {statusLabel(game.status)}
           </Badge>
-          <Badge tone="brand">Round {game.round}</Badge>
-          <Badge tone="info">Cycle {game.cycle}</Badge>
+          <Badge tone="brand">Runde {game.round}</Badge>
+          <Badge tone="info">Durchlauf {game.cycle}</Badge>
           <Badge tone="neutral">
-            <Users className="h-3 w-3" /> {remaining} to play this cycle
+            <Users className="h-3 w-3" /> {remaining} in diesem Durchlauf übrig
           </Badge>
           <Badge tone="neutral">
-            <Gift className="h-3 w-3" /> {game.availableBoxes.length} of {config.boxCount} boxes left
+            <Gift className="h-3 w-3" /> {game.availableBoxes.length} von {config.boxCount} Boxen übrig
           </Badge>
 
           <div className="ml-auto flex flex-wrap gap-2">
             {game.status === "idle" ? (
               <Button size="sm" icon={<Play className="h-4 w-4" />} onClick={handleStart}>
-                Start game
+                Spiel starten
               </Button>
             ) : null}
             {game.status === "running" ? (
               <Button size="sm" variant="secondary" icon={<Pause className="h-4 w-4" />} onClick={() => setGame(pauseGame(game))}>
-                Pause
+                Pausieren
               </Button>
             ) : null}
             {game.status === "paused" ? (
               <Button size="sm" icon={<Play className="h-4 w-4" />} onClick={() => setGame(resumeGame(game))}>
-                Resume
+                Fortsetzen
               </Button>
             ) : null}
             <Button
@@ -183,13 +200,13 @@ export function BoxPlay({
               onClick={handleRepeatRound}
               disabled={openedCount === 0}
             >
-              Repeat round
+              Runde wiederholen
             </Button>
             <Button size="sm" variant="danger" icon={<RotateCcw className="h-4 w-4" />} onClick={() => setConfirmReset(true)}>
-              Reset
+              Zurücksetzen
             </Button>
             <Button size="sm" variant="ghost" onClick={onExit}>
-              Setup
+              Einrichtung
             </Button>
           </div>
         </CardBody>
@@ -204,30 +221,30 @@ export function BoxPlay({
               <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-center">
                 {game.status === "idle" ? (
                   <p className="py-4 text-sm text-gray-500">
-                    Press <span className="font-semibold text-ink-900">Start game</span> to activate the board.
+                    Drücke <span className="font-semibold text-ink-900">Spiel starten</span>, um das Spielfeld zu aktivieren.
                   </p>
                 ) : game.phase === "selecting" && game.currentParticipant ? (
                   <div className="animate-scale-in">
-                    <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Now choosing</p>
+                    <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Jetzt wählt</p>
                     <p className="mt-2 text-3xl font-extrabold text-ink-900 sm:text-4xl">{game.currentParticipant}</p>
                     <p className="mt-2 text-sm text-gold-700">
-                      Pick any unopened box below to reveal what’s inside.
+                      Wähle unten eine noch geschlossene Box, um ihren Inhalt zu enthüllen.
                     </p>
                   </div>
                 ) : drawing ? (
                   <div>
-                    <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Drawing participant…</p>
+                    <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Teilnehmende Person wird gezogen…</p>
                     <p className="mt-2 text-3xl font-extrabold text-gold-600 sm:text-4xl">{previewName}</p>
                   </div>
                 ) : game.phase === "revealed" ? (
                   <div>
-                    <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Turn complete</p>
-                    <p className="mt-2 text-2xl font-bold text-ink-900">Ready for the next participant</p>
+                    <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Zug abgeschlossen</p>
+                    <p className="mt-2 text-2xl font-bold text-ink-900">Bereit für die nächste Person</p>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Next up</p>
-                    <p className="mt-2 text-2xl font-bold text-ink-900">Draw a random participant</p>
+                    <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Als Nächstes</p>
+                    <p className="mt-2 text-2xl font-bold text-ink-900">Ziehe eine zufällige Person</p>
                   </div>
                 )}
 
@@ -243,16 +260,16 @@ export function BoxPlay({
                       config.participants.length === 0
                     }
                   >
-                    Draw participant
+                    Person ziehen
                   </Button>
                   {game.phase === "revealed" && !exhausted ? (
                     <Button variant="secondary" icon={<SkipForward className="h-4 w-4" />} onClick={handleDraw}>
-                      Next participant
+                      Nächste Person
                     </Button>
                   ) : null}
                   {exhausted && !game.currentParticipant ? (
                     <Button variant="primary" icon={<Repeat className="h-4 w-4" />} onClick={handleRepeatRound}>
-                      All boxes open — Repeat round
+                      Alle Boxen offen – Runde wiederholen
                     </Button>
                   ) : null}
                 </div>
@@ -288,23 +305,23 @@ export function BoxPlay({
         {/* Sidebar */}
         <div className="space-y-6">
           <Card>
-            <CardHeader title="Live stats" icon={<Trophy className="h-5 w-5" />} />
+            <CardHeader title="Live-Statistik" icon={<Trophy className="h-5 w-5" />} />
             <CardBody className="grid grid-cols-2 gap-4 text-center">
-              <Stat label="Participants" value={config.participants.length} />
-              <Stat label="Boxes" value={config.boxCount} />
-              <Stat label="Selections" value={game.history.length} />
-              <Stat label="Round" value={game.round} />
+              <Stat label="Teilnehmende" value={config.participants.length} />
+              <Stat label="Boxen" value={config.boxCount} />
+              <Stat label="Auswahlen" value={game.history.length} />
+              <Stat label="Runde" value={game.round} />
             </CardBody>
           </Card>
 
           <Card>
-            <CardHeader title="History" subtitle="Most recent first." icon={<History className="h-5 w-5" />} />
+            <CardHeader title="Verlauf" subtitle="Neueste zuerst." icon={<History className="h-5 w-5" />} />
             <CardBody>
               {historyByLatest.length === 0 ? (
                 <EmptyState
                   icon={<History className="h-6 w-6" />}
-                  title="No selections yet"
-                  description="Opened boxes and their results will appear here."
+                  title="Noch keine Auswahlen"
+                  description="Geöffnete Boxen und ihre Ergebnisse erscheinen hier."
                 />
               ) : (
                 <ul className="max-h-96 space-y-2 overflow-y-auto pr-1">
@@ -345,7 +362,7 @@ export function BoxPlay({
               </span>
             </div>
             <p className="text-xs uppercase tracking-[0.25em] text-gray-400">
-              Box #{reveal.boxIndex + 1} · {contentLabel(reveal.content.type)}
+              Box Nr. {reveal.boxIndex + 1} · {contentLabel(reveal.content.type)}
             </p>
             <p className="mt-1 text-lg font-semibold text-ink-900">{reveal.participant}</p>
             <p className="mt-4 rounded-xl border border-gold-200 bg-gold-50 p-4 text-base font-medium text-ink-900 animate-slide-up">
@@ -353,7 +370,7 @@ export function BoxPlay({
             </p>
             <div className="mt-6 flex w-full gap-3">
               <Button variant="secondary" className="flex-1" onClick={() => setReveal(null)}>
-                Close
+                Schließen
               </Button>
               <Button
                 className="flex-1"
@@ -364,7 +381,7 @@ export function BoxPlay({
                   handleDraw();
                 }}
               >
-                Next turn
+                Nächster Zug
               </Button>
             </div>
           </div>
@@ -373,9 +390,9 @@ export function BoxPlay({
 
       <ConfirmDialog
         open={confirmReset}
-        title="Reset the whole game?"
-        description="This clears all selections, restarts the participant cycle and refills every box. Your setup and names are kept."
-        confirmLabel="Reset game"
+        title="Das gesamte Spiel zurücksetzen?"
+        description="Alle Auswahlen werden gelöscht, der Durchlauf startet neu und alle Boxen werden neu gefüllt. Einrichtung und Namen bleiben erhalten."
+        confirmLabel="Spiel zurücksetzen"
         onConfirm={handleReset}
         onCancel={() => setConfirmReset(false)}
       />

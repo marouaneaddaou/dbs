@@ -5,7 +5,7 @@ import { uid } from "@/lib/storage";
 export const EMPTY_BOX_CONTENT: BoxContent = {
   id: "empty",
   type: "text",
-  text: "This box is empty.",
+  text: "Diese Box ist leer.",
 };
 
 /** Start a brand new game for a config (status stays idle until "Start"). */
@@ -113,13 +113,13 @@ export interface OpenResult {
  */
 export function openBox(game: BoxGame, config: BoxConfig, boxIndex: number): OpenResult {
   if (game.status !== "running") {
-    return { game, selection: null, error: "The game is not running." };
+    return { game, selection: null, error: "Das Spiel läuft nicht." };
   }
   if (game.phase !== "selecting" || !game.currentParticipant) {
-    return { game, selection: null, error: "Draw a participant first." };
+    return { game, selection: null, error: "Ziehe zuerst eine teilnehmende Person." };
   }
   if (!game.availableBoxes.includes(boxIndex)) {
-    return { game, selection: null, error: "That box is already open." };
+    return { game, selection: null, error: "Diese Box ist bereits geöffnet." };
   }
 
   const content = game.contentsOrder[boxIndex] ?? EMPTY_BOX_CONTENT;
@@ -169,12 +169,15 @@ export function createEmptyConfig(): BoxConfig {
   const now = Date.now();
   return {
     id: uid("cfg"),
-    name: "New box game",
+    name: "Neues Boxspiel",
     boxCount: 6,
     participants: [],
     contents: [],
     createdAt: now,
     updatedAt: now,
+    saveState: "draft",
+    savedAt: null,
+    draftUpdatedAt: now,
   };
 }
 

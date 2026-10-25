@@ -121,31 +121,31 @@ export function VotingRoomForm({
   function handleSubmit() {
     setError(null);
     if (!title.trim()) {
-      setError("Please enter a room title.");
+      setError("Bitte gib einen Titel für den Raum ein.");
       return;
     }
     if (questions.length === 0) {
-      setError("Add at least one question.");
+      setError("Füge mindestens eine Frage hinzu.");
       return;
     }
     const cleaned: VotingQuestion[] = [];
     for (let i = 0; i < questions.length; i += 1) {
       const q = questions[i];
       if (!q.text.trim()) {
-        setError(`Question ${i + 1}: please enter the question text.`);
+        setError(`Frage ${i + 1}: Bitte gib den Fragetext ein.`);
         return;
       }
       const options = q.options
         .map((o) => ({ id: o.id, text: o.text.trim() }))
         .filter((o) => o.text.length > 0);
       if (options.length < 2) {
-        setError(`Question ${i + 1}: provide at least two options.`);
+        setError(`Frage ${i + 1}: Gib mindestens zwei Optionen an.`);
         return;
       }
       cleaned.push({ id: q.id, text: q.text.trim(), options });
     }
     if (!unlimited && (!durationMinutes || durationMinutes <= 0)) {
-      setError("Enter a valid duration in minutes, or choose unlimited.");
+      setError("Gib eine gültige Dauer in Minuten ein oder wähle unbegrenzt.");
       return;
     }
 
@@ -160,11 +160,11 @@ export function VotingRoomForm({
     } else {
       const chosen = normalizeCode(codeInput);
       if (!chosen) {
-        setError("Choose your room code before creating the room.");
+        setError("Wähle einen Raumcode, bevor du den Raum erstellst.");
         return;
       }
       if (taken.has(chosen)) {
-        setError(`The code ${chosen} is already used by another voting room. Choose a different code.`);
+        setError(`Der Code ${chosen} wird bereits von einem anderen Abstimmungsraum verwendet. Wähle einen anderen Code.`);
         return;
       }
       code = chosen;
@@ -184,10 +184,12 @@ export function VotingRoomForm({
       closesAt: unlimited ? null : openedAt + Math.floor(durationMinutes) * 60_000,
       status: publishNow ? "open" : "draft",
       createdAt: initialRoom?.createdAt ?? now,
+      saveState: "saved",
+      savedAt: now,
     };
     onSaved(room);
     toast.success(
-      editing ? `Room ${room.code} updated.` : `Room ${room.code} created and saved locally.`,
+      editing ? `Raum ${room.code} wurde aktualisiert.` : `Raum ${room.code} wurde erstellt und dauerhaft gespeichert.`,
     );
   }
 
@@ -195,50 +197,50 @@ export function VotingRoomForm({
     <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
       <div className="space-y-6">
         <Card>
-          <CardHeader title="Room details" icon={<HelpCircle className="h-5 w-5" />} />
+          <CardHeader title="Raumdetails" icon={<HelpCircle className="h-5 w-5" />} />
           <CardBody className="space-y-5">
             <Field
-              label="Choose Your Room Code"
+              label="Raumcode wählen"
               hint={
                 editing
-                  ? "The room code stays unchanged until the room is closed or deleted."
-                  : "Participants join by entering this exact code with their username."
+                  ? "Der Raumcode bleibt unverändert, bis der Raum geschlossen oder gelöscht wird."
+                  : "Teilnehmende treten mit genau diesem Code und ihrem Namen bei."
               }
             >
               <Input
                 value={editing ? initialRoom?.code ?? "" : codeInput}
                 onChange={(e) => setCodeInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
                 disabled={editing}
-                placeholder={editing ? "" : "e.g. 12355"}
+                placeholder={editing ? "" : "z. B. 12355"}
                 className="font-mono tracking-[0.3em] disabled:opacity-60"
                 maxLength={12}
               />
             </Field>
-            <Field label="Title">
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Team lunch poll" />
+            <Field label="Titel">
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Umfrage zum Teamessen" />
             </Field>
-            <Field label="Description" hint="Optional context for participants.">
+            <Field label="Beschreibung" hint="Optionaler Kontext für die Teilnehmenden.">
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Help voters understand what they're deciding."
+                placeholder="Erkläre kurz, worüber abgestimmt wird."
               />
             </Field>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Voting mode">
+              <Field label="Abstimmungsmodus">
                 <Select value={mode} onChange={(e) => setMode(e.target.value as VoteMode)}>
-                  <option value="single">Single choice (one option per question)</option>
-                  <option value="multiple">Multiple choice (several options)</option>
+                  <option value="single">Einzelwahl (eine Option pro Frage)</option>
+                  <option value="multiple">Mehrfachwahl (mehrere Optionen)</option>
                 </Select>
               </Field>
-              <Field label="Results visibility">
+              <Field label="Sichtbarkeit der Ergebnisse">
                 <Select
                   value={resultsVisibility}
                   onChange={(e) => setResultsVisibility(e.target.value as ResultsVisibility)}
                 >
-                  <option value="during">Show results during voting</option>
-                  <option value="after">Reveal only after closing</option>
+                  <option value="during">Ergebnisse während der Abstimmung zeigen</option>
+                  <option value="after">Erst nach dem Schließen zeigen</option>
                 </Select>
               </Field>
             </div>
@@ -247,30 +249,30 @@ export function VotingRoomForm({
               <Switch
                 checked={allowChange}
                 onChange={setAllowChange}
-                label="Allow vote changes"
-                description="Voters can re-submit and replace their ballot."
+                label="Stimmenänderung erlauben"
+                description="Teilnehmende können erneut abstimmen und ihre Stimme ersetzen."
               />
               <Switch
                 checked={unlimited}
                 onChange={setUnlimited}
-                label="Unlimited duration"
-                description="Turn off to set a countdown deadline."
+                label="Unbegrenzte Dauer"
+                description="Deaktiviere dies, um einen Countdown festzulegen."
               />
             </div>
 
             <Switch
               checked={publishNow}
               onChange={setPublishNow}
-              label="Open for voting"
+              label="Für Abstimmung öffnen"
               description={
                 publishNow
-                  ? "The room is live and accepts ballots immediately."
-                  : "Saved as a draft — voters can't submit until you open it."
+                  ? "Der Raum ist live und nimmt sofort Stimmen an."
+                  : "Wird als Entwurf gespeichert – Stimmen sind erst nach dem Öffnen möglich."
               }
             />
 
             {!unlimited ? (
-              <Field label="Duration (minutes)" hint="The deadline is enforced by the app clock in this browser.">
+              <Field label="Dauer (Minuten)" hint="Die Frist wird anhand der App-Uhrzeit geprüft.">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-gray-400" />
                   <Input
@@ -280,7 +282,7 @@ export function VotingRoomForm({
                     onChange={(e) => setDurationMinutes(Number(e.target.value))}
                     className="w-32"
                   />
-                  <span className="text-sm text-gray-400">minutes</span>
+                  <span className="text-sm text-gray-400">Minuten</span>
                 </div>
               </Field>
             ) : null}
@@ -289,12 +291,12 @@ export function VotingRoomForm({
 
         <Card>
           <CardHeader
-            title="Questions & options"
-            subtitle={`${questions.length} question(s)`}
+            title="Fragen & Optionen"
+            subtitle={`${questions.length} Frage(n)`}
             icon={<ListChecks className="h-5 w-5" />}
             action={
               <Button size="sm" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={addQuestion}>
-                Add question
+                Frage hinzufügen
               </Button>
             }
           />
@@ -308,7 +310,7 @@ export function VotingRoomForm({
                   <Input
                     value={question.text}
                     onChange={(e) => updateQuestion(question.id, { text: e.target.value })}
-                    placeholder="What do you want to ask?"
+                    placeholder="Was möchtest du fragen?"
                     className="flex-1"
                   />
                   <Button
@@ -316,7 +318,7 @@ export function VotingRoomForm({
                     size="icon"
                     onClick={() => removeQuestion(question.id)}
                     disabled={questions.length === 1}
-                    aria-label="Remove question"
+                    aria-label="Frage entfernen"
                     className="text-gray-400 hover:text-brand-600"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -345,7 +347,7 @@ export function VotingRoomForm({
                         size="icon"
                         onClick={() => removeOption(question.id, option.id)}
                         disabled={question.options.length <= 2}
-                        aria-label="Remove option"
+                        aria-label="Option entfernen"
                         className="text-gray-400 hover:text-brand-600"
                       >
                         <MinusCircle className="h-4 w-4" />
@@ -359,7 +361,7 @@ export function VotingRoomForm({
                     onClick={() => addOption(question.id)}
                     disabled={question.options.length >= 10}
                   >
-                    Add option
+                    Option hinzufügen
                   </Button>
                 </div>
               </div>
@@ -370,21 +372,21 @@ export function VotingRoomForm({
 
       <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
         <Card>
-          <CardHeader title="Summary" icon={<ToggleLeft className="h-5 w-5" />} />
+          <CardHeader title="Zusammenfassung" icon={<ToggleLeft className="h-5 w-5" />} />
           <CardBody className="space-y-3 text-sm text-gray-500">
-            <SummaryRow label="Room code" value={editing ? initialRoom?.code ?? "" : codeInput || "—"} />
-            <SummaryRow label="Mode" value={mode === "single" ? "Single choice" : "Multiple choice"} />
-            <SummaryRow label="Questions" value={String(questions.length)} />
-            <SummaryRow label="Vote changes" value={allowChange ? "Allowed" : "Locked"} />
+            <SummaryRow label="Raumcode" value={editing ? initialRoom?.code ?? "" : codeInput || "—"} />
+            <SummaryRow label="Modus" value={mode === "single" ? "Einzelwahl" : "Mehrfachwahl"} />
+            <SummaryRow label="Fragen" value={String(questions.length)} />
+            <SummaryRow label="Stimmenänderung" value={allowChange ? "Erlaubt" : "Gesperrt"} />
             <SummaryRow
-              label="Results"
-              value={resultsVisibility === "during" ? "Visible during" : "After closing"}
+              label="Ergebnisse"
+              value={resultsVisibility === "during" ? "Während der Abstimmung" : "Nach dem Schließen"}
             />
-            <SummaryRow label="Deadline" value={unlimited ? "Unlimited" : `${durationMinutes} min`} />
-            <SummaryRow label="Status" value={publishNow ? "Open" : "Draft"} />
+            <SummaryRow label="Frist" value={unlimited ? "Unbegrenzt" : `${durationMinutes} Min.`} />
+            <SummaryRow label="Status" value={publishNow ? "Offen" : "Entwurf"} />
             <div className="flex items-center gap-2 pt-1 text-xs text-gray-400">
               {resultsVisibility === "during" ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-              {editing ? `Keeping code ${initialRoom?.code}.` : "Codes are never auto-generated — the room is created only with the code you chose."}
+              {editing ? `Code ${initialRoom?.code} bleibt erhalten.` : "Codes werden nie automatisch erzeugt – der Raum entsteht nur mit deinem gewählten Code."}
             </div>
           </CardBody>
         </Card>
@@ -396,7 +398,7 @@ export function VotingRoomForm({
         ) : null}
 
         <Button className="w-full" size="lg" icon={<Save className="h-5 w-5" />} onClick={handleSubmit}>
-          {editing ? "Save changes" : "Create room"}
+          {editing ? "Änderungen speichern" : "Raum erstellen"}
         </Button>
       </div>
     </div>

@@ -62,8 +62,8 @@ export function QuizHostView({ code }: { code: string }) {
   if (wantsHost && !authed) {
     return (
       <AdminLogin
-        title="Host login required"
-        description="Sign in with the admin password to open the host controls for this quiz."
+        title="Host-Anmeldung erforderlich"
+        description="Melde dich mit dem Admin-Passwort an, um die Host-Steuerung für dieses Quiz zu öffnen."
       />
     );
   }
@@ -199,7 +199,7 @@ function HostSessionScreen({ code }: { code: string }) {
           return;
         }
         setPeerStatus("error");
-        setPeerError("Could not start the shared room. Check your internet connection and reload the page.");
+        setPeerError("Der gemeinsame Raum konnte nicht gestartet werden. Prüfe deine Internetverbindung und lade die Seite neu.");
       });
 
       peer.on("disconnected", () => {
@@ -225,8 +225,8 @@ function HostSessionScreen({ code }: { code: string }) {
           setPeerStatus("error");
           setPeerError(
             lastPeerFailure === "unavailable-id"
-              ? `A session for room code ${room!.code} is already open (possibly in another tab or window). Close it and reopen this page.`
-              : "Could not start the shared room. Check your internet connection and reload the page.",
+              ? `Für den Raumcode ${room!.code} ist bereits eine Sitzung geöffnet (möglicherweise in einem anderen Tab oder Fenster). Schließe sie und öffne diese Seite erneut.`
+              : "Der gemeinsame Raum konnte nicht gestartet werden. Prüfe deine Internetverbindung und lade die Seite neu.",
           );
           return;
         }
@@ -269,8 +269,8 @@ function HostSessionScreen({ code }: { code: string }) {
 
   const copyCode = useCallback(() => {
     navigator.clipboard?.writeText(code).then(
-      () => toast.success(`Copied code ${code}.`),
-      () => toast.error("Could not copy to clipboard."),
+      () => toast.success(`Code ${code} kopiert.`),
+      () => toast.error("Der Code konnte nicht kopiert werden."),
     );
   }, [code, toast]);
 
@@ -285,13 +285,13 @@ function HostSessionScreen({ code }: { code: string }) {
       : "";
   const shareTitle = room?.title || `Quiz ${room?.code ?? code}`;
   const shareText = shareUrl
-    ? `Join the quiz "${shareTitle}" — room ${room?.code ?? code}: ${shareUrl}`
+    ? `Mach beim Quiz „${shareTitle}“ mit – Raum ${room?.code ?? code}: ${shareUrl}`
     : "";
 
   async function copyRoomLink() {
     const ok = await copyToClipboard(shareUrl);
-    if (ok) toast.success(`Room link copied — ${shareUrl}`);
-    else toast.error("Could not copy the room link.");
+    if (ok) toast.success(`Raumlink kopiert – ${shareUrl}`);
+    else toast.error("Der Raumlink konnte nicht kopiert werden.");
   }
 
   function shareToWhatsApp() {
@@ -310,8 +310,8 @@ function HostSessionScreen({ code }: { code: string }) {
     if (typeof navigator.share !== "function") {
       // No Web Share API here (e.g. desktop browsers) — fall back to copying.
       const ok = await copyToClipboard(shareUrl);
-      if (ok) toast.success("Sharing isn't supported in this browser — room link copied instead.");
-      else toast.error("Sharing isn't supported in this browser.");
+      if (ok) toast.success("Teilen wird in diesem Browser nicht unterstützt – der Raumlink wurde stattdessen kopiert.");
+      else toast.error("Teilen wird in diesem Browser nicht unterstützt.");
       return;
     }
     try {
@@ -319,7 +319,7 @@ function HostSessionScreen({ code }: { code: string }) {
     } catch (err) {
       // A dismissed share sheet is not an error worth reporting.
       if (!(err instanceof DOMException && err.name === "AbortError")) {
-        toast.error("Couldn't open the share menu.");
+        toast.error("Das Teilen-Menü konnte nicht geöffnet werden.");
       }
     }
   }
@@ -331,11 +331,11 @@ function HostSessionScreen({ code }: { code: string }) {
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <EmptyState
           icon={<AlertTriangle className="h-7 w-7" />}
-          title={`Quiz “${code}” not found in this browser`}
-          description="Host sessions run on the device where the quiz was created. Create or import the quiz first, then open its room."
+          title={`Quiz „${code}“ wurde nicht gefunden`}
+          description="Die Sitzung wird auf dem Gerät gehostet, auf dem du sie öffnest. Stelle sicher, dass das Quiz im gemeinsamen Speicher vorhanden ist, oder erstelle bzw. importiere es zuerst."
           action={
             <Link href="/admin" className="text-sm font-medium text-gold-600 hover:text-gold-700">
-              Back to dashboard
+              Zurück zum Dashboard
             </Link>
           }
         />
@@ -353,14 +353,14 @@ function HostSessionScreen({ code }: { code: string }) {
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <PageHeader
         backHref="/admin"
-        backLabel="Back to dashboard"
+        backLabel="Zurück zum Dashboard"
         eyebrow={`Quiz ${room.code}`}
-        title={room.title || "Untitled quiz"}
+        title={room.title || "Unbenanntes Quiz"}
         description={room.description || undefined}
         icon={<Trophy className="h-6 w-6" />}
         action={
           <Badge tone={phase === "lobby" ? "neutral" : phase === "playing" ? "brand" : "success"}>
-            {phase === "lobby" ? "Lobby" : phase === "playing" ? "In progress" : "Finished"}
+            {phase === "lobby" ? "Warteraum" : phase === "playing" ? "Läuft" : "Beendet"}
           </Badge>
         }
       />
@@ -369,31 +369,31 @@ function HostSessionScreen({ code }: { code: string }) {
       <Card className={cn("mb-6", peerStatus === "error" ? "border-brand-300" : "border-gold-200 bg-gold-50/50")}>
         <CardBody className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-gray-500">Room code — share with students</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-gray-500">Raumcode – mit den Teilnehmenden teilen</p>
             <p className="mt-1 font-mono text-4xl font-extrabold tracking-[0.3em] text-ink-900">{room.code}</p>
             <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
               {peerStatus === "open" ? (
                 <>
-                  <Wifi className="h-3.5 w-3.5 text-emerald-600" /> Room open — students can join from any device.
+                  <Wifi className="h-3.5 w-3.5 text-emerald-600" /> Raum offen – Teilnehmende können von jedem Gerät beitreten.
                 </>
               ) : peerStatus === "starting" ? (
                 <>
                   <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />{" "}
-                  Opening the shared room…
+                  Gemeinsamer Raum wird geöffnet…
                 </>
               ) : (
                 <>
-                  <WifiOff className="h-3.5 w-3.5 text-brand-600" /> Room could not open.
+                  <WifiOff className="h-3.5 w-3.5 text-brand-600" /> Raum konnte nicht geöffnet werden.
                 </>
               )}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="secondary" icon={<Copy className="h-4 w-4" />} onClick={copyCode}>
-              Copy code
+              Code kopieren
             </Button>
             <Button variant="gold" icon={<Share2 className="h-4 w-4" />} onClick={() => setShareOpen(true)}>
-              Share room
+              Raum teilen
             </Button>
           </div>
         </CardBody>
@@ -406,8 +406,8 @@ function HostSessionScreen({ code }: { code: string }) {
         open={shareOpen}
         onClose={() => setShareOpen(false)}
         size="sm"
-        title="Share room"
-        description={`Room ${room.code} — send the join link to your students.`}
+        title="Raum teilen"
+        description={`Raum ${room.code} – sende den Beitrittslink an die Teilnehmenden.`}
       >
         <div className="space-y-3">
           <p className="break-all rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-500">
@@ -416,27 +416,27 @@ function HostSessionScreen({ code }: { code: string }) {
           <div className="space-y-2">
             <ShareOption
               icon={<Link2 className="h-4 w-4" />}
-              label="Copy room link"
-              hint="Copy the direct link to your clipboard"
+              label="Raumlink kopieren"
+              hint="Kopiert den direkten Link in die Zwischenablage"
               onClick={copyRoomLink}
             />
             <ShareOption
               icon={<WhatsAppGlyph className="h-4 w-4" />}
-              label="Share on WhatsApp"
+              label="Über WhatsApp teilen"
               onClick={shareToWhatsApp}
             />
             <ShareOption
               icon={<Facebook className="h-4 w-4" />}
-              label="Share on Facebook"
+              label="Über Facebook teilen"
               onClick={shareToFacebook}
             />
             <ShareOption
               icon={<Share2 className="h-4 w-4" />}
-              label="Share via other apps"
+              label="Über andere Apps teilen"
               hint={
                 typeof navigator !== "undefined" && typeof navigator.share === "function"
                   ? undefined
-                  : "Not supported here — copies the link instead"
+                  : "Hier nicht unterstützt – der Link wird stattdessen kopiert"
               }
               onClick={shareViaApps}
             />
@@ -446,15 +446,15 @@ function HostSessionScreen({ code }: { code: string }) {
 
       {/* Progress summary */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat icon={<Users className="h-4 w-4" />} label="Joined" value={progress.joined} />
+        <Stat icon={<Users className="h-4 w-4" />} label="Beigetreten" value={progress.joined} />
         <Stat
           icon={<CheckCircle2 className="h-4 w-4" />}
-          label="Completed"
+          label="Abgeschlossen"
           value={progress.completed}
           tone={progress.completed > 0 ? "success" : undefined}
         />
-        <Stat icon={<Play className="h-4 w-4" />} label="In progress" value={progress.playing} />
-        <Stat icon={<WifiOff className="h-4 w-4" />} label="Disconnected" value={progress.disconnected} tone={progress.disconnected > 0 ? "warning" : undefined} />
+        <Stat icon={<Play className="h-4 w-4" />} label="Läuft" value={progress.playing} />
+        <Stat icon={<WifiOff className="h-4 w-4" />} label="Getrennt" value={progress.disconnected} tone={progress.disconnected > 0 ? "warning" : undefined} />
       </section>
 
       {/* ------------------------------- LOBBY ------------------------------- */}
@@ -462,15 +462,15 @@ function HostSessionScreen({ code }: { code: string }) {
         <div className="mt-6 grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader
-              title="Students"
-              subtitle={`${students.length} joined — they answer on their own devices`}
+              title="Teilnehmende"
+              subtitle={`${students.length} beigetreten – sie antworten auf ihren eigenen Geräten`}
               icon={<Users className="h-5 w-5" />}
             />
             <CardBody className="space-y-3">
               {students.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50/60 px-4 py-8 text-center text-sm text-gray-400">
-                  Waiting for students to enter the code <span className="font-mono font-bold">{room.code}</span>{" "}
-                  with their username…
+                  Warte darauf, dass Teilnehmende den Code <span className="font-mono font-bold">{room.code}</span>{" "}
+                  mit ihrem Namen eingeben…
                 </p>
               ) : (
                 <ul className="space-y-2">
@@ -491,7 +491,7 @@ function HostSessionScreen({ code }: { code: string }) {
                         className="h-8 text-gray-400 hover:text-brand-600"
                         onClick={() => session.removeStudent(s.id)}
                       >
-                        Remove
+                        Entfernen
                       </Button>
                     </li>
                   ))}
@@ -502,24 +502,24 @@ function HostSessionScreen({ code }: { code: string }) {
 
           <Card>
             <CardHeader
-              title="Ready to start?"
-              subtitle={`${room.questions.length} questions`}
+              title="Bereit zum Start?"
+              subtitle={`${room.questions.length} Fragen`}
               icon={<Play className="h-5 w-5" />}
             />
             <CardBody className="space-y-4">
               <ul className="space-y-2 text-sm text-gray-500">
                 <li className="flex items-center justify-between">
-                  <span>Questions</span> <span className="font-medium text-ink-900">{room.questions.length}</span>
+                  <span>Fragen</span> <span className="font-medium text-ink-900">{room.questions.length}</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span>Timers</span>{" "}
+                  <span>Zeitlimits</span>{" "}
                   <span className="font-medium text-ink-900">
-                    {room.questions.filter((q) => q.timeLimitSec).length ? "Enabled" : "Disabled"}
+                    {room.questions.filter((q) => q.timeLimitSec).length ? "Aktiviert" : "Deaktiviert"}
                   </span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span>Answers revealed</span>{" "}
-                  <span className="font-medium text-ink-900">Only when everyone finishes (or you end it)</span>
+                  <span>Antworten sichtbar</span>{" "}
+                  <span className="font-medium text-ink-900">Erst wenn alle fertig sind (oder du beendest)</span>
                 </li>
               </ul>
               <Button
@@ -529,14 +529,14 @@ function HostSessionScreen({ code }: { code: string }) {
                 disabled={students.length === 0}
                 onClick={() => {
                   const result = session.start();
-                  if (!result.ok) toast.error(result.error ?? "Could not start.");
-                  else toast.success("Quiz started — students can answer on their own screens.");
+                  if (!result.ok) toast.error(result.error ?? "Das Quiz konnte nicht gestartet werden.");
+                  else toast.success("Quiz gestartet – die Teilnehmenden können auf ihren Bildschirmen antworten.");
                 }}
               >
-                Start quiz
+                Quiz starten
               </Button>
               <p className="text-center text-xs text-gray-400">
-                New students can no longer join once you start.
+                Nach dem Start können keine neuen Teilnehmenden mehr beitreten.
               </p>
             </CardBody>
           </Card>
@@ -548,8 +548,8 @@ function HostSessionScreen({ code }: { code: string }) {
         <div className="mt-6 space-y-6">
           <Card>
             <CardHeader
-              title="Leaderboard"
-              subtitle="Updates after every answer — sorted by points, then correct, then speed"
+              title="Rangliste"
+              subtitle="Aktualisiert sich nach jeder Antwort – sortiert nach Punkten, richtigen Antworten und Geschwindigkeit"
               icon={<Crown className="h-5 w-5" />}
             />
             <CardBody>
@@ -559,8 +559,8 @@ function HostSessionScreen({ code }: { code: string }) {
 
           <Card>
             <CardHeader
-              title="Students"
-              subtitle="Everyone answers independently on their own device"
+              title="Teilnehmende"
+              subtitle="Alle antworten unabhängig auf ihrem eigenen Gerät"
               icon={<Users className="h-5 w-5" />}
             />
             <CardBody className="space-y-4">
@@ -568,11 +568,11 @@ function HostSessionScreen({ code }: { code: string }) {
                 <Switch
                   checked={session.allowEditing}
                   onChange={(value) => session.setAllowEditing(value)}
-                  label="Allow answer editing"
+                  label="Antwortänderung erlauben"
                   description={
                     session.allowEditing
-                      ? "On — students can revisit earlier questions and change submitted answers until they finish."
-                      : "Off — submitted answers are locked; students can only move forward."
+                      ? "An – Teilnehmende können zu früheren Fragen zurückkehren und abgegebene Antworten bis zum Abschluss ändern."
+                      : "Aus – abgegebene Antworten sind gesperrt; es geht nur vorwärts."
                   }
                 />
               </div>
@@ -585,7 +585,7 @@ function HostSessionScreen({ code }: { code: string }) {
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium text-ink-900">{s.name}</span>
                       <span className="text-xs text-gray-500">
-                        {session.responses.filter((r) => r.playerId === s.id).length}/{room.questions.length} answered
+                        {session.responses.filter((r) => r.playerId === s.id).length}/{room.questions.length} beantwortet
                       </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5">
@@ -595,10 +595,10 @@ function HostSessionScreen({ code }: { code: string }) {
                           size="sm"
                           variant="ghost"
                           className="h-8 px-2 text-gray-400 hover:text-brand-600"
-                          title="Remove participant (unblocks reveal if they won't finish)"
+                          title="Teilnehmende Person entfernen (ermöglicht das Enthüllen, falls sie nicht fertig wird)"
                           onClick={() => session.removeStudent(s.id)}
                         >
-                          Remove
+                          Entfernen
                         </Button>
                       ) : null}
                     </span>
@@ -610,8 +610,8 @@ function HostSessionScreen({ code }: { code: string }) {
 
           <Card>
             <CardHeader
-              title="Per-question progress"
-              subtitle="How many students have answered each question"
+              title="Fortschritt pro Frage"
+              subtitle="Wie viele Teilnehmende jede Frage beantwortet haben"
               icon={<ListChecks className="h-5 w-5" />}
             />
             <CardBody className="overflow-x-auto">
@@ -619,9 +619,9 @@ function HostSessionScreen({ code }: { code: string }) {
                 <thead className="text-xs uppercase tracking-wide text-gray-400">
                   <tr>
                     <th className="px-3 py-2">#</th>
-                    <th className="px-3 py-2">Question</th>
-                    <th className="px-3 py-2 text-right">Answered</th>
-                    <th className="px-3 py-2 text-right">Correct</th>
+                    <th className="px-3 py-2">Frage</th>
+                    <th className="px-3 py-2 text-right">Beantwortet</th>
+                    <th className="px-3 py-2 text-right">Richtig</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -629,7 +629,7 @@ function HostSessionScreen({ code }: { code: string }) {
                     <tr key={stat.questionId} className="border-t border-gray-100">
                       <td className="px-3 py-2 font-semibold text-gray-400">{i + 1}</td>
                       <td className="max-w-[280px] truncate px-3 py-2 text-ink-900">
-                        {room.questions[i]?.text || "Untitled"}
+                        {room.questions[i]?.text || "Ohne Titel"}
                       </td>
                       <td className="px-3 py-2 text-right font-medium text-ink-900">
                         {stat.answered}/{stat.total}
@@ -644,7 +644,7 @@ function HostSessionScreen({ code }: { code: string }) {
 
           <div className="flex justify-end gap-3">
             <Button variant="danger" size="lg" icon={<Square className="h-4 w-4" />} onClick={() => setConfirmEnd(true)}>
-              End quiz & reveal results
+              Quiz beenden & Ergebnisse zeigen
             </Button>
           </div>
         </div>
@@ -658,16 +658,16 @@ function HostSessionScreen({ code }: { code: string }) {
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-emerald-600 ring-1 ring-emerald-200">
                 <Trophy className="h-7 w-7" />
               </span>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ink-900">Results revealed</h2>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ink-900">Ergebnisse enthüllt</h2>
               <p className="max-w-md text-sm text-gray-500">
-                The answer key, scores and leaderboard are now visible to everyone connected, and this run was saved
-                to your quiz history.
+                Lösungen, Punkte und Rangliste sind jetzt für alle verbundenen Geräte sichtbar. Dieser Durchlauf
+                wurde im Quiz-Verlauf gespeichert.
               </p>
             </CardBody>
           </Card>
 
           <Card>
-            <CardHeader title="Leaderboard" subtitle="Rank, points, correct / incorrect, accuracy" icon={<Crown className="h-5 w-5" />} />
+            <CardHeader title="Rangliste" subtitle="Platz, Punkte, richtig / falsch, Trefferquote" icon={<Crown className="h-5 w-5" />} />
             <CardBody className="space-y-6">
               <Podium
                 entries={session.finalLeaderboard().slice(0, 3).map((s) => ({
@@ -675,7 +675,7 @@ function HostSessionScreen({ code }: { code: string }) {
                   name: s.name,
                   points: s.points,
                   rank: s.rank,
-                  subtitle: `${s.correct} correct · ${s.accuracy}%`,
+                  subtitle: `${s.correct} richtig · ${s.accuracy} %`,
                 }))}
               />
               <LeaderboardTable rows={session.finalLeaderboard()} />
@@ -684,8 +684,8 @@ function HostSessionScreen({ code }: { code: string }) {
 
           <Card>
             <CardHeader
-              title="Question difficulty"
-              subtitle="Questions students found hard show a low correct count"
+              title="Schwierigkeit der Fragen"
+              subtitle="Fragen, die schwer waren, haben eine niedrige Anzahl richtiger Antworten"
               icon={<ListChecks className="h-5 w-5" />}
             />
             <CardBody className="overflow-x-auto">
@@ -693,10 +693,10 @@ function HostSessionScreen({ code }: { code: string }) {
                 <thead className="text-xs uppercase tracking-wide text-gray-400">
                   <tr>
                     <th className="px-3 py-2">#</th>
-                    <th className="px-3 py-2">Question</th>
-                    <th className="px-3 py-2 text-right">Answered</th>
-                    <th className="px-3 py-2 text-right">Correct</th>
-                    <th className="px-3 py-2 text-right">Success</th>
+                    <th className="px-3 py-2">Frage</th>
+                    <th className="px-3 py-2 text-right">Beantwortet</th>
+                    <th className="px-3 py-2 text-right">Richtig</th>
+                    <th className="px-3 py-2 text-right">Erfolg</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -704,12 +704,12 @@ function HostSessionScreen({ code }: { code: string }) {
                     <tr key={stat.questionId} className="border-t border-gray-100">
                       <td className="px-3 py-2 font-semibold text-gray-400">{i + 1}</td>
                       <td className="max-w-[260px] truncate px-3 py-2 text-ink-900">
-                        {room.questions[i]?.text || "Untitled"}
+                        {room.questions[i]?.text || "Ohne Titel"}
                       </td>
                       <td className="px-3 py-2 text-right text-gray-700">{stat.answered}</td>
                       <td className="px-3 py-2 text-right text-emerald-600">{stat.correct}</td>
                       <td className="px-3 py-2 text-right font-medium text-ink-900">
-                        {stat.answered > 0 ? Math.round((stat.correct / stat.answered) * 100) : 0}%
+                        {stat.answered > 0 ? Math.round((stat.correct / stat.answered) * 100) : 0} %
                       </td>
                     </tr>
                   ))}
@@ -724,13 +724,13 @@ function HostSessionScreen({ code }: { code: string }) {
               icon={<RotateCcw className="h-4 w-4" />}
               onClick={() => {
                 session.newSession();
-                toast.success("New session started — same code, fresh lobby.");
+                toast.success("Neue Sitzung gestartet – gleicher Code, neuer Warteraum.");
               }}
             >
-              New session (same code)
+              Neue Sitzung (gleicher Code)
             </Button>
             <Link href="/admin">
-              <Button icon={<LayoutDashboard className="h-4 w-4" />}>Back to Dashboard</Button>
+              <Button icon={<LayoutDashboard className="h-4 w-4" />}>Zurück zum Dashboard</Button>
             </Link>
           </div>
         </div>
@@ -738,31 +738,32 @@ function HostSessionScreen({ code }: { code: string }) {
 
       <ConfirmDialog
         open={confirmEnd}
-        title="End the quiz now?"
+        title="Quiz jetzt beenden?"
         description={
           progress.completed < progress.joined
-            ? `${progress.joined - progress.completed} student(s) have not finished. Their unanswered questions stay unanswered, and the answer key and leaderboard will be revealed to everyone immediately.`
-            : "The answer key and leaderboard will be revealed to everyone immediately."
+            ? `${progress.joined - progress.completed} Teilnehmende sind noch nicht fertig. Ihre offenen Fragen bleiben unbeantwortet; Lösungen und Rangliste werden sofort für alle sichtbar.`
+            : "Lösungen und Rangliste werden sofort für alle sichtbar."
         }
-        confirmLabel="End & reveal"
+        confirmLabel="Beenden & zeigen"
         tone="primary"
         onConfirm={() => {
           session.endQuiz();
           setConfirmEnd(false);
-          toast.success("Quiz ended — results revealed and saved.");
+          toast.success("Quiz beendet – Ergebnisse wurden gezeigt und gespeichert.");
         }}
         onCancel={() => setConfirmEnd(false)}
       />
 
       <p className="mt-6 flex items-start gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-500" />
-        The answer key stays on this device until you reveal it. Students only receive question text and options
-        over an encrypted peer-to-peer connection — never the correct flags. Results are saved in this browser.
+        Während der Live-Sitzung bleiben die Lösungen auf dem Gerät der Lehrkraft, bis du sie freigibst.
+        Teilnehmende erhalten nur Fragetext und Optionen über eine verschlüsselte Peer-to-Peer-Verbindung – niemals
+        die Markierung der richtigen Antwort. Ergebnisse werden dauerhaft gespeichert.
       </p>
       <p className="mt-2 text-center text-xs text-gray-400">
-        Keep this page open while the class plays — the session lives on the teacher&apos;s device.{" "}
+        Lass diese Seite während des Spiels geöffnet – die Sitzung läuft auf dem Gerät der Lehrkraft.{" "}
         {progress.disconnected > 0
-          ? `${progress.disconnected} student(s) disconnected can rejoin during the session.`
+          ? `${progress.disconnected} getrennte Teilnehmende können während der Sitzung wieder beitreten.`
           : ""}
       </p>
     </div>
@@ -796,16 +797,16 @@ function Stat({
 }
 
 function StatusChip({ status, connected }: { status: string; connected: boolean }) {
-  if (status === "completed") return <Badge tone="success">Completed</Badge>;
-  if (status === "removed") return <Badge tone="neutral">Removed</Badge>;
-  if (!connected) return <Badge tone="warning">Disconnected</Badge>;
-  if (status === "playing") return <Badge tone="brand">In progress</Badge>;
-  return <Badge tone="neutral">Joined</Badge>;
+  if (status === "completed") return <Badge tone="success">Abgeschlossen</Badge>;
+  if (status === "removed") return <Badge tone="neutral">Entfernt</Badge>;
+  if (!connected) return <Badge tone="warning">Getrennt</Badge>;
+  if (status === "playing") return <Badge tone="brand">Läuft</Badge>;
+  return <Badge tone="neutral">Beigetreten</Badge>;
 }
 
 export function LeaderboardTable({ rows }: { rows: import("@/types/quiz").QuizPlayerScore[] }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-gray-400">No students recorded.</p>;
+    return <p className="text-sm text-gray-400">Keine Teilnehmenden erfasst.</p>;
   }
   return (
     <div className="overflow-x-auto">
@@ -813,13 +814,13 @@ export function LeaderboardTable({ rows }: { rows: import("@/types/quiz").QuizPl
         <thead className="text-xs uppercase tracking-wide text-gray-400">
           <tr>
             <th className="px-3 py-2">#</th>
-            <th className="px-3 py-2">Student</th>
-            <th className="px-3 py-2 text-right">Points</th>
-            <th className="px-3 py-2 text-right">Correct</th>
-            <th className="px-3 py-2 text-right">Incorrect</th>
-            <th className="px-3 py-2 text-right">Unanswered</th>
-            <th className="px-3 py-2 text-right">Accuracy</th>
-            <th className="px-3 py-2 text-right">Time</th>
+            <th className="px-3 py-2">Person</th>
+            <th className="px-3 py-2 text-right">Punkte</th>
+            <th className="px-3 py-2 text-right">Richtig</th>
+            <th className="px-3 py-2 text-right">Falsch</th>
+            <th className="px-3 py-2 text-right">Offen</th>
+            <th className="px-3 py-2 text-right">Quote</th>
+            <th className="px-3 py-2 text-right">Zeit</th>
           </tr>
         </thead>
         <tbody>
@@ -831,7 +832,7 @@ export function LeaderboardTable({ rows }: { rows: import("@/types/quiz").QuizPl
               <td className="px-3 py-2 text-right text-emerald-600">{s.correct}</td>
               <td className="px-3 py-2 text-right text-brand-600">{s.incorrect}</td>
               <td className="px-3 py-2 text-right text-gray-400">{s.unanswered}</td>
-              <td className="px-3 py-2 text-right text-gray-700">{s.accuracy}%</td>
+              <td className="px-3 py-2 text-right text-gray-700">{s.accuracy} %</td>
               <td className="px-3 py-2 text-right text-gray-500">{formatTime(s.totalTimeMs)}</td>
             </tr>
           ))}
@@ -842,12 +843,12 @@ export function LeaderboardTable({ rows }: { rows: import("@/types/quiz").QuizPl
 }
 
 function formatTime(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return "—";
+  if (!Number.isFinite(ms) || ms <= 0) return "–";
   const totalSeconds = Math.round(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  if (minutes === 0) return `${seconds}s`;
-  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+  if (minutes === 0) return `${seconds} Sek.`;
+  return `${minutes} Min. ${String(seconds).padStart(2, "0")} Sek.`;
 }
 
 /** One row in the "Share room" popup — icon + label (+ optional hint). */

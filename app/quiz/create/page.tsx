@@ -16,8 +16,8 @@ import { QuizRoomForm } from "@/components/quiz/QuizRoomForm";
 export default function CreateQuizPage() {
   return (
     <AdminGate
-      title="Admin login"
-      description="Enter the admin password to create or edit quizzes."
+      title="Admin-Anmeldung"
+      description="Gib das Admin-Passwort ein, um Quizze zu erstellen oder zu bearbeiten."
     >
       <CreateQuizPageContent />
     </AdminGate>
@@ -57,19 +57,19 @@ function CreateQuizPageContent() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <PageHeader
           backHref="/admin"
-          backLabel="Back to dashboard"
-          eyebrow="Not found"
-          title="That quiz doesn't exist"
-          description="The quiz you tried to edit isn't saved in this browser."
+          backLabel="Zurück zum Dashboard"
+          eyebrow="Nicht gefunden"
+          title="Dieses Quiz existiert nicht"
+          description="Das Quiz, das du bearbeiten wolltest, wurde nicht gefunden."
           icon={<Trophy className="h-6 w-6" />}
         />
         <Card>
           <CardBody className="text-sm text-gray-500">
-            It may have been deleted, or it lives on another device.{" "}
+            Vielleicht wurde es gelöscht.{" "}
             <Link href="/quiz/create" className="font-medium text-gold-600 hover:text-gold-700">
-              Create a new quiz
-            </Link>{" "}
-            instead.
+              Erstelle stattdessen ein neues Quiz
+            </Link>
+            .
           </CardBody>
         </Card>
       </div>
@@ -80,13 +80,13 @@ function CreateQuizPageContent() {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <PageHeader
         backHref="/admin"
-        backLabel="Back to dashboard"
-        eyebrow={editing ? "Edit quiz" : "New quiz"}
-        title={editing ? "Edit quiz" : "Create a quiz"}
+        backLabel="Zurück zum Dashboard"
+        eyebrow={editing ? "Quiz bearbeiten" : "Neues Quiz"}
+        title={editing ? "Quiz bearbeiten" : "Quiz erstellen"}
         description={
           editing
-            ? `Update the quiz and save. Its code (${initialRoom?.code}) is kept.`
-            : "Add questions, mark the correct answers, set points and timers, then choose the room code participants will use to join."
+            ? `Aktualisiere das Quiz und speichere es. Der Code (${initialRoom?.code}) bleibt erhalten.`
+            : "Füge Fragen hinzu, markiere die richtigen Antworten, lege Punkte und Zeitlimits fest und wähle den Raumcode für die Teilnehmenden."
         }
         icon={<Trophy className="h-6 w-6" />}
       />

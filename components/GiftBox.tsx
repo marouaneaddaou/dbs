@@ -7,11 +7,11 @@ import { cn } from "@/lib/cn";
 export type GiftBoxState = "available" | "opening" | "opened" | "disabled";
 
 const TYPE_META: Record<BoxContentType, { label: string; icon: typeof Gift; tone: string }> = {
-  gift: { label: "Gift", icon: Gift, tone: "text-emerald-600" },
-  question: { label: "Question", icon: HelpCircle, tone: "text-sky-600" },
-  challenge: { label: "Challenge", icon: Target, tone: "text-amber-600" },
-  task: { label: "Task", icon: Lightbulb, tone: "text-violet-600" },
-  text: { label: "Note", icon: Sparkles, tone: "text-gold-600" },
+  gift: { label: "Geschenk", icon: Gift, tone: "text-emerald-600" },
+  question: { label: "Frage", icon: HelpCircle, tone: "text-sky-600" },
+  challenge: { label: "Herausforderung", icon: Target, tone: "text-amber-600" },
+  task: { label: "Aufgabe", icon: Lightbulb, tone: "text-violet-600" },
+  text: { label: "Notiz", icon: Sparkles, tone: "text-gold-600" },
 };
 
 export function getTypeMeta(type: BoxContentType) {
@@ -40,7 +40,7 @@ export function GiftBox({
       type="button"
       onClick={interactive ? onClick : undefined}
       disabled={!interactive}
-      aria-label={`Box ${index + 1}`}
+      aria-label={`Box Nummer ${index + 1}`}
       className={cn(
         "group relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300",
         interactive &&
@@ -83,7 +83,7 @@ export function GiftBox({
               </p>
             </>
           ) : (
-            <span className="text-[11px] text-gray-400">Empty</span>
+            <span className="text-[11px] text-gray-400">Leer</span>
           )}
           <span className="mt-1 text-[10px] font-bold text-gray-400">#{index + 1}</span>
         </div>

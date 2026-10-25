@@ -6,6 +6,7 @@ import type { BoxConfig, BoxGame } from "@/types/boxes";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { uid } from "@/lib/storage";
 import { createEmptyConfig, createGame, emptyBoxNumbers } from "@/lib/boxes";
+import { markSaved } from "@/lib/shared/retention";
 import {
   BOX_GROUPS,
   BOX_GROUP_IDS,
@@ -29,8 +30,8 @@ type Stage = "list" | "setup" | "play";
 export default function BoxesPage() {
   return (
     <AdminGate
-      title="Admin login"
-      description="Enter the admin password to create and play Random Boxes games."
+      title="Admin-Anmeldung"
+      description="Gib das Admin-Passwort ein, um Boxspiele zu erstellen und zu spielen."
     >
       <BoxesPageContent />
     </AdminGate>
@@ -62,6 +63,13 @@ function BoxesPageContent() {
 
   function updateConfig(next: BoxConfig) {
     setConfigs((prev) => prev.map((c) => (c.id === next.id ? next : c)));
+  }
+
+  function savedVersion(target: BoxConfig): BoxConfig {
+    if (target.saveState !== "draft") return target;
+    const next = markSaved(target);
+    setConfigs((prev) => prev.map((c) => (c.id === next.id ? next : c)));
+    return next;
   }
 
   function handleOpenGroup(group: BoxGroup) {
@@ -98,11 +106,12 @@ function BoxesPageContent() {
     if (play) {
       const target = configs.find((c) => c.id === id);
       if (!target) return;
+      const playable = savedVersion(target);
       setGames((prev) => {
         const existing = prev[id];
         // Editing the setup invalidates old progress, so start fresh.
-        if (!existing || existing.updatedAt < target.updatedAt || existing.configId !== id) {
-          return { ...prev, [id]: { ...createGame(target), status: "running" } };
+        if (!existing || existing.updatedAt < playable.updatedAt || existing.configId !== id) {
+          return { ...prev, [id]: { ...createGame(playable), status: "running" } };
         }
         return prev;
       });
@@ -115,7 +124,7 @@ function BoxesPageContent() {
     const copy: BoxConfig = {
       ...source,
       id: uid("cfg"),
-      name: `${source.name} (copy)`,
+      name: `${source.name} (Kopie)`,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -171,13 +180,13 @@ function BoxesPageContent() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <PageHeader
-          eyebrow="Standalone game"
-          title="Random Boxes"
-          description="Create box games, draw participants fairly and reveal hidden contents. No room codes needed."
+          eyebrow="Eigenständiges Spiel"
+          title="Zufallsboxen"
+          description="Erstelle Boxspiele, ziehe Teilnehmende fair und enthülle verborgene Inhalte. Keine Raumcodes nötig."
           icon={<Boxes className="h-6 w-6" />}
           action={
             <Button icon={<Plus className="h-4 w-4" />} onClick={handleNew}>
-              New game
+              Neues Spiel
             </Button>
           }
         />
@@ -185,9 +194,9 @@ function BoxesPageContent() {
         <div className="mb-6 flex items-start gap-3 rounded-2xl border border-gold-200 bg-gold-50 p-4 text-sm text-gray-700">
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-gold-600" />
           <p>
-            Each participant gets exactly one turn per cycle — with 40 names and 30 boxes the last 10 names
-            continue automatically into the next round. “Repeat round” only reshuffles box contents and never
-            disrupts the participant order.
+            Jede Person ist pro Runde genau einmal an der Reihe – bei 40 Namen und 30 Boxen kommen die
+            letzten 10 Namen automatisch in der nächsten Runde dran. „Runde wiederholen“ mischt nur die
+            Boxinhalte neu und ändert nie die Reihenfolge der Teilnehmenden.
           </p>
         </div>
 
@@ -204,9 +213,9 @@ function BoxesPageContent() {
 
         <ConfirmDialog
           open={!!confirmDelete}
-          title="Delete this game?"
-          description={confirmDelete ? `“${confirmDelete.name}” and its saved progress will be removed from this browser.` : undefined}
-          confirmLabel="Delete"
+          title="Dieses Spiel löschen?"
+          description={confirmDelete ? `„${confirmDelete.name}“ und der gespeicherte Spielstand werden dauerhaft gelöscht.` : undefined}
+          confirmLabel="Löschen"
           onConfirm={handleDelete}
           onCancel={() => setConfirmDelete(null)}
         />
@@ -221,12 +230,12 @@ function BoxesPageContent() {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <PageHeader
         backHref={undefined}
-        title={config.name || "Untitled game"}
-        description="Edit the setup, then play. Everything saves automatically."
+        title={config.name || "Unbenanntes Spiel"}
+        description="Bearbeite die Einrichtung und spiele dann. Entwürfe werden automatisch zwischengespeichert."
         icon={<Boxes className="h-6 w-6" />}
         action={
           <Button variant="ghost" onClick={() => setStage("list")}>
-            All games
+            Alle Spiele
           </Button>
         }
       />
@@ -240,25 +249,26 @@ function BoxesPageContent() {
             stage === "setup" ? "bg-white text-ink-900 shadow-sm" : "text-gray-500 hover:text-gray-900",
           )}
         >
-          <Settings2 className="h-4 w-4" /> Setup
+          <Settings2 className="h-4 w-4" /> Einrichtung
         </button>
         <button
           type="button"
           onClick={() => {
             if (config.participants.length === 0) return;
+            const playable = savedVersion(config);
             if (!game) {
-              setGames((prev) => ({ ...prev, [config.id]: { ...createGame(config), status: "running" } }));
+              setGames((prev) => ({ ...prev, [config.id]: { ...createGame(playable), status: "running" } }));
             }
             setStage("play");
           }}
           disabled={config.participants.length === 0 || hasEmptyBox}
-          title={hasEmptyBox ? "Fill every box with content first" : undefined}
+          title={hasEmptyBox ? "Bitte fülle zuerst jede Box mit Inhalt" : undefined}
           className={cn(
             "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
             stage === "play" ? "bg-brand-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-900",
           )}
         >
-          <Trophy className="h-4 w-4" /> Play
+          <Trophy className="h-4 w-4" /> Spielen
         </button>
       </div>
 
@@ -267,7 +277,8 @@ function BoxesPageContent() {
           config={config}
           onChange={updateConfig}
           onPlay={() => {
-            setGames((prev) => ({ ...prev, [config.id]: { ...createGame(config), status: "running" } }));
+            const playable = savedVersion(config);
+            setGames((prev) => ({ ...prev, [config.id]: { ...createGame(playable), status: "running" } }));
             setStage("play");
           }}
         />
@@ -285,7 +296,7 @@ function BoxesPageContent() {
           onExit={() => setStage("setup")}
         />
       ) : (
-        <p className="text-sm text-gray-500">Add participants in Setup to begin playing.</p>
+        <p className="text-sm text-gray-500">Füge in der Einrichtung Teilnehmende hinzu, um zu spielen.</p>
       )}
     </div>
   );

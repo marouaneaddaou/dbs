@@ -9,14 +9,14 @@ export default function NotFound() {
       </span>
       <h1 className="mt-6 text-4xl font-extrabold text-ink-900">404</h1>
       <p className="mt-2 text-gray-500">
-        We couldn’t find that page. It may have moved, or the room code lives in a different browser.
+        Diese Seite wurde nicht gefunden. Vielleicht wurde sie verschoben oder der Raumcode gehört zu einem anderen Browser.
       </p>
       <Link
         href="/"
         className="mt-8 inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-6 text-sm font-semibold text-white shadow-glow transition-colors hover:bg-brand-700"
       >
         <Home className="h-4 w-4" />
-        Back home
+        Zur Startseite
       </Link>
     </div>
   );

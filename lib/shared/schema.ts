@@ -1,6 +1,7 @@
 import type { BoxConfig, BoxGame } from "@/types/boxes";
 import type { VotingRoomRecord } from "@/types/voting";
 import type { QuizHistoryMap, QuizRoom, QuizSessionRecord } from "@/types/quiz";
+import { normalizeSharedSaveTracking } from "@/lib/shared/retention";
 
 export const SHARED_SCHEMA_VERSION = 1;
 
@@ -61,14 +62,14 @@ export function isSharedStateDocument(value: unknown): value is SharedStateDocum
 export function sanitizeSharedData(input: unknown): SharedData {
   if (!isRecord(input)) return createEmptySharedData();
   const data = input as Partial<SharedData>;
-  return {
+  return normalizeSharedSaveTracking({
     boxConfigs: Array.isArray(data.boxConfigs) ? (data.boxConfigs as BoxConfig[]) : [],
     boxGames: isRecord(data.boxGames) ? (data.boxGames as Record<string, BoxGame>) : {},
     votingRooms: Array.isArray(data.votingRooms) ? (data.votingRooms as VotingRoomRecord[]) : [],
     quizRooms: Array.isArray(data.quizRooms) ? (data.quizRooms as QuizRoom[]) : [],
     quizSessions: isRecord(data.quizSessions) ? (data.quizSessions as Record<string, QuizSessionRecord>) : {},
     quizHistory: isRecord(data.quizHistory) ? (data.quizHistory as QuizHistoryMap) : {},
-  };
+  });
 }
 
 export function mergeSharedData(base: SharedData, incoming: SharedData): SharedData {

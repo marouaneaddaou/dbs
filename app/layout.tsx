@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swa
 export const metadata: Metadata = {
   title: "DBS — Deutsch-Bildungsstudio",
   description:
-    "DBS Deutsch-Bildungsstudio: random box games, local voting rooms and quiz competitions. Runs entirely in your browser — no accounts, no database.",
+    "DBS Deutsch-Bildungsstudio: Boxspiele, Abstimmungen und Quiz-Wettbewerbe. Einfach mit einem Code teilnehmen – ohne Benutzerkonto.",
 };
 
 export const viewport: Viewport = {
@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="de" className={inter.variable}>
       <body className="min-h-screen bg-white font-sans text-gray-900">
         <Providers>
           <Background />

@@ -15,13 +15,13 @@ export function BoxGroups({
     <section className="mb-8">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-ink-900">Groups</h2>
+          <h2 className="text-lg font-semibold text-ink-900">Gruppen</h2>
           <p className="mt-0.5 text-sm text-gray-500">
-            Choose a group to load its participants. The boxes stay free for your questions.
+            Wähle eine Gruppe, um ihre Teilnehmenden zu übernehmen. Die Boxen bleiben für deine Fragen frei.
           </p>
         </div>
         <Badge tone="gold" icon={<Users className="h-3.5 w-3.5" />}>
-          {groups.length} groups
+          {groups.length} Gruppen
         </Badge>
       </div>
 
@@ -31,7 +31,7 @@ export function BoxGroups({
             key={group.id}
             type="button"
             onClick={() => onOpen(group)}
-            aria-label={`Open ${group.label} with ${group.names.length} names`}
+            aria-label={`${group.label} mit ${group.names.length} Namen öffnen`}
             className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-card transition-all hover:-translate-y-1 hover:border-gold-300 hover:shadow-card-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-2"
           >
             <div className="flex items-start justify-between gap-3">
@@ -44,13 +44,13 @@ export function BoxGroups({
             <h3 className="mt-4 text-lg font-semibold text-ink-900">{group.label}</h3>
             <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-gray-500">
               <Clock className="h-3.5 w-3.5" />
-              {group.names.length} names ready
+              {group.names.length} Namen bereit
             </p>
 
             <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-sm">
-              <span className="text-gray-500">Participants only</span>
+              <span className="text-gray-500">Nur Teilnehmende</span>
               <span className="inline-flex items-center gap-1 font-medium text-brand-700">
-                Open
+                Öffnen
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </span>
             </div>

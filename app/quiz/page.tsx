@@ -64,11 +64,11 @@ export default function QuizPage() {
     setError(null);
     const clean = code.replace(/[^a-z0-9]/gi, "").toUpperCase();
     if (!clean) {
-      setError("Enter the quiz code you received.");
+      setError("Bitte gib den erhaltenen Quiz-Code ein.");
       return;
     }
     if (!name.trim()) {
-      setError("Enter a username to play with.");
+      setError("Bitte gib einen Namen ein, mit dem du mitspielen möchtest.");
       return;
     }
     router.push(`/quiz/room?code=${clean}&name=${encodeURIComponent(name.trim())}`);
@@ -79,17 +79,17 @@ export default function QuizPage() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <PageHeader
           backHref="/"
-          backLabel="Back to home"
-          eyebrow="Invalid link"
-          title="This quiz room no longer exists"
-          description={`The link points to room ${linkedCode}, but that quiz isn't saved in this browser anymore — it may have been deleted.`}
+          backLabel="Zur Startseite"
+          eyebrow="Ungültiger Link"
+          title="Dieser Quizraum existiert nicht mehr"
+          description={`Der Link verweist auf den Raum ${linkedCode}, aber dieses Quiz wurde gelöscht oder ist nicht mehr verfügbar.`}
           icon={<AlertTriangle className="h-6 w-6" />}
         />
         <Card>
           <CardBody className="space-y-4 text-sm text-gray-500">
             <p>
-              Ask your teacher for a fresh link or a new room code, or go back to the join page and enter a
-              different code by hand.
+              Bitte deine Lehrkraft um einen neuen Link oder Raumcode oder gib auf der Beitrittsseite
+              einen anderen Code ein.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button
@@ -100,10 +100,10 @@ export default function QuizPage() {
                   router.replace("/quiz");
                 }}
               >
-                Enter a different code
+                Anderen Code eingeben
               </Button>
               <Button variant="secondary" onClick={() => setIgnoreMissing(true)}>
-                Open the room anyway
+                Raum trotzdem öffnen
               </Button>
             </div>
           </CardBody>
@@ -115,38 +115,38 @@ export default function QuizPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <PageHeader
-        eyebrow="Timed competitions"
-        title="Join a Quiz"
-        description="Enter the room code from your teacher and a username — then answer on your own device while the class plays."
+        eyebrow="Zeitgesteuerte Wettbewerbe"
+        title="Quiz beitreten"
+        description="Gib den Raumcode deiner Lehrkraft und deinen Namen ein – dann antworte auf deinem eigenen Gerät, während die Klasse spielt."
         icon={<Trophy className="h-6 w-6" />}
       />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader
-            title="Join a quiz"
-            subtitle="Use the room code shown on your teacher's screen."
+            title="Quiz beitreten"
+            subtitle="Nutze den Raumcode auf dem Bildschirm deiner Lehrkraft."
             icon={<KeyRound className="h-5 w-5" />}
           />
           <CardBody className="space-y-4">
-            <Field label="Quiz code">
+            <Field label="Quiz-Code">
               <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="e.g. 12355"
+                placeholder="z. B. 12355"
                 className="font-mono tracking-[0.3em]"
                 maxLength={12}
                 autoFocus
               />
             </Field>
-            <Field label="Your username">
+            <Field label="Dein Name">
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleJoin();
                 }}
-                placeholder="e.g. Sam"
+                placeholder="z. B. Sam"
               />
             </Field>
             {error ? (
@@ -155,37 +155,37 @@ export default function QuizPage() {
               </p>
             ) : null}
             <Button className="w-full" size="lg" icon={<LogIn className="h-4 w-4" />} onClick={handleJoin}>
-              Join quiz
+              Quiz beitreten
             </Button>
             <p className="text-xs text-gray-400">
-              Everyone joins from their own device with the same code. Correct answers stay hidden
-              until all classmates finish (or your teacher reveals them).
+              Alle treten mit demselben Code von ihrem eigenen Gerät bei. Die richtigen Antworten
+              bleiben verborgen, bis alle fertig sind (oder deine Lehrkraft sie freigibt).
             </p>
           </CardBody>
         </Card>
 
         <Card>
           <CardHeader
-            title="How it works"
-            subtitle="From joining to results."
+            title="So funktioniert es"
+            subtitle="Vom Beitritt bis zum Ergebnis."
             icon={<Users className="h-5 w-5" />}
           />
           <CardBody className="space-y-3 text-sm text-gray-500">
-            <p>1. Your teacher creates the quiz and opens the room from the dashboard.</p>
-            <p>2. Enter the room code with your username to join from your own device.</p>
-            <p>3. Answer each question at your own pace — faster answers earn speed bonuses.</p>
-            <p>4. When everyone finishes, the leaderboard and answer key reveal on every screen.</p>
+            <p>1. Deine Lehrkraft erstellt das Quiz und öffnet den Raum im Dashboard.</p>
+            <p>2. Gib den Raumcode und deinen Namen ein, um von deinem Gerät beizutreten.</p>
+            <p>3. Beantworte die Fragen in deinem Tempo – schnellere Antworten bringen Bonuspunkte.</p>
+            <p>4. Wenn alle fertig sind, erscheinen Rangliste und Lösungen auf allen Bildschirmen.</p>
           </CardBody>
         </Card>
       </div>
 
       {linkedCode && ready ? (
         <p className="mt-6 text-center text-xs text-gray-400">
-          Link filled in room code{" "}
-          <span className="font-mono font-bold tracking-[0.2em] text-gold-600">{linkedCode}</span> — just add
-          your username to join.{" "}
+          Der Link hat den Raumcode{" "}
+          <span className="font-mono font-bold tracking-[0.2em] text-gold-600">{linkedCode}</span> eingetragen – füge
+          nur noch deinen Namen hinzu.{" "}
           <Link href="/quiz" className="font-medium text-gold-600 hover:text-gold-700">
-            Not your room?
+            Nicht dein Raum?
           </Link>
         </p>
       ) : null}

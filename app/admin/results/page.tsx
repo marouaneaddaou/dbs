@@ -40,34 +40,34 @@ type SortKey = "rank" | "score" | "accuracy" | "time" | "name" | "finished";
 type StatusFilter = "all" | "completed" | "incomplete";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "rank", label: "Rank" },
-  { value: "score", label: "Score" },
-  { value: "accuracy", label: "Accuracy" },
-  { value: "time", label: "Time" },
+  { value: "rank", label: "Rang" },
+  { value: "score", label: "Punkte" },
+  { value: "accuracy", label: "Trefferquote" },
+  { value: "time", label: "Zeit" },
   { value: "name", label: "Name" },
-  { value: "finished", label: "Newest" },
+  { value: "finished", label: "Neueste" },
 ];
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All statuses" },
-  { value: "completed", label: "Completed" },
-  { value: "incomplete", label: "Not finished" },
+  { value: "all", label: "Alle Status" },
+  { value: "completed", label: "Abgeschlossen" },
+  { value: "incomplete", label: "Nicht beendet" },
 ];
 
 function formatDate(ts: number | null): string {
-  if (!ts) return "—";
+  if (!ts) return "–";
   try {
-    return new Date(ts).toLocaleString();
+    return new Date(ts).toLocaleString("de-DE");
   } catch {
-    return "—";
+    return "–";
   }
 }
 
 export default function AdminResultsPage() {
   return (
     <AdminGate
-      title="Admin login"
-      description="Enter the admin password to review quiz results, rankings and answer analysis."
+      title="Admin-Anmeldung"
+      description="Gib das Admin-Passwort ein, um Quiz-Ergebnisse, Ranglisten und Antwortanalysen anzusehen."
     >
       <ResultsContent />
     </AdminGate>
@@ -139,24 +139,24 @@ function ResultsContent() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <PageHeader
-        eyebrow="Analysis"
-        title="Quiz Results"
-        description="Rankings, per-participant answer reviews and question difficulty for every completed run saved in this browser."
+        eyebrow="Auswertung"
+        title="Quiz-Ergebnisse"
+        description="Ranglisten, Antworten pro Teilnehmer und Fragen-Schwierigkeit für alle abgeschlossenen Durchläufe im gemeinsamen Speicher."
         icon={<BarChart3 className="h-6 w-6" />}
         backHref="/admin"
-        backLabel="Admin dashboard"
+        backLabel="Admin-Dashboard"
       />
 
       {/* Summary */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard icon={<Users className="h-4 w-4" />} label="Participants" value={summary.participants} />
-        <StatCard icon={<CheckCircle2 className="h-4 w-4" />} label="Completed" value={summary.completed} />
-        <StatCard icon={<Target className="h-4 w-4" />} label="Avg score" value={summary.avgScore} />
-        <StatCard icon={<Trophy className="h-4 w-4" />} label="High score" value={summary.highScore} />
+        <StatCard icon={<Users className="h-4 w-4" />} label="Teilnehmer" value={summary.participants} />
+        <StatCard icon={<CheckCircle2 className="h-4 w-4" />} label="Abgeschlossen" value={summary.completed} />
+        <StatCard icon={<Target className="h-4 w-4" />} label="Ø Punkte" value={summary.avgScore} />
+        <StatCard icon={<Trophy className="h-4 w-4" />} label="Bestwert" value={summary.highScore} />
         <StatCard
           icon={<BarChart3 className="h-4 w-4" />}
-          label="Correct rate"
-          value={`${summary.correctRate}%`}
+          label="Richtig-Quote"
+          value={`${summary.correctRate} %`}
         />
       </section>
 
@@ -165,16 +165,16 @@ function ResultsContent() {
         <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="flex-1">
             <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">
-              Search
+              Suche
             </span>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Participant or quiz name…"
+                placeholder="Teilnehmer oder Quizname…"
                 className="pl-9"
-                aria-label="Search results"
+                aria-label="Ergebnisse durchsuchen"
               />
             </div>
           </label>
@@ -182,8 +182,8 @@ function ResultsContent() {
             <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">
               Quiz
             </span>
-            <Select value={quizFilter} onChange={(e) => setQuizFilter(e.target.value)} aria-label="Filter by quiz">
-              <option value="all">All quizzes</option>
+            <Select value={quizFilter} onChange={(e) => setQuizFilter(e.target.value)} aria-label="Nach Quiz filtern">
+              <option value="all">Alle Quizze</option>
               {quizOptions.map((opt) => (
                 <option key={opt.code} value={opt.code}>
                   {opt.title || opt.code} ({opt.code})
@@ -198,7 +198,7 @@ function ResultsContent() {
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              aria-label="Filter by status"
+              aria-label="Nach Status filtern"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -209,9 +209,9 @@ function ResultsContent() {
           </label>
           <label className="sm:w-40">
             <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">
-              Sort by
+              Sortieren nach
             </span>
-            <Select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} aria-label="Sort results">
+            <Select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} aria-label="Ergebnisse sortieren">
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -225,8 +225,8 @@ function ResultsContent() {
       {/* Leaderboard */}
       <Card className="mt-6">
         <CardHeader
-          title="Leaderboard"
-          subtitle={`${filtered.length} participant${filtered.length === 1 ? "" : "s"}`}
+          title="Rangliste"
+          subtitle={`${filtered.length} Teilnehmer`}
           icon={<Trophy className="h-5 w-5" />}
         />
         <CardBody className="p-0">
@@ -234,11 +234,11 @@ function ResultsContent() {
             <div className="p-5">
               <EmptyState
                 icon={<Trophy className="h-7 w-7" />}
-                title={allRows.length === 0 ? "No results yet" : "No matching results"}
+                title={allRows.length === 0 ? "Noch keine Ergebnisse" : "Keine passenden Ergebnisse"}
                 description={
                   allRows.length === 0
-                    ? "Host a quiz to completion and its standings will be saved here automatically."
-                    : "Try clearing the search or changing the filters."
+                    ? "Führe ein Quiz bis zum Ende durch – der Endstand wird hier automatisch gespeichert."
+                    : "Leere die Suche oder ändere die Filter."
                 }
               />
             </div>
@@ -247,16 +247,16 @@ function ResultsContent() {
               <table className="w-full min-w-[880px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-400">
-                    <th className="px-5 py-3 font-medium">Rank</th>
-                    <th className="px-5 py-3 font-medium">Participant</th>
+                    <th className="px-5 py-3 font-medium">Rang</th>
+                    <th className="px-5 py-3 font-medium">Teilnehmer</th>
                     <th className="px-5 py-3 font-medium">Quiz</th>
-                    <th className="px-5 py-3 text-right font-medium">Score</th>
+                    <th className="px-5 py-3 text-right font-medium">Punkte</th>
                     <th className="px-5 py-3 text-right font-medium">%</th>
-                    <th className="px-5 py-3 text-right font-medium">Correct</th>
-                    <th className="px-5 py-3 text-right font-medium">Wrong</th>
-                    <th className="px-5 py-3 text-right font-medium">Skipped</th>
-                    <th className="px-5 py-3 text-right font-medium">Time</th>
-                    <th className="px-5 py-3 text-right font-medium">Finished</th>
+                    <th className="px-5 py-3 text-right font-medium">Richtig</th>
+                    <th className="px-5 py-3 text-right font-medium">Falsch</th>
+                    <th className="px-5 py-3 text-right font-medium">Übersprungen</th>
+                    <th className="px-5 py-3 text-right font-medium">Zeit</th>
+                    <th className="px-5 py-3 text-right font-medium">Beendet</th>
                     <th className="px-5 py-3 text-right font-medium">Details</th>
                   </tr>
                 </thead>
@@ -275,11 +275,11 @@ function ResultsContent() {
                           <p className="font-medium text-ink-900">{row.name}</p>
                           {row.completed ? (
                             <Badge tone="success" className="mt-1">
-                              completed
+                              abgeschlossen
                             </Badge>
                           ) : (
                             <Badge tone="warning" className="mt-1">
-                              not finished
+                              nicht beendet
                             </Badge>
                           )}
                         </td>
@@ -288,7 +288,7 @@ function ResultsContent() {
                           <p className="mt-0.5 font-mono text-xs text-gray-400">{row.roomCode}</p>
                         </td>
                         <td className="px-5 py-3 text-right font-bold text-gold-600">{row.points}</td>
-                        <td className="px-5 py-3 text-right text-gray-700">{pct === null ? "—" : `${pct}%`}</td>
+                        <td className="px-5 py-3 text-right text-gray-700">{pct === null ? "–" : `${pct} %`}</td>
                         <td className="px-5 py-3 text-right text-emerald-600">{row.correct}</td>
                         <td className="px-5 py-3 text-right text-brand-600">{row.incorrect}</td>
                         <td className="px-5 py-3 text-right text-gray-400">{row.unanswered}</td>
@@ -300,9 +300,9 @@ function ResultsContent() {
                             size="sm"
                             icon={<Eye className="h-4 w-4" />}
                             onClick={() => setSelected(row)}
-                            aria-label={`View answers of ${row.name}`}
+                            aria-label={`Antworten von ${row.name} ansehen`}
                           >
-                            View
+                            Ansehen
                           </Button>
                         </td>
                       </tr>
@@ -318,16 +318,16 @@ function ResultsContent() {
       {/* Hardest questions */}
       <Card className="mt-6">
         <CardHeader
-          title="Hardest questions"
-          subtitle="Most wrong answers across saved runs"
+          title="Schwierigste Fragen"
+          subtitle="Die meisten falschen Antworten über alle gespeicherten Durchläufe"
           icon={<Target className="h-5 w-5" />}
         />
         <CardBody>
           {hardest.length === 0 ? (
             <EmptyState
               icon={<Target className="h-7 w-7" />}
-              title="No question data yet"
-              description="Question-level analysis needs completed runs recorded with the current quiz version."
+              title="Noch keine Fragendaten"
+              description="Die Analyse auf Fragenebene benötigt abgeschlossene Durchläufe mit der aktuellen Quiz-Version."
             />
           ) : (
             <ol className="space-y-3">
@@ -342,10 +342,10 @@ function ResultsContent() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-ink-900">{q.text}</p>
                     <p className="mt-1 text-xs text-gray-500">
-                      {q.wrongCount} of {q.timesAnswered} answered wrong ({q.wrongRate}%)
+                      {q.wrongCount} von {q.timesAnswered} falsch beantwortet ({q.wrongRate} %)
                     </p>
                   </div>
-                  <Badge tone={q.wrongRate >= 50 ? "warning" : "neutral"}>{q.wrongRate}%</Badge>
+                  <Badge tone={q.wrongRate >= 50 ? "warning" : "neutral"}>{q.wrongRate} %</Badge>
                 </li>
               ))}
             </ol>
@@ -358,7 +358,7 @@ function ResultsContent() {
         open={!!selected}
         onClose={() => setSelected(null)}
         size="lg"
-        title={selected ? `${selected.name} — answer review` : "Answer review"}
+        title={selected ? `${selected.name} – Antworten im Detail` : "Antworten im Detail"}
       >
         {selected ? <AnswerReview row={selected} /> : null}
       </Modal>
@@ -401,11 +401,11 @@ function AnswerReview({ row }: { row: QuizResultRow }) {
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2">
           <Badge tone={row.completed ? "success" : "warning"}>
-            {row.completed ? "Completed" : "Not finished"}
+            {row.completed ? "Abgeschlossen" : "Nicht beendet"}
           </Badge>
-          <Badge tone="gold">{row.points} pts</Badge>
+          <Badge tone="gold">{row.points} Pkt.</Badge>
           <Badge tone="neutral">
-            {row.correct}✓ / {row.incorrect}✗ / {row.unanswered} skipped
+            {row.correct}✓ / {row.incorrect}✗ / {row.unanswered} übersprungen
           </Badge>
           <Badge tone="neutral">
             <Clock className="h-3 w-3" /> {formatTotalTime(row.totalTimeMs)}
@@ -413,8 +413,8 @@ function AnswerReview({ row }: { row: QuizResultRow }) {
         </div>
         <EmptyState
           icon={<Eye className="h-6 w-6" />}
-          title="No question details for this run"
-          description="This run was saved before per-question snapshots were recorded. Scores above are still accurate."
+          title="Keine Fragendetails für diesen Durchlauf"
+          description="Dieser Durchlauf wurde gespeichert, bevor Antworten pro Frage erfasst wurden. Die oben angezeigten Punkte sind weiterhin korrekt."
         />
       </div>
     );
@@ -426,19 +426,19 @@ function AnswerReview({ row }: { row: QuizResultRow }) {
     <div className="space-y-5">
       <div className="flex flex-wrap gap-2">
         <Badge tone={row.completed ? "success" : "warning"}>
-          {row.completed ? "Completed" : "Not finished"}
+          {row.completed ? "Abgeschlossen" : "Nicht beendet"}
         </Badge>
         <Badge tone="gold">
-          {row.points} pts{pct !== null ? ` · ${pct}%` : ""}
+          {row.points} Pkt.{pct !== null ? ` · ${pct} %` : ""}
         </Badge>
         <Badge tone="neutral">
-          <CheckCircle2 className="h-3 w-3" /> {row.correct} correct
+          <CheckCircle2 className="h-3 w-3" /> {row.correct} richtig
         </Badge>
         <Badge tone="neutral">
-          <XCircle className="h-3 w-3" /> {row.incorrect} wrong
+          <XCircle className="h-3 w-3" /> {row.incorrect} falsch
         </Badge>
         <Badge tone="neutral">
-          <Timer className="h-3 w-3" /> {row.unanswered} skipped
+          <Timer className="h-3 w-3" /> {row.unanswered} übersprungen
         </Badge>
         <Badge tone="neutral">
           <Clock className="h-3 w-3" /> {formatTotalTime(row.totalTimeMs)}
@@ -478,15 +478,15 @@ function QuestionReviewCard({
   const verdictBadge =
     verdict === "correct" ? (
       <Badge tone="success">
-        <CheckCircle2 className="h-3 w-3" /> Correct
+        <CheckCircle2 className="h-3 w-3" /> Richtig
       </Badge>
     ) : verdict === "wrong" ? (
       <Badge tone="brand">
-        <XCircle className="h-3 w-3" /> Wrong
+        <XCircle className="h-3 w-3" /> Falsch
       </Badge>
     ) : (
       <Badge tone="warning">
-        <Timer className="h-3 w-3" /> Skipped
+        <Timer className="h-3 w-3" /> Übersprungen
       </Badge>
     );
 
@@ -494,7 +494,7 @@ function QuestionReviewCard({
     <li className={`rounded-xl border p-4 ${tone}`}>
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-semibold text-ink-900">
-          {index + 1}. {question.text || "Untitled question"}
+          {index + 1}. {question.text || "Unbenannte Frage"}
         </p>
         {verdictBadge}
       </div>
@@ -511,10 +511,10 @@ function QuestionReviewCard({
               key={answer.id}
               className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${style}`}
             >
-              <span className="min-w-0 break-words">{answer.text || "—"}</span>
+              <span className="min-w-0 break-words">{answer.text || "–"}</span>
               <span className="flex shrink-0 items-center gap-1 text-xs font-medium">
-                {answer.correct ? <CheckCircle2 className="h-3.5 w-3.5" aria-label="Correct answer" /> : null}
-                {picked ? <span aria-label="Picked">· picked</span> : null}
+                {answer.correct ? <CheckCircle2 className="h-3.5 w-3.5" aria-label="Richtige Antwort" /> : null}
+                {picked ? <span aria-label="Gewählt">· gewählt</span> : null}
               </span>
             </li>
           );
@@ -522,10 +522,10 @@ function QuestionReviewCard({
       </ul>
       {response ? (
         <p className="mt-2 text-xs text-gray-500">
-          +{response.points} pts · {formatTotalTime(response.elapsedMs)}
+          +{response.points} Pkt. · {formatTotalTime(response.elapsedMs)}
         </p>
       ) : (
-        <p className="mt-2 text-xs text-gray-400">No answer recorded.</p>
+        <p className="mt-2 text-xs text-gray-400">Keine Antwort gespeichert.</p>
       )}
     </li>
   );

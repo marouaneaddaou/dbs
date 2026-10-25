@@ -41,7 +41,7 @@ export function useSharedSync() {
           ...s,
           syncing: false,
           conflict: true,
-          error: "Conflict detected. Latest remote state applied.",
+          error: "Konflikt erkannt. Der neueste Serverstand wurde übernommen.",
           revision: latest.state.revision,
           updatedAt: latest.state.updatedAt,
           lastSyncedAt: Date.now(),
@@ -64,12 +64,12 @@ export function useSharedSync() {
         if (typeof window !== "undefined") window.dispatchEvent(new Event(SHARED_SYNC_EVENT));
         return;
       }
-      setState((s) => ({ ...s, syncing: false, error: res.error || "Sync failed" }));
+      setState((s) => ({ ...s, syncing: false, error: "Synchronisierung fehlgeschlagen." }));
     } catch (e: any) {
       if (e?.message === "unauthorized") {
         setState((s) => ({ ...s, enabled: false, syncing: false }));
       } else {
-        setState((s) => ({ ...s, syncing: false, error: "Sync failed" }));
+        setState((s) => ({ ...s, syncing: false, error: "Synchronisierung fehlgeschlagen." }));
       }
     } finally {
       pushingRef.current = false;

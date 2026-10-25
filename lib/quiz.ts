@@ -45,6 +45,8 @@ export function createEmptyRoom(): QuizRoom {
     correctVisibility: "afterEach",
     status: "draft",
     createdAt: Date.now(),
+    saveState: "saved",
+    savedAt: Date.now(),
   };
 }
 
@@ -55,27 +57,27 @@ export interface QuestionValidation {
 
 /** Validate a question before it can be used in a live quiz. */
 export function validateQuestion(question: QuizQuestion): QuestionValidation {
-  if (!question.text.trim()) return { ok: false, error: "Question text is required." };
+  if (!question.text.trim()) return { ok: false, error: "Ein Fragetext ist erforderlich." };
   const filled = question.answers.filter((a) => a.text.trim().length > 0);
-  if (filled.length < 2) return { ok: false, error: "Each question needs at least two answers." };
+  if (filled.length < 2) return { ok: false, error: "Jede Frage benötigt mindestens zwei Antworten." };
   const correct = filled.filter((a) => a.correct);
   if (correct.length !== 1) {
-    return { ok: false, error: "Each question must have exactly one correct answer." };
+    return { ok: false, error: "Jede Frage muss genau eine richtige Antwort haben." };
   }
-  if (question.points <= 0) return { ok: false, error: "Points must be a positive number." };
+  if (question.points <= 0) return { ok: false, error: "Die Punkte müssen eine positive Zahl sein." };
   if (question.timeLimitSec !== null && question.timeLimitSec < 5) {
-    return { ok: false, error: "The timer must be at least 5 seconds." };
+    return { ok: false, error: "Der Timer muss mindestens 5 Sekunden betragen." };
   }
   return { ok: true };
 }
 
 export function validateRoom(room: QuizRoom): QuestionValidation {
-  if (!room.title.trim()) return { ok: false, error: "Quiz title is required." };
-  if (room.questions.length === 0) return { ok: false, error: "Add at least one question." };
+  if (!room.title.trim()) return { ok: false, error: "Ein Quiz-Titel ist erforderlich." };
+  if (room.questions.length === 0) return { ok: false, error: "Füge mindestens eine Frage hinzu." };
   for (let i = 0; i < room.questions.length; i += 1) {
     const check = validateQuestion(room.questions[i]);
     if (!check.ok) {
-      return { ok: false, error: `Question ${i + 1}: ${check.error}` };
+      return { ok: false, error: `Frage ${i + 1}: ${check.error}` };
     }
   }
   return { ok: true };
@@ -398,7 +400,7 @@ export function hardestQuestions(rows: QuizResultRow[], limit = 5): QuestionDiff
       if (!question || seen.has(response.questionId)) continue;
       seen.add(response.questionId);
       const entry = stats.get(response.questionId) ?? {
-        text: question.text || "Untitled question",
+        text: question.text || "Unbenannte Frage",
         timesAnswered: 0,
         wrongCount: 0,
       };

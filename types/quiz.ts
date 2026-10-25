@@ -1,3 +1,5 @@
+import type { SaveTracking } from "@/types/persistence";
+
 export interface QuizAnswer {
   id: string;
   text: string;
@@ -20,7 +22,7 @@ export type CorrectVisibility = "afterEach" | "atEnd";
 
 export type QuizRoomStatus = "draft" | "published";
 
-export interface QuizRoom {
+export interface QuizRoom extends SaveTracking {
   code: string;
   title: string;
   description: string;

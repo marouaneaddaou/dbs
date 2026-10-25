@@ -14,14 +14,14 @@ import { Podium } from "@/components/Podium";
 
 function formatDate(ts: number): string {
   try {
-    return new Date(ts).toLocaleString();
+    return new Date(ts).toLocaleString("de-DE");
   } catch {
-    return "—";
+    return "–";
   }
 }
 
 /**
- * Review every completed run saved for one quiz.
+ * Review every completed run saved for one quiz (German UI).
  * Runs are stored per quiz code in localStorage, so results survive refreshes.
  */
 export function QuizHistoryModal({
@@ -46,7 +46,7 @@ export function QuizHistoryModal({
   const selected = runs.find((r) => r.id === selectedId) ?? null;
 
   return (
-    <Modal open={open} onClose={onClose} title={roomTitle || "Quiz results"} size="lg">
+    <Modal open={open} onClose={onClose} title={roomTitle || "Quiz-Ergebnisse"} size="lg">
       {!hydrated ? (
         <div className="h-40 animate-pulse rounded-xl bg-gray-100" />
       ) : selected ? (
@@ -57,20 +57,20 @@ export function QuizHistoryModal({
             className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-ink-900"
           >
             <ArrowLeft className="h-4 w-4" />
-            All completed runs
+            Alle abgeschlossenen Durchläufe
           </button>
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="success">
-              <Trophy className="h-3 w-3" /> Completed
+              <Trophy className="h-3 w-3" /> Abgeschlossen
             </Badge>
             <Badge tone="neutral">
               <Clock className="h-3 w-3" /> {formatDate(selected.finishedAt)}
             </Badge>
             <Badge tone="neutral">
-              <Users className="h-3 w-3" /> {selected.playerCount} player(s)
+              <Users className="h-3 w-3" /> {selected.playerCount} Spieler
             </Badge>
-            <Badge tone="gold">{selected.questionCount} Q</Badge>
+            <Badge tone="gold">{selected.questionCount} Fragen</Badge>
           </div>
 
           {selected.scores.length > 0 ? (
@@ -80,11 +80,11 @@ export function QuizHistoryModal({
                 name: s.name,
                 points: s.points,
                 rank: s.rank,
-                subtitle: `${s.correct} correct · ${s.accuracy}%`,
+                subtitle: `${s.correct} richtig · ${s.accuracy} %`,
               }))}
             />
           ) : (
-            <EmptyState icon={<Trophy className="h-6 w-6" />} title="No players" description="This run had no players." />
+            <EmptyState icon={<Trophy className="h-6 w-6" />} title="Keine Spieler" description="An diesem Durchlauf haben keine Spieler teilgenommen." />
           )}
 
           <div className="overflow-x-auto">
@@ -92,12 +92,12 @@ export function QuizHistoryModal({
               <thead className="text-xs uppercase tracking-wide text-gray-400">
                 <tr>
                   <th className="px-3 py-2">#</th>
-                  <th className="px-3 py-2">Player</th>
-                  <th className="px-3 py-2 text-right">Points</th>
-                  <th className="px-3 py-2 text-right">Correct</th>
-                  <th className="px-3 py-2 text-right">Incorrect</th>
-                  <th className="px-3 py-2 text-right">Accuracy</th>
-                  <th className="px-3 py-2 text-right">Time</th>
+                  <th className="px-3 py-2">Spieler</th>
+                  <th className="px-3 py-2 text-right">Punkte</th>
+                  <th className="px-3 py-2 text-right">Richtig</th>
+                  <th className="px-3 py-2 text-right">Falsch</th>
+                  <th className="px-3 py-2 text-right">Trefferquote</th>
+                  <th className="px-3 py-2 text-right">Zeit</th>
                 </tr>
               </thead>
               <tbody>
@@ -108,7 +108,7 @@ export function QuizHistoryModal({
                     <td className="px-3 py-2 text-right font-bold text-gold-600">{s.points}</td>
                     <td className="px-3 py-2 text-right text-emerald-600">{s.correct}</td>
                     <td className="px-3 py-2 text-right text-brand-600">{s.incorrect}</td>
-                    <td className="px-3 py-2 text-right text-gray-700">{s.accuracy}%</td>
+                    <td className="px-3 py-2 text-right text-gray-700">{s.accuracy} %</td>
                     <td className="px-3 py-2 text-right text-gray-500">{formatTotalTime(s.totalTimeMs)}</td>
                   </tr>
                 ))}
@@ -119,8 +119,8 @@ export function QuizHistoryModal({
       ) : runs.length === 0 ? (
         <EmptyState
           icon={<Trophy className="h-6 w-6" />}
-          title="No completed runs yet"
-          description="When this quiz finishes, its final standings are saved here automatically — even after a refresh."
+          title="Noch keine abgeschlossenen Durchläufe"
+          description="Sobald dieses Quiz endet, wird der Endstand hier automatisch gespeichert – auch nach einer Aktualisierung."
         />
       ) : (
         <ul className="space-y-2">
@@ -135,10 +135,10 @@ export function QuizHistoryModal({
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold text-ink-900">
-                      {winner ? `${winner.name} won with ${winner.points} pts` : "Completed run"}
+                      {winner ? `${winner.name} gewinnt mit ${winner.points} Pkt.` : "Abgeschlossener Durchlauf"}
                     </span>
                     <span className="mt-0.5 block text-xs text-gray-500">
-                      {formatDate(run.finishedAt)} · {run.playerCount} player(s) · {run.questionCount} question(s)
+                      {formatDate(run.finishedAt)} · {run.playerCount} Spieler · {run.questionCount} Fragen
                     </span>
                   </span>
                   <Crown className="h-4 w-4 shrink-0 text-gold-500" />
@@ -151,7 +151,7 @@ export function QuizHistoryModal({
 
       <div className="mt-6 flex justify-end">
         <Button variant="secondary" onClick={onClose}>
-          Close
+          Schließen
         </Button>
       </div>
     </Modal>

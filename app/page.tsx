@@ -14,17 +14,17 @@ const cards = [
     href: "/quiz",
     icon: Trophy,
     iconClass: "bg-gold-50 text-gold-600 ring-gold-200",
-    title: "Join a Quiz",
-    description: "Enter the quiz code from your host and play with your username.",
-    action: "Join Quiz",
+    title: "Quiz beitreten",
+    description: "Gib den Quiz-Code deiner Lehrkraft ein und spiele mit deinem Namen mit.",
+    action: "Quiz beitreten",
   },
   {
     href: "/votes",
     icon: Vote,
     iconClass: "bg-brand-50 text-brand-600 ring-brand-100",
-    title: "Join a Vote",
-    description: "Open the vote room link or enter a room code to cast your vote.",
-    action: "Join Vote",
+    title: "Abstimmung beitreten",
+    description: "Öffne den Link zum Abstimmungsraum oder gib den Raumcode ein.",
+    action: "Abstimmung beitreten",
   },
 ];
 
@@ -34,10 +34,10 @@ export default function LandingPage() {
       <div className="flex flex-col items-center text-center">
         <DbsLogo size="lg" align="center" />
         <h1 className="mt-8 text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
-          Welcome to DBS
+          Willkommen bei DBS
         </h1>
         <p className="mt-2 max-w-xl text-sm text-gray-500 sm:text-base">
-          Play quizzes and vote in live rooms with just a code — no account needed.
+          Spiele Quizze und stimme in Live-Räumen ab – nur mit einem Code, ganz ohne Benutzerkonto.
         </p>
       </div>
 
@@ -68,7 +68,7 @@ export default function LandingPage() {
 
       <p className="mt-10 flex items-center justify-center gap-2 text-center text-sm text-gray-400">
         <KeyRound className="h-4 w-4" />
-        Got a code from your teacher or host? Open the matching page above and enter it.
+        Du hast einen Code von deiner Lehrkraft oder deinem Host? Öffne oben die passende Seite und gib ihn ein.
       </p>
     </div>
   );

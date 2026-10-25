@@ -165,11 +165,11 @@ export function QuizRoomForm({
     } else {
       const chosen = normalizeCode(codeInput);
       if (!chosen) {
-        setError("Choose your room code before creating the quiz.");
+        setError("Wähle einen Raumcode, bevor du das Quiz erstellst.");
         return;
       }
       if (taken.has(chosen)) {
-        setError(`The code ${chosen} is already used by another quiz. Choose a different code.`);
+        setError(`Der Code ${chosen} wird bereits von einem anderen Quiz verwendet. Wähle einen anderen Code.`);
         return;
       }
       code = chosen;
@@ -183,15 +183,17 @@ export function QuizRoomForm({
       correctVisibility,
       status: publishNow ? "published" : "draft",
       createdAt: initialRoom?.createdAt ?? Date.now(),
+      saveState: "saved",
+      savedAt: Date.now(),
     };
     const check = validateRoom(room);
     if (!check.ok) {
-      setError(check.error ?? "Please review your quiz.");
+      setError(check.error ?? "Bitte überprüfe dein Quiz.");
       return;
     }
     onSaved(room);
     toast.success(
-      editing ? `Quiz ${room.code} updated.` : `Quiz ${room.code} created and saved locally.`,
+      editing ? `Quiz ${room.code} wurde aktualisiert.` : `Quiz ${room.code} wurde erstellt und dauerhaft gespeichert.`,
     );
   }
 
@@ -206,55 +208,55 @@ export function QuizRoomForm({
     <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
       <div className="space-y-6">
         <Card>
-          <CardHeader title="Quiz details" icon={<Trophy className="h-5 w-5" />} />
+          <CardHeader title="Quizdetails" icon={<Trophy className="h-5 w-5" />} />
           <CardBody className="space-y-5">
             <Field
-              label="Choose Your Room Code"
+              label="Raumcode wählen"
               hint={
                 editing
-                  ? "The room code stays unchanged until the room is closed or deleted."
-                  : "Participants join by entering this exact code with their username."
+                  ? "Der Raumcode bleibt unverändert, bis der Raum geschlossen oder gelöscht wird."
+                  : "Teilnehmende treten mit genau diesem Code und ihrem Namen bei."
               }
             >
               <Input
                 value={editing ? initialRoom?.code ?? "" : codeInput}
                 onChange={(e) => setCodeInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
                 disabled={editing}
-                placeholder={editing ? "" : "e.g. 12355"}
+                placeholder={editing ? "" : "z. B. 12355"}
                 className="font-mono tracking-[0.3em] disabled:opacity-60"
                 maxLength={12}
               />
             </Field>
-            <Field label="Title">
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Friday trivia night" />
+            <Field label="Titel">
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Freitags-Quizabend" />
             </Field>
-            <Field label="Description" hint="Optional intro shown before the quiz starts.">
+            <Field label="Beschreibung" hint="Optionale Einleitung, die vor dem Quizstart angezeigt wird.">
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="A short description for players."
+                placeholder="Eine kurze Beschreibung für die Mitspielenden."
               />
             </Field>
             <Field
-              label="When to reveal correct answers"
-              hint="Classroom sessions always reveal at the end — the answer key stays hidden from students until everyone finishes."
+              label="Wann richtige Antworten gezeigt werden"
+              hint="Im Klassenraummodus werden sie immer am Ende gezeigt – die Lösungen bleiben für Schülerinnen und Schüler verborgen, bis alle fertig sind."
             >
               <Select
                 value={correctVisibility}
                 onChange={(e) => setCorrectVisibility(e.target.value as CorrectVisibility)}
               >
-                <option value="afterEach">After each question</option>
-                <option value="atEnd">Only at the very end</option>
+                <option value="afterEach">Nach jeder Frage</option>
+                <option value="atEnd">Erst ganz am Ende</option>
               </Select>
             </Field>
             <Switch
               checked={publishNow}
               onChange={setPublishNow}
-              label="Publish quiz"
+              label="Quiz veröffentlichen"
               description={
                 publishNow
-                  ? "The quiz is ready to play with its local code."
-                  : "Saved as a draft — players can't start it until you publish."
+                  ? "Das Quiz ist mit seinem Code spielbereit."
+                  : "Wird als Entwurf gespeichert – Mitspielende können erst nach der Veröffentlichung starten."
               }
             />
           </CardBody>
@@ -262,12 +264,12 @@ export function QuizRoomForm({
 
         <Card>
           <CardHeader
-            title="Questions"
-            subtitle={`${questions.length} question(s) · up to ${maxTotalPoints.toLocaleString("en-US")} points total`}
+            title="Fragen"
+            subtitle={`${questions.length} Frage(n) · bis zu ${maxTotalPoints.toLocaleString("de-DE")} Punkte insgesamt`}
             icon={<ListChecks className="h-5 w-5" />}
             action={
               <Button size="sm" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setQuestions((p) => [...p, newQuestion()])}>
-                Add question
+                Frage hinzufügen
               </Button>
             }
           />
@@ -281,13 +283,13 @@ export function QuizRoomForm({
                   <Input
                     value={question.text}
                     onChange={(e) => update(question.id, { text: e.target.value })}
-                    placeholder="Question text"
+                    placeholder="Fragetext"
                     className="flex-1"
                   />
-                  <Button variant="ghost" size="icon" onClick={() => move(qIndex, -1)} disabled={qIndex === 0} aria-label="Move up">
+                  <Button variant="ghost" size="icon" onClick={() => move(qIndex, -1)} disabled={qIndex === 0} aria-label="Nach oben verschieben">
                     <ArrowUp className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => move(qIndex, 1)} disabled={qIndex === questions.length - 1} aria-label="Move down">
+                  <Button variant="ghost" size="icon" onClick={() => move(qIndex, 1)} disabled={qIndex === questions.length - 1} aria-label="Nach unten verschieben">
                     <ArrowDown className="h-4 w-4" />
                   </Button>
                   <Button
@@ -295,7 +297,7 @@ export function QuizRoomForm({
                     size="icon"
                     onClick={() => setQuestions((p) => p.filter((q) => q.id !== question.id))}
                     disabled={questions.length === 1}
-                    aria-label="Remove question"
+                    aria-label="Frage entfernen"
                     className="text-gray-400 hover:text-brand-600"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -308,7 +310,7 @@ export function QuizRoomForm({
                       <button
                         type="button"
                         onClick={() => setCorrect(question.id, answer.id)}
-                        aria-label={`Mark option ${aIndex + 1} correct`}
+                        aria-label={`Option ${aIndex + 1} als richtig markieren`}
                         className={cn(
                           "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors",
                           answer.correct
@@ -321,7 +323,7 @@ export function QuizRoomForm({
                       <Input
                         value={answer.text}
                         onChange={(e) => updateAnswer(question.id, answer.id, e.target.value)}
-                        placeholder={`Answer ${aIndex + 1}${answer.correct ? " (correct)" : ""}`}
+                        placeholder={`Antwort ${aIndex + 1}${answer.correct ? " (richtig)" : ""}`}
                         className="h-9"
                       />
                       <Button
@@ -329,7 +331,7 @@ export function QuizRoomForm({
                         size="icon"
                         onClick={() => removeAnswer(question.id, answer.id)}
                         disabled={question.answers.length <= 2}
-                        aria-label="Remove answer"
+                        aria-label="Antwort entfernen"
                         className="text-gray-400 hover:text-brand-600"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -337,11 +339,11 @@ export function QuizRoomForm({
                     </div>
                   ))}
                   <Button size="sm" variant="ghost" icon={<Plus className="h-4 w-4" />} onClick={() => addAnswer(question.id)} disabled={question.answers.length >= 8}>
-                    Add answer
+                    Antwort hinzufügen
                   </Button>
 
                   <div className="grid gap-3 pt-2 sm:grid-cols-3">
-                    <Field label="Timer (seconds)">
+                    <Field label="Zeitlimit (Sekunden)">
                       <Input
                         type="number"
                         min={5}
@@ -355,14 +357,15 @@ export function QuizRoomForm({
                       <Switch
                         checked={question.timerEnabled}
                         onChange={(v) => update(question.id, { timerEnabled: v })}
-                        label="Timer on"
+                        label="Zeitlimit aktiv"
                       />
                     </div>
                   </div>
                   <p className="text-xs text-gray-500">
-                    Speed bonus: a correct answer keeps its full {question.points} points and earns up to{" "}
-                    {Math.round(question.points * SPEED_BONUS_RATE)} more — the less time used, the higher the
-                    bonus. Wrong answers and unanswered questions score 0.
+                    Geschwindigkeitsbonus: Eine richtige Antwort behält ihre {question.points} Punkte und
+                    erhält bis zu {Math.round(question.points * SPEED_BONUS_RATE)} zusätzliche Punkte – je
+                    weniger Zeit verbraucht wird, desto höher der Bonus. Falsche und unbeantwortete Fragen
+                    ergeben 0 Punkte.
                   </p>
                 </div>
               </div>
@@ -373,27 +376,27 @@ export function QuizRoomForm({
 
       <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
         <Card>
-          <CardHeader title="Summary" icon={<Sparkles className="h-5 w-5" />} />
+          <CardHeader title="Zusammenfassung" icon={<Sparkles className="h-5 w-5" />} />
           <CardBody className="space-y-3 text-sm text-gray-500">
-            <SummaryRow label="Room code" value={editing ? initialRoom?.code ?? "" : codeInput || "—"} />
-            <SummaryRow label="Questions" value={String(questions.length)} />
+            <SummaryRow label="Raumcode" value={editing ? initialRoom?.code ?? "" : codeInput || "—"} />
+            <SummaryRow label="Fragen" value={String(questions.length)} />
             <SummaryRow
-              label="Points per question"
-              value={`Base + up to ${Math.round((questions[0]?.points ?? 100) * SPEED_BONUS_RATE)} speed bonus`}
+              label="Punkte pro Frage"
+              value={`Grundpunkte + bis zu ${Math.round((questions[0]?.points ?? 100) * SPEED_BONUS_RATE)} Geschwindigkeitsbonus`}
             />
-            <SummaryRow label="Max points" value={maxTotalPoints.toLocaleString("en-US")} />
+            <SummaryRow label="Maximale Punkte" value={maxTotalPoints.toLocaleString("de-DE")} />
             <SummaryRow
-              label="Answers revealed"
-              value={correctVisibility === "afterEach" ? "After each question" : "At the end"}
+              label="Antworten sichtbar"
+              value={correctVisibility === "afterEach" ? "Nach jeder Frage" : "Am Ende"}
             />
             <SummaryRow
-              label="Timers"
+              label="Zeitlimits"
               value={String(questions.filter((q) => q.timerEnabled).length)}
             />
-            <SummaryRow label="Status" value={publishNow ? "Published" : "Draft"} />
+            <SummaryRow label="Status" value={publishNow ? "Veröffentlicht" : "Entwurf"} />
             <p className="flex items-center gap-2 pt-1 text-xs text-gray-400">
               <Gift className="h-3.5 w-3.5" />
-              {editing ? `Keeping code ${initialRoom?.code}.` : "Codes are never auto-generated — the room is created only with the code you chose."}
+              {editing ? `Code ${initialRoom?.code} bleibt erhalten.` : "Codes werden nie automatisch erzeugt – der Raum entsteht nur mit deinem gewählten Code."}
             </p>
           </CardBody>
         </Card>
@@ -401,10 +404,10 @@ export function QuizRoomForm({
           <p className="rounded-xl border border-brand-200 bg-brand-50 p-3 text-sm text-brand-700">{error}</p>
         ) : null}
         <Button className="w-full" size="lg" icon={<Save className="h-5 w-5" />} onClick={handleSubmit}>
-          {editing ? "Save changes" : "Create quiz"}
+          {editing ? "Änderungen speichern" : "Quiz erstellen"}
         </Button>
         <p className="flex items-center justify-center gap-2 text-center text-xs text-gray-400">
-          <Clock className="h-3.5 w-3.5" /> Timers and deadlines are enforced in this browser.
+          <Clock className="h-3.5 w-3.5" /> Zeitlimits werden anhand der App-Uhrzeit geprüft.
         </p>
       </div>
     </div>

@@ -27,7 +27,7 @@ export function PageHeader({
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4" />
-          {backLabel ?? "Back"}
+          {backLabel ?? "Zurück"}
         </Link>
       ) : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

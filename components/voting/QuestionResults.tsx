@@ -28,7 +28,7 @@ export function QuestionResults({
           <Card key={question.questionId}>
             <CardHeader
               title={question.text}
-              subtitle={`Question ${index + 1} · ${question.totalVotes} vote(s)`}
+              subtitle={`Frage ${index + 1} · ${question.totalVotes} Stimme(n)`}
               icon={<BarChart3 className="h-5 w-5" />}
             />
             <CardBody className="space-y-3">
@@ -57,7 +57,7 @@ export function QuestionResults({
                 );
               })}
               {question.totalVotes === 0 ? (
-                <p className="text-center text-xs text-gray-400">No votes yet.</p>
+                <p className="text-center text-xs text-gray-400">Noch keine Stimmen.</p>
               ) : null}
             </CardBody>
           </Card>

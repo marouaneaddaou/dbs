@@ -12,8 +12,8 @@ import { Field, Input } from "@/components/ui/Field";
  * On success the session is stored in sessionStorage and the caller re-renders.
  */
 export function AdminLogin({
-  title = "Admin login",
-  description = "Enter the admin password to manage games, quizzes and votes.",
+  title = "Admin-Anmeldung",
+  description = "Gib das Admin-Passwort ein, um Spiele, Quizze und Abstimmungen zu verwalten.",
 }: {
   title?: string;
   description?: string;
@@ -25,7 +25,7 @@ export function AdminLogin({
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!password) {
-      setError("Enter the admin password.");
+      setError("Bitte gib das Admin-Passwort ein.");
       return;
     }
     const ok = await loginAdmin(password);
@@ -35,7 +35,7 @@ export function AdminLogin({
       return;
     }
     setPassword("");
-    setError("Incorrect password. Please try again.");
+    setError("Das Passwort ist falsch. Bitte versuche es erneut.");
   }
 
   return (
@@ -55,13 +55,13 @@ export function AdminLogin({
         </div>
 
         <div className="mt-6 space-y-4">
-          <Field label="Admin password">
+          <Field label="Admin-Passwort">
             <div className="relative">
               <Input
                 type={show ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
+                placeholder="Passwort eingeben"
                 autoComplete="current-password"
                 autoFocus
                 className="pr-11"
@@ -69,7 +69,7 @@ export function AdminLogin({
               <button
                 type="button"
                 onClick={() => setShow((v) => !v)}
-                aria-label={show ? "Hide password" : "Show password"}
+                aria-label={show ? "Passwort verbergen" : "Passwort anzeigen"}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
               >
                 {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -84,13 +84,13 @@ export function AdminLogin({
           ) : null}
 
           <Button type="submit" className="w-full" size="lg" icon={<LogIn className="h-4 w-4" />}>
-            Login
+            Anmelden
           </Button>
         </div>
       </form>
 
       <p className="mt-6 max-w-sm text-center text-xs text-gray-400">
-        This is a local demo password gate stored only in this tab’s session. It is not production-grade security.
+        Die Anmeldung wird serverseitig geprüft und als sichere Sitzung in diesem Browser gespeichert.
       </p>
     </div>
   );

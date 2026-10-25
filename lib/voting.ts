@@ -42,28 +42,28 @@ export function validateBallot(
   alreadyVoted: boolean,
 ): BallotValidation {
   if (room.status !== "open") {
-    return { ok: false, error: "This poll is closed." };
+    return { ok: false, error: "Diese Abstimmung ist geschlossen." };
   }
   if (isRoomExpired(room)) {
-    return { ok: false, error: "The voting deadline has passed." };
+    return { ok: false, error: "Die Abstimmungsfrist ist abgelaufen." };
   }
   if (alreadyVoted && !room.allowChange) {
-    return { ok: false, error: "You have already voted and changes are disabled." };
+    return { ok: false, error: "Du hast bereits abgestimmt und Änderungen sind deaktiviert." };
   }
   for (const question of room.questions) {
     const picked = answers[question.id] ?? [];
     if (picked.length === 0) {
-      return { ok: false, error: "Please answer every question before submitting." };
+      return { ok: false, error: "Bitte beantworte jede Frage, bevor du abstimmst." };
     }
     if (room.mode === "single" && picked.length !== 1) {
-      return { ok: false, error: "Only one option per question is allowed." };
+      return { ok: false, error: "Pro Frage ist nur eine Option erlaubt." };
     }
     const validIds = new Set(question.options.map((o) => o.id));
     if (picked.some((id) => !validIds.has(id))) {
-      return { ok: false, error: "Your ballot contains an unknown option." };
+      return { ok: false, error: "Deine Stimme enthält eine unbekannte Option." };
     }
     if (new Set(picked).size !== picked.length) {
-      return { ok: false, error: "Duplicate options are not allowed." };
+      return { ok: false, error: "Doppelte Optionen sind nicht erlaubt." };
     }
   }
   return { ok: true };
@@ -83,7 +83,7 @@ export function castVote(
   answers: Record<string, string[]>,
 ): CastVoteResult {
   const cleanVoter = voter.trim();
-  if (!cleanVoter) return { ok: false, error: "Please enter a username.", votes };
+  if (!cleanVoter) return { ok: false, error: "Bitte gib deinen Namen ein.", votes };
   const existingIndex = votes.findIndex((v) => v.voter.toLowerCase() === cleanVoter.toLowerCase());
   const validation = validateBallot(room, answers, existingIndex >= 0);
   if (!validation.ok) return { ok: false, error: validation.error, votes };
@@ -163,6 +163,8 @@ export function createEmptyRoom(): VotingRoom {
     closesAt: null,
     status: "open",
     createdAt: now,
+    saveState: "saved",
+    savedAt: now,
   };
 }
 

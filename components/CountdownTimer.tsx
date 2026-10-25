@@ -50,7 +50,7 @@ export function CountdownTimer({
     return (
       <span className={cn("inline-flex items-center gap-2 text-sm text-gray-500", className)}>
         <Clock className="h-4 w-4" />
-        No time limit
+Kein Zeitlimit
       </span>
     );
   }
@@ -70,9 +70,9 @@ export function CountdownTimer({
           )}
         >
           <Clock className={cn("h-4 w-4", urgent && "animate-pulse")} />
-          {expired ? "Time is up" : formatRemaining(remaining)}
+          {expired ? "Zeit abgelaufen" : formatRemaining(remaining)}
         </span>
-        {compact ? null : <span className="text-xs uppercase tracking-wide text-gray-400">remaining</span>}
+        {compact ? null : <span className="text-xs uppercase tracking-wide text-gray-400">verbleibend</span>}
       </div>
       {ratio !== null ? (
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">

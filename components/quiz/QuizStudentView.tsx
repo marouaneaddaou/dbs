@@ -39,7 +39,7 @@ import { cn } from "@/lib/cn";
 
 const IDENTITY_KEY = "dbs_quiz_identity_v1";
 
-/** Quizizz-style answer-card palette (yellow-green, purple, orange, teal â€” cycled for >4 options). */
+/** Quizizz-style answer-card palette (yellow-green, purple, orange, teal – cycled for >4 options). */
 const OPTION_STYLES = [
   { card: "bg-lime-500 hover:bg-lime-400" },
   { card: "bg-violet-500 hover:bg-violet-400" },
@@ -309,7 +309,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
         if (cancelled || terminalRef.current) return;
         const type = err.type ?? "";
         if (type === "peer-unavailable") {
-          // Teacher's device is not hosting right now â€” keep retrying gently.
+          // Teacher's device is not hosting right now – keep retrying gently.
           setReachable(false);
           setConnState("connecting");
           scheduleRetry();
@@ -390,7 +390,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
   }, [index, phase, quiz?.code]);
 
   // Countdown deadline for the current question only (null until the reset
-  // above binds the timer to this index â€” prevents stale fires on question
+  // above binds the timer to this index – prevents stale fires on question
   // changes).
   const deadline =
     timer.index === index && current?.timeLimitSec && current.timeLimitSec > 0
@@ -409,7 +409,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
         conn.send(msg);
         return;
       } catch {
-        /* connection dropped mid-send â€” queue below */
+        /* connection dropped mid-send – queue below */
       }
     }
     outboxRef.current.push(msg);
@@ -465,7 +465,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
     // Never overwrite an already submitted answer on expiry.
     if (answers[current.id] !== undefined) return;
     recordAnswer(current, null); // save as unanswered
-    goNext(); // auto-advance â€” navigation stays per-student
+    goNext();     // auto-advance – navigation stays per-student
   };
 
   // Live countdown tick for the bar (200ms + CSS transition = smooth).
@@ -488,7 +488,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
 
   /* --------------------------------- screens -------------------------------- */
   if (!hydrated || !studentId) {
-    return <StudentSkeleton text="Preparing your seatâ€¦" />;
+    return <StudentSkeleton text="Dein Platz wird vorbereitet…" />;
   }
 
   if (!name.trim()) {
@@ -496,8 +496,8 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
       <div className="mx-auto max-w-md px-4 py-16 sm:px-6">
         <Card className="border-gold-200 bg-gold-50/40">
           <CardHeader
-            title="What's your name?"
-            subtitle={`Room ${code} â€” your teacher will see this name.`}
+            title="Wie heißt du?"
+            subtitle={`Raum ${code} – deine Lehrkraft sieht diesen Namen.`}
             icon={<LogIn className="h-5 w-5" />}
           />
           <CardBody className="space-y-4">
@@ -511,7 +511,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
               onKeyDown={(e) => {
                 if (e.key === "Enter") submitName();
               }}
-              placeholder="e.g. Alex"
+              placeholder="z. B. Alex"
               maxLength={40}
               className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-base font-medium text-ink-900 outline-none transition-colors focus:border-gold-400 focus:ring-2 focus:ring-gold-200"
             />
@@ -522,7 +522,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
               icon={<ArrowRight className="h-5 w-5" />}
               onClick={submitName}
             >
-              Join the quiz
+              Quiz beitreten
             </Button>
           </CardBody>
         </Card>
@@ -533,7 +533,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
   function submitName() {
     const trimmed = nameDraft.trim();
     if (!trimmed) {
-      setNameError("Please enter your name.");
+      setNameError("Bitte gib deinen Namen ein.");
       return;
     }
     writeSession("dbs_player_name", trimmed);
@@ -545,11 +545,11 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
       <StudentShell code={code} quizTitle={quiz?.title} connState={connState}>
         <EmptyState
           icon={<XCircle className="h-7 w-7 text-brand-500" />}
-          title="You were removed"
-          description="The teacher removed you from this session. Ask them for a new room code if this was a mistake."
+          title="Du wurdest entfernt"
+          description="Die Lehrkraft hat dich aus dieser Sitzung entfernt. Bitte um einen neuen Raumcode, falls das ein Versehen war."
           action={
             <Link href="/quiz" className="text-sm font-medium text-gold-600 hover:text-gold-700">
-              Join another quiz
+              Anderem Quiz beitreten
             </Link>
           }
         />
@@ -562,8 +562,8 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
       <StudentShell code={code} quizTitle={quiz?.title} connState={connState}>
         <EmptyState
           icon={<Hourglass className="h-7 w-7 text-gold-500" />}
-          title="This quiz already started"
-          description="You joined after the teacher began (or the session already finished). Ask your teacher for a fresh room code."
+          title="Dieses Quiz hat bereits begonnen"
+          description="Du bist beigetreten, nachdem die Lehrkraft gestartet hat (oder die Sitzung ist schon beendet). Bitte um einen neuen Raumcode."
           action={
             <div className="flex gap-3">
               <Button
@@ -574,10 +574,10 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
                   setLate(false);
                 }}
               >
-                Try again
+                Erneut versuchen
               </Button>
               <Link href="/quiz">
-                <Button variant="secondary">Back to join page</Button>
+                <Button variant="secondary">Zurück zur Beitrittsseite</Button>
               </Link>
             </div>
           }
@@ -598,19 +598,19 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             )}
           </span>
           <h1 className="mt-4 text-xl font-bold text-ink-900">
-            {reachable ? "Connecting to your teacherâ€¦" : "Can't reach the room yet"}
+            {reachable ? "Verbindung zu deiner Lehrkraft wird hergestellt…" : "Der Raum ist noch nicht erreichbar"}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
             {reachable
-              ? `Joining room ${code} as ${name}.`
-              : `Room ${code} isn't hosting right now. Make sure your teacher has the room open on their screen â€” or ask for a new code if this room was deleted. We keep retrying automatically.`}
+              ? `Du trittst Raum ${code} als ${name} bei.`
+              : `Raum ${code} wird gerade nicht gehostet. Stelle sicher, dass deine Lehrkraft den Raum geöffnet hat – oder bitte um einen neuen Code, falls der Raum gelöscht wurde. Es wird automatisch weiter versucht.`}
           </p>
           <div className="mt-5 flex justify-center gap-3">
             <Button variant="secondary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => retryNowRef.current()}>
-              Try now
+              Jetzt versuchen
             </Button>
             <Link href="/quiz">
-              <Button variant="ghost">Leave</Button>
+              <Button variant="ghost">Verlassen</Button>
             </Link>
           </div>
         </div>
@@ -625,17 +625,17 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
             <CheckCircle2 className="h-8 w-8" />
           </span>
-          <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">You&apos;re in!</h1>
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">Du bist dabei!</h1>
           <p className="mt-2 text-sm text-gray-500">
-            Welcome, <span className="font-semibold text-ink-900">{name}</span>. Waiting for your teacher to start
-            the quiz â€” stay on this screen.
+            Willkommen, <span className="font-semibold text-ink-900">{name}</span>. Warte, bis deine Lehrkraft
+            das Quiz startet – bleib auf diesem Bildschirm.
           </p>
           <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
-            <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Room code</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Raumcode</p>
             <p className="mt-1 font-mono text-3xl font-extrabold tracking-[0.3em] text-ink-900">{code}</p>
           </div>
           <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-gray-400">
-            <Wifi className="h-3.5 w-3.5 text-emerald-500" /> Connected to your teacher
+            <Wifi className="h-3.5 w-3.5 text-emerald-500" /> Mit deiner Lehrkraft verbunden
           </p>
         </div>
       </StudentShell>
@@ -656,17 +656,17 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             Du hast den Quiz beendet. Bitte warte auf die anderen Teilnehmer.
           </p>
           <p className="mt-1.5 text-sm text-gray-500">
-            Results and the answer key appear here for everyone once{" "}
-            <span className="font-semibold text-ink-900">all classmates finish</span> (or your teacher ends the
-            quiz).
+            Ergebnisse und die Lösungen erscheinen hier für alle, sobald{" "}
+            <span className="font-semibold text-ink-900">alle Mitschüler fertig sind</span> (oder deine Lehrkraft
+            das Quiz beendet).
           </p>
           <p className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm text-gray-500">
-            Your score:{" "}
-            <span className="font-extrabold text-gold-600">{totalScore.toLocaleString("en-US")}</span> pts
+            Dein Punktestand:{" "}
+            <span className="font-extrabold text-gold-600">{totalScore.toLocaleString("de-DE")}</span> Pkt.
           </p>
           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
-            Waiting for the rest of the classâ€¦
+            Warte auf den Rest der Klasse…
           </div>
         </div>
       </StudentShell>
@@ -684,13 +684,13 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
   if (finished && !reveal) {
     return (
       <StudentShell code={code} quizTitle={quiz.title} connState={connState}>
-        <StudentSkeleton text="Finalizing resultsâ€¦" />
+        <StudentSkeleton text="Ergebnisse werden zusammengestellt…" />
       </StudentShell>
     );
   }
 
   if (!current) {
-    return <StudentShell code={code} quizTitle={quiz.title} connState={connState}><StudentSkeleton text="Loading questionâ€¦" /></StudentShell>;
+    return <StudentShell code={code} quizTitle={quiz.title} connState={connState}><StudentSkeleton text="Frage wird geladen…" /></StudentShell>;
   }
 
   // Answer grid adapts to the actual number of choices (2, 3, 4, or more).
@@ -726,10 +726,10 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
         canProceed ? (
           <>
             {allowEditing && index > 0 ? (
-              <QuizNavButton label="Back" icon={<ArrowLeft className="h-4 w-4" />} onClick={goBack} />
+              <QuizNavButton label="Zurück" icon={<ArrowLeft className="h-4 w-4" />} onClick={goBack} />
             ) : null}
             <QuizNavButton
-              label={isLast ? "Finish Quiz" : "Next"}
+              label={isLast ? "Quiz abschließen" : "Weiter"}
               icon={
                 isLast ? <CheckCircle2 className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />
               }
@@ -741,9 +741,9 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
       }
     >
       <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-7">
-        {/* Countdown timer bar â€” very top, above the question card */}
+        {/* Countdown timer bar – very top, above the question card */}
         {deadline !== null ? (
-          <div className="mb-3 flex items-center gap-3" aria-label="Question timer">
+          <div className="mb-3 flex items-center gap-3" aria-label="Frage-Timer">
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
               <div
                 className={cn(
@@ -764,7 +764,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           </div>
         ) : null}
 
-        {/* Overall quiz progress â€” thin line under the timer */}
+        {/* Overall quiz progress – thin line under the timer */}
         <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-violet-400 to-lime-400 transition-all duration-300"
@@ -772,28 +772,28 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
           />
         </div>
 
-        {/* Running total â€” updated with every confirmed answer */}
+        {/* Running total – updated with every confirmed answer */}
         <div className="mb-4 flex justify-end">
           <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-white/80">
-            Your score:{" "}
-            <span className="font-extrabold text-lime-300">{totalScore.toLocaleString("en-US")}</span> pts
+            Dein Punktestand:{" "}
+            <span className="font-extrabold text-lime-300">{totalScore.toLocaleString("de-DE")}</span> Pkt.
           </span>
         </div>
 
-        {/* Question card â€” large, centered, dark purple */}
+        {/* Question card – large, centered, dark purple */}
         <div className="rounded-3xl border border-white/10 bg-[#2f1863]/85 px-5 py-6 shadow-2xl shadow-violet-950/50 sm:px-8 sm:py-8">
-          {/* meta row: points Â· counter pill Â· editing chip */}
+          {/* meta row: points · counter pill · editing chip */}
           <div className="flex flex-wrap items-center justify-center gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr]">
             <span className="whitespace-nowrap rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white/80 sm:justify-self-start">
-              {current.points} pts + speed bonus Â· faster = more
+              {current.points} Pkt. + Tempo-Bonus · schneller = mehr
             </span>
             <span className="rounded-full border border-white/15 bg-white/10 px-3.5 py-1 text-xs font-extrabold tracking-wide text-white">
-              Question {index + 1} of {total}
+              Frage {index + 1} von {total}
             </span>
             <span className="sm:justify-self-end">
               {allowEditing ? (
                 <span className="whitespace-nowrap rounded-full border border-amber-300/30 bg-amber-300/15 px-2.5 py-1 text-[11px] font-bold text-amber-200">
-                  Editing on
+                  Bearbeiten aktiv
                 </span>
               ) : null}
             </span>
@@ -803,14 +803,14 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             {current.text}
           </p>
 
-          {/* Answer cards â€” colorful, adaptive count, Quizizz-style feedback */}
+          {/* Answer cards – colorful, adaptive count, Quizizz-style feedback */}
           <div className={cn("mt-6 grid gap-3", answerCols)}>
             {current.answers.map((answer, i) => {
               const style = OPTION_STYLES[i % OPTION_STYLES.length];
               const isSelected = pickedId === answer.id;
               const locked = !allowEditing && (pickedId !== null || submitted);
               // Live feedback (host-validated): green key, red wrong pick,
-              // everything else fades out â€” only after this answer is recorded.
+              // everything else fades out – only after this answer is recorded.
               const isKey = feedback !== null && answer.id === feedback.correctAnswerId;
               const isWrongPick = isSelected && feedback !== null && feedback.correct === false;
               const faded = feedback !== null && !isKey && !isWrongPick;
@@ -851,7 +851,7 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
             })}
           </div>
 
-          {/* Points earned for this question â€” host-confirmed with the answer */}
+          {/* Points earned for this question – host-confirmed with the answer */}
           {feedback !== null ? (
             <p
               className={cn(
@@ -860,15 +860,15 @@ export function QuizStudentView({ code, name: initialName }: { code: string; nam
               )}
             >
               {feedback.correct
-                ? `+${(feedback.points ?? 0).toLocaleString("en-US")} pts â€” correct!`
-                : "0 pts â€” not correct"}
+                ? `+${(feedback.points ?? 0).toLocaleString("de-DE")} Pkt. – richtig!`
+                : "0 Pkt. – nicht richtig"}
             </p>
           ) : null}
 
           <p className={cn("text-center text-xs text-white/50", feedback !== null ? "mt-2" : "mt-5")}>
             {allowEditing
-              ? "Your answer is checked instantly â€” green means correct, red means wrong â€” and you can revise until you finish. Correct answers always keep their full points and earn up to 50% more by speed. Full results appear when everyone finishes."
-              : "Your answer is checked instantly â€” green means correct, red means wrong. Correct answers always keep their full points and earn up to 50% more by speed â€” the faster, the more. Full results appear when everyone finishes."}
+              ? "Deine Antwort wird sofort geprüft – grün bedeutet richtig, rot bedeutet falsch – und du kannst sie bis zum Abschluss korrigieren. Richtige Antworten behalten immer ihre volle Punktzahl und verdienen durch Tempo bis zu 50 % mehr. Die vollständigen Ergebnisse erscheinen, wenn alle fertig sind."
+              : "Deine Antwort wird sofort geprüft – grün bedeutet richtig, rot bedeutet falsch. Richtige Antworten behalten immer ihre volle Punktzahl und verdienen durch Tempo bis zu 50 % mehr – je schneller, desto mehr. Die vollständigen Ergebnisse erscheinen, wenn alle fertig sind."}
           </p>
         </div>
       </div>
@@ -897,21 +897,21 @@ function StudentResults({
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-gold-500 ring-1 ring-emerald-200">
             <Crown className="h-7 w-7" />
           </span>
-          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink-900">Results revealed!</h1>
-          <p className="text-sm text-gray-500">Everyone finished â€” here are the final standings.</p>
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink-900">Ergebnisse sind da!</h1>
+          <p className="text-sm text-gray-500">Alle sind fertig – hier ist der Endstand.</p>
           {mine ? (
             <div className="mt-4 grid w-full max-w-xs grid-cols-3 gap-2 rounded-2xl bg-white p-4 ring-1 ring-emerald-200">
               <div>
                 <p className="text-lg font-extrabold text-gold-600">{mine.points}</p>
-                <p className="text-[10px] uppercase tracking-wide text-gray-400">Points</p>
+                <p className="text-[10px] uppercase tracking-wide text-gray-400">Punkte</p>
               </div>
               <div>
                 <p className="text-lg font-extrabold text-emerald-600">{mine.correct}</p>
-                <p className="text-[10px] uppercase tracking-wide text-gray-400">Correct</p>
+                <p className="text-[10px] uppercase tracking-wide text-gray-400">Richtig</p>
               </div>
               <div>
                 <p className="text-lg font-extrabold text-ink-900">#{mine.rank}</p>
-                <p className="text-[10px] uppercase tracking-wide text-gray-400">Rank</p>
+                <p className="text-[10px] uppercase tracking-wide text-gray-400">Rang</p>
               </div>
             </div>
           ) : null}
@@ -919,7 +919,7 @@ function StudentResults({
       </Card>
 
       <Card>
-        <CardHeader title="Top 3" subtitle="Gold, silver and bronze" icon={<Crown className="h-5 w-5" />} />
+        <CardHeader title="Top 3" subtitle="Gold, Silber und Bronze" icon={<Crown className="h-5 w-5" />} />
         <CardBody>
           <Podium
             entries={reveal.leaderboard.slice(0, 3).map((row) => ({
@@ -927,14 +927,14 @@ function StudentResults({
               name: row.name,
               points: row.points,
               rank: row.rank,
-              subtitle: `${row.correct} correct Â· ${row.accuracy}%`,
+              subtitle: `${row.correct} richtig · ${row.accuracy} %`,
             }))}
           />
         </CardBody>
       </Card>
 
       <Card>
-        <CardHeader title="Everyone" subtitle="Rank, points, correct / incorrect, accuracy" icon={<Users className="h-5 w-5" />} />
+        <CardHeader title="Alle Teilnehmer" subtitle="Rang, Punkte, richtig / falsch, Trefferquote" icon={<Users className="h-5 w-5" />} />
         <CardBody>
           <LeaderboardTable rows={reveal.leaderboard} />
         </CardBody>
@@ -942,14 +942,14 @@ function StudentResults({
 
       <Card>
         <CardHeader
-          title="Your answers"
-          subtitle="Correct answers and points â€” now public"
+          title="Deine Antworten"
+          subtitle="Richtige Antworten und Punkte – jetzt öffentlich"
           icon={<CheckCircle2 className="h-5 w-5" />}
         />
         <CardBody className="space-y-3">
           {quiz.questions.map((q, i) => {
             const correctId = correctByQuestion.get(q.id) ?? null;
-            const correctText = q.answers.find((a) => a.id === correctId)?.text ?? "â€”";
+            const correctText = q.answers.find((a) => a.id === correctId)?.text ?? "–";
             const yours = reveal.yourResponses.find((r) => r.questionId === q.id) ?? null;
             const yourId = yours?.answerId ?? null;
             const yourText = q.answers.find((a) => a.id === yourId)?.text ?? null;
@@ -974,23 +974,23 @@ function StudentResults({
                   </p>
                   <span className="shrink-0 text-xs font-semibold">
                     {isCorrect ? (
-                      <span className="text-emerald-600">+{yours?.points ?? 0} pts âœ“</span>
+                      <span className="text-emerald-600">+{yours?.points ?? 0} Pkt. ✓</span>
                     ) : isUnanswered ? (
-                      <span className="text-gray-400">Unanswered</span>
+                      <span className="text-gray-400">Nicht beantwortet</span>
                     ) : (
-                      <span className="text-brand-600">âœ— 0 pts</span>
+                      <span className="text-brand-600">✗ 0 Pkt.</span>
                     )}
                   </span>
                 </div>
                 <div className="mt-2 space-y-1 text-sm">
                   <p className="text-gray-500">
-                    Your answer:{" "}
+                    Deine Antwort:{" "}
                     <span className={cn("font-medium", isCorrect ? "text-emerald-600" : isUnanswered ? "text-gray-400" : "text-brand-600")}>
-                      {yourText ?? "Unanswered"}
+                      {yourText ?? "Nicht beantwortet"}
                     </span>
                   </p>
                   <p className="text-gray-500">
-                    Correct answer: <span className="font-medium text-ink-900">{correctText}</span>
+                    Richtige Antwort: <span className="font-medium text-ink-900">{correctText}</span>
                   </p>
                 </div>
               </div>
@@ -1002,7 +1002,7 @@ function StudentResults({
       <div className="flex justify-center pb-4">
         <Link href="/quiz">
           <Button size="lg" icon={<ArrowRight className="h-5 w-5" />}>
-            Back to quizzes
+            Zurück zur Quiz-Übersicht
           </Button>
         </Link>
       </div>
@@ -1023,7 +1023,7 @@ function StudentSkeleton({ text }: { text: string }) {
   );
 }
 
-/** Compact header control for the dark quiz screen (Back / Next / Finish Quiz). */
+/** Compact header control for the dark quiz screen (back / next / finish quiz). */
 function QuizNavButton({
   icon,
   label,
@@ -1086,7 +1086,7 @@ function StudentShell({
               {quizTitle ?? "Quiz"}
             </p>
             <p className={cn("text-[11px] uppercase tracking-wide", dark ? "text-white/50" : "text-gray-400")}>
-              Room{" "}
+              Raum{" "}
               <span className={cn("font-mono font-bold", dark ? "text-lime-300" : "text-gold-600")}>
                 {code}
               </span>
@@ -1122,11 +1122,11 @@ function StudentShell({
                       dark ? "bg-amber-300" : "bg-gold-500",
                     )}
                   />{" "}
-                  Connecting
+                  Verbinden
                 </>
               ) : (
                 <>
-                  <WifiOff className="h-3 w-3" /> Offline â€” retrying
+                  <WifiOff className="h-3 w-3" /> Offline – neuer Versuch
                 </>
               )}
             </span>
