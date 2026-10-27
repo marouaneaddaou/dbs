@@ -118,6 +118,22 @@ export const BOX_GROUPS: readonly BoxGroup[] = [
       "Nasser",
     ],
   },
+  {
+    id: "group-e-1600",
+    letter: "E",
+    label: "Gruppe E: 16.00 Uhr",
+    names: [
+      "Soufiane Soga",
+      "Noufal Kouita",
+      "Aya Blutmizguida",
+      "Imad Chibane",
+      "Moslih Zineb",
+      "Saida Zaikaoumi",
+      "Ghita Bouzeggar",
+      "Hossam El Adel",
+      "Amine Ajloca",
+    ],
+  },
 ];
 
 export const BOX_GROUP_IDS: ReadonlySet<string> = new Set(BOX_GROUPS.map((group) => group.id));

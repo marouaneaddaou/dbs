@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Gift, Plus, Save, UserPlus, Users, Wand2, X } from "lucide-react";
+import { Gift, MessageCircle, Plus, Save, UserPlus, Users, Wand2, X } from "lucide-react";
 import type { BoxConfig, BoxContent, BoxContentType } from "@/types/boxes";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -11,6 +11,39 @@ import { useToast } from "@/components/ui/Toast";
 import { emptyBoxNumbers } from "@/lib/boxes";
 import { normalizeNames, parseBoxList, parseNameList } from "@/lib/randomization";
 import { uid } from "@/lib/storage";
+
+const SPRECHEN_VOCABULARY = [
+  "Der Vorname",
+  "Der Nachname",
+  "Das Alter",
+  "Der Wohnort",
+  "Die Herkunft",
+  "Der Beruf",
+  "Das Studium",
+  "Die Sprachen",
+  "Die Hobbys",
+  "Die Ausstellung",
+  "Deutschland",
+  "Das Lieblingsessen",
+  "Die Freizeit",
+  "Das Geburtsdatum",
+  "Der Deutschkurs",
+  "Das Sprachniveau",
+  "Die Telefonnummer",
+  "Das Lieblingsgetränk",
+  "Die Geschwister",
+  "Das Museum",
+  "Die Kinder",
+  "Die Adresse",
+  "Das Frühstück",
+  "Das Mittagessen",
+  "Der Geburtsort",
+  "Die Mannschaft",
+  "Das Wetter",
+  "Das Restaurant",
+  "Die Lebensmittel",
+  "Die Sprechstunde",
+];
 
 const CONTENT_TYPES: { value: BoxContentType; label: string }[] = [
   { value: "gift", label: "Geschenk" },
@@ -163,6 +196,16 @@ export function BoxSetup({
     toast.success(`${count} Beispielboxen wurden gefüllt.`);
   }
 
+  function applySprechenTemplate() {
+    const count = SPRECHEN_VOCABULARY.length;
+    const next = syncContents(config.contents, count);
+    SPRECHEN_VOCABULARY.forEach((text, i) => {
+      next[i] = { ...next[i], type: "text", text };
+    });
+    patch({ boxCount: count, contents: next });
+    toast.success(`Vorlage "Boxes für Sprechen" angewendet. ${count} Boxen wurden gefüllt.`);
+  }
+
   const emptyBoxes = emptyBoxNumbers(config);
 
   return (
@@ -301,9 +344,29 @@ export function BoxSetup({
             icon={<Wand2 className="h-5 w-5" />}
           />
           <CardBody className="space-y-4">
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Vorlagen</p>
+              <button
+                type="button"
+                onClick={applySprechenTemplate}
+                className="group flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white p-4 text-left shadow-card transition-all hover:-translate-y-0.5 hover:border-gold-300 hover:shadow-card-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-2"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-50 text-gold-600 ring-1 ring-gold-200">
+                    <MessageCircle className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-ink-900">Boxes für Sprechen</p>
+                    <p className="text-xs text-gray-500">30 Boxen mit deutschem Vokabular für Sprechübungen</p>
+                  </div>
+                </div>
+                <Plus className="h-4 w-4 text-gray-400 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </div>
+
             <Field
               label="Liste einfügen – eine Box pro Zeile"
-              hint={'Optionale Präfixe wie „Box 1:“ werden entfernt. Die Zeilen füllen Box 1, Box 2, … der Reihe nach.'}
+              hint={'Optionale Präfixe wie "Box 1:" werden entfernt. Die Zeilen füllen Box 1, Box 2, … der Reihe nach.'}
             >
               <Textarea
                 value={pasteBoxes}
