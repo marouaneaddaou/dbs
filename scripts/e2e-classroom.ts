@@ -1,4 +1,4 @@
-import { chromium, type Browser, type Page } from "playwright";
+﻿import { chromium, type Browser, type Page } from "playwright";
 
 /**
  * Classroom end-to-end check (Playwright, real browsers over WebRTC).
@@ -38,7 +38,7 @@ const seededQuiz = {
 };
 
 function log(step: string) {
-  console.log(`  · ${step}`);
+  console.log(`  Â· ${step}`);
 }
 
 async function waitFor(page: Page, text: string, timeout = 30_000): Promise<void> {
@@ -50,7 +50,7 @@ async function answerQuestion(page: Page, label: string, qIndex: number, action:
   await waitFor(page, `Question ${qIndex} of 3`, 30_000);
   await page.getByRole("button", { name: /right choice|wrong choice/ }).first().click();
   await page.getByRole("button", { name: action, exact: true }).click();
-  log(`${label} answered question ${qIndex} → ${action}`);
+  log(`${label} answered question ${qIndex} â†’ ${action}`);
 }
 
 async function run(): Promise<void> {
@@ -159,7 +159,7 @@ async function run(): Promise<void> {
       /pts — correct!/.test(aAfterAnswer) && aAfterAnswer.includes("Your score:"),
     );
     await studentA.getByRole("button", { name: "Next", exact: true }).click();
-    log("A answered question 1 → Next");
+    log("A answered question 1 â†’ Next");
     await waitFor(studentA, "Question 2 of 3", 15_000);
     check("student A: Next advances to question 2", true);
 
@@ -181,7 +181,7 @@ async function run(): Promise<void> {
       teacherMid.includes("1/3 answered"),
     );
 
-    /* ------------------- A finishes → German wait screen -------------------- */
+    /* ------------------- A finishes â†’ German wait screen -------------------- */
     log("student A finishes the quiz");
     await answerQuestion(studentA, "A", 2, "Next");
     await answerQuestion(studentA, "A", 3, "Finish Quiz");
@@ -194,7 +194,7 @@ async function run(): Promise<void> {
     );
     check("student A: finished screen still shows the running total", aMidBody.includes("Your score:"));
 
-    /* --------------------------- B finishes → reveal ------------------------ */
+    /* --------------------------- B finishes â†’ reveal ------------------------ */
     log("student B answers everything (wrong pick on Q1 to verify red/green feedback)");
     await waitFor(studentB, "Question 1 of 3", 30_000);
     await studentB.getByRole("button", { name: /wrong choice 1a/ }).click();
@@ -213,7 +213,7 @@ async function run(): Promise<void> {
       await studentB.getByRole("button", { name: /wrong choice 1b/ }).isDisabled(),
     );
     await studentB.getByRole("button", { name: "Next", exact: true }).click();
-    log("B answered question 1 (wrong) → Next");
+    log("B answered question 1 (wrong) â†’ Next");
     await answerQuestion(studentB, "B", 2, "Next");
     await answerQuestion(studentB, "B", 3, "Finish Quiz");
 
@@ -227,7 +227,7 @@ async function run(): Promise<void> {
     check("student A: sees the shared leaderboard", aResult.includes("StudentB"));
     check("student A: sees answer key after reveal", aResult.includes("Correct answer"));
     check("student A: podium visible", aResult.includes("Top 3"));
-    check("student A: reveal shows per-question earned points", /pts ✓/.test(aResult));
+    check("student A: reveal shows per-question earned points", /pts âœ“/.test(aResult));
     check(
       "no answer was lost across refresh — nothing shows Unanswered",
       !aResult.includes("Unanswered"),

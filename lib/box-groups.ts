@@ -1,4 +1,4 @@
-import type { BoxConfig } from "@/types/boxes";
+﻿import type { BoxConfig } from "@/types/boxes";
 
 export interface BoxGroup {
   id: string;
@@ -34,6 +34,8 @@ export const BOX_GROUPS: readonly BoxGroup[] = [
       "Sanae",
       "Rachid",
       "Yassin",
+      "MohamedB",
+      "Azzedin",
     ],
   },
   {

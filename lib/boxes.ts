@@ -1,4 +1,4 @@
-import type { BoxConfig, BoxContent, BoxGame, BoxSelection } from "@/types/boxes";
+﻿import type { BoxConfig, BoxContent, BoxGame, BoxSelection } from "@/types/boxes";
 import { buildBoxIndexes, buildContentsOrder, shuffle } from "@/lib/randomization";
 import { uid } from "@/lib/storage";
 
@@ -118,6 +118,9 @@ export function openBox(game: BoxGame, config: BoxConfig, boxIndex: number): Ope
   if (game.phase !== "selecting" || !game.currentParticipant) {
     return { game, selection: null, error: "Ziehe zuerst eine teilnehmende Person." };
   }
+  if (config.boxCount <= 0) {
+    return { game, selection: null, error: "Keine Boxen konfiguriert." };
+  }
   if (!game.availableBoxes.includes(boxIndex)) {
     return { game, selection: null, error: "Diese Box ist bereits geöffnet." };
   }
@@ -183,6 +186,7 @@ export function createEmptyConfig(): BoxConfig {
 
 /** Box numbers (1-based) that have no content yet — used for validation. */
 export function emptyBoxNumbers(config: BoxConfig): number[] {
+  if (config.boxCount <= 0) return [];
   return Array.from({ length: config.boxCount }, (_, i) => i + 1).filter(
     (n) => !(config.contents[n - 1]?.text.trim() ?? ""),
   );

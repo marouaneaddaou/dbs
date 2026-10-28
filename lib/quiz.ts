@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   QuizAnswer,
   QuizHistoryEntry,
   QuizHistoryMap,
@@ -328,7 +328,7 @@ export function scorePercent(row: Pick<QuizResultRow, "points" | "maxPoints">): 
 }
 
 /**
- * Cross-run leaderboard ordering: points → correct answers → total response
+ * Cross-run leaderboard ordering: points â†’ correct answers â†’ total response
  * time on correct answers (faster first). Ties after all three share a rank.
  */
 export function rankQuizResults(rows: QuizResultRow[]): QuizResultRow[] {

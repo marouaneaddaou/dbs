@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { Boxes, Info, Plus, Settings2, Trophy } from "lucide-react";
@@ -194,9 +194,7 @@ function BoxesPageContent() {
         <div className="mb-6 flex items-start gap-3 rounded-2xl border border-gold-200 bg-gold-50 p-4 text-sm text-gray-700">
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-gold-600" />
           <p>
-            Jede Person ist pro Runde genau einmal an der Reihe – bei 40 Namen und 30 Boxen kommen die
-            letzten 10 Namen automatisch in der nächsten Runde dran. „Runde wiederholen“ mischt nur die
-            Boxinhalte neu und ändert nie die Reihenfolge der Teilnehmenden.
+            Jede Person ist pro Runde genau einmal an der Reihe – bei 40 Namen und 30 Boxen kommen die letzten 10 Namen automatisch in der nächsten Runde dran. „Runde wiederholen“ mischt nur die Boxinhalte neu und ändert nie die Reihenfolge der Teilnehmenden.
           </p>
         </div>
 
@@ -214,7 +212,7 @@ function BoxesPageContent() {
         <ConfirmDialog
           open={!!confirmDelete}
           title="Dieses Spiel löschen?"
-          description={confirmDelete ? `„${confirmDelete.name}“ und der gespeicherte Spielstand werden dauerhaft gelöscht.` : undefined}
+          description={confirmDelete ? `„${confirmDelete.name}„ und der gespeicherte Spielstand werden dauerhaft gelöscht.` : undefined}
           confirmLabel="Löschen"
           onConfirm={handleDelete}
           onCancel={() => setConfirmDelete(null)}
@@ -261,8 +259,8 @@ function BoxesPageContent() {
             }
             setStage("play");
           }}
-          disabled={config.participants.length === 0 || hasEmptyBox}
-          title={hasEmptyBox ? "Bitte fülle zuerst jede Box mit Inhalt" : undefined}
+          disabled={config.participants.length === 0 || (config.boxCount > 0 && hasEmptyBox)}
+          title={config.boxCount > 0 && hasEmptyBox ? "Bitte fülle zuerst jede Box mit Inhalt" : undefined}
           className={cn(
             "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
             stage === "play" ? "bg-brand-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-900",

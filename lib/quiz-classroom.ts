@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Classroom quiz protocol — teacher-hosted shared rooms.
  *
  * The teacher's browser is the host of the live session (PeerJS/WebRTC data
@@ -322,7 +322,7 @@ export class HostSession {
     return question?.answers.find((a) => a.correct)?.id ?? "";
   }
 
-  /** Response → wire shape for the owning student, incl. own-answer feedback. */
+  /** Response â†’ wire shape for the owning student, incl. own-answer feedback. */
   private toAnswerState(response: QuizResponse): StudentAnswerState {
     return {
       questionId: response.questionId,

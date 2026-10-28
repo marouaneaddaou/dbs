@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Reusable, SSR-safe localStorage utilities.
  *
  * Everything the app persists lives under a versioned key so we can migrate
@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
   quizRooms: "dbs_quiz_rooms_v1",
   quizSessions: "dbs_quiz_sessions_v1",
   quizHistory: "dbs_quiz_history_v1",
+  boxGroupMembers: "dbs_box_group_members_v1",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -61,6 +62,7 @@ export function writeJSON<T>(key: string, value: T): boolean {
     touchMeta();
     try {
       window.dispatchEvent(new Event("dbs-storage-written"));
+      window.dispatchEvent(new StorageEvent("storage", { key }));
     } catch {
       /* ignore */
     }

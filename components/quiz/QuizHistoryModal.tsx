@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { ArrowLeft, Clock, Crown, Trophy, Users } from "lucide-react";
@@ -80,7 +80,7 @@ export function QuizHistoryModal({
                 name: s.name,
                 points: s.points,
                 rank: s.rank,
-                subtitle: `${s.correct} richtig · ${s.accuracy} %`,
+                subtitle: `${s.correct} richtig Â· ${s.accuracy} %`,
               }))}
             />
           ) : (
@@ -138,7 +138,7 @@ export function QuizHistoryModal({
                       {winner ? `${winner.name} gewinnt mit ${winner.points} Pkt.` : "Abgeschlossener Durchlauf"}
                     </span>
                     <span className="mt-0.5 block text-xs text-gray-500">
-                      {formatDate(run.finishedAt)} · {run.playerCount} Spieler · {run.questionCount} Fragen
+                      {formatDate(run.finishedAt)} Â· {run.playerCount} Spieler Â· {run.questionCount} Fragen
                     </span>
                   </span>
                   <Crown className="h-4 w-4 shrink-0 text-gold-500" />

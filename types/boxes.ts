@@ -50,4 +50,8 @@ export interface BoxGame {
   history: BoxSelection[];
   lastResult: BoxSelection | null;
   updatedAt: number;
+  /** For 0-box lottery: names already drawn in the current round */
+  zeroBoxDrawn?: string[];
+  /** For 0-box lottery: current round identifier */
+  zeroBoxRound?: number;
 }

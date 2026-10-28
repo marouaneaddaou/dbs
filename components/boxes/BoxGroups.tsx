@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { ArrowRight, Clock, Users } from "lucide-react";
 import type { BoxGroup } from "@/lib/box-groups";

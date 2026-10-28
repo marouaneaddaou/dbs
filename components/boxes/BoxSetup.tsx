@@ -122,7 +122,7 @@ export function BoxSetup({
   }
 
   function setBoxCount(value: number) {
-    const clamped = Math.max(1, Math.min(200, Math.floor(value) || 1));
+    const clamped = Math.max(0, Math.min(200, Math.floor(value) || 0));
     patch({ boxCount: clamped, contents: syncContents(config.contents, clamped) });
   }
 
@@ -241,7 +241,7 @@ export function BoxSetup({
                 </Button>
                 <input
                   type="number"
-                  min={1}
+                  min={0}
                   max={200}
                   value={config.boxCount}
                   onChange={(e) => setBoxCount(Number(e.target.value))}

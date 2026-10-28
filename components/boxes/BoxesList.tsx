@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Boxes, Copy, Gift, Play, Plus, Settings2, Trash2, Users } from "lucide-react";
 import type { BoxConfig, BoxGame } from "@/types/boxes";

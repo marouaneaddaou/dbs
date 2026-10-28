@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -17,11 +17,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 /**
  * `/quiz/room` dispatcher.
  *
- * - `?host=1` → the host screen for admins (this device has a session);
+ * - `?host=1` â†’ the host screen for admins (this device has a session);
  *   everyone else opening the shared link — students on their own devices —
  *   gets the room's normal join screen (username form) so they can enter
  *   their name and join. Teachers can still sign in from that screen.
- * - otherwise → student join screen (username + room code, own device)
+ * - otherwise â†’ student join screen (username + room code, own device)
  *
  * On browsers that store quiz rooms (the admin's), a student link whose room
  * was deleted shows a clear error instead of an endless connecting screen.

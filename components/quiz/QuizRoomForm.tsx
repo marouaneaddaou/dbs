@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import {
@@ -265,7 +265,7 @@ export function QuizRoomForm({
         <Card>
           <CardHeader
             title="Fragen"
-            subtitle={`${questions.length} Frage(n) · bis zu ${maxTotalPoints.toLocaleString("de-DE")} Punkte insgesamt`}
+            subtitle={`${questions.length} Frage(n) Â· bis zu ${maxTotalPoints.toLocaleString("de-DE")} Punkte insgesamt`}
             icon={<ListChecks className="h-5 w-5" />}
             action={
               <Button size="sm" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setQuestions((p) => [...p, newQuestion()])}>

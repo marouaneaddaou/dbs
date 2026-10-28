@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { KeyRound, LogIn, Trophy, Vote } from "lucide-react";
 import { DbsLogo } from "@/components/layout/DbsLogo";
 import { Button } from "@/components/ui/Button";
@@ -73,3 +73,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

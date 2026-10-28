@@ -1,4 +1,4 @@
-import type { SaveTracking } from "@/types/persistence";
+﻿import type { SaveTracking } from "@/types/persistence";
 
 export interface QuizAnswer {
   id: string;

@@ -1,4 +1,4 @@
-/** Browser file download / upload helpers used by the JSON import & export features. */
+﻿/** Browser file download / upload helpers used by the JSON import & export features. */
 
 export function downloadJSON(filename: string, data: unknown): void {
   if (typeof window === "undefined") return;

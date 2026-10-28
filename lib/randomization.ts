@@ -1,4 +1,4 @@
-import type { BoxContent } from "@/types/boxes";
+﻿import type { BoxContent } from "@/types/boxes";
 
 /** Fisher–Yates shuffle. Returns a new array; never mutates the input. */
 export function shuffle<T>(input: readonly T[]): T[] {

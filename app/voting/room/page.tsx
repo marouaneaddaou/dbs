@@ -1,4 +1,4 @@
-import { ClientRedirect } from "@/components/ClientRedirect";
+﻿import { ClientRedirect } from "@/components/ClientRedirect";
 
 /** Legacy URL — the voting room now lives under /votes. */
 export default function VotingRoomRedirectPage() {

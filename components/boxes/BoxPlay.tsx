@@ -83,6 +83,22 @@ export function BoxPlay({
     };
   }, []);
 
+  useEffect(() => {
+    if (config.boxCount === 0) {
+      setGame((prev) => {
+        if (prev.zeroBoxDrawn === undefined || prev.zeroBoxRound === undefined) {
+          return {
+            ...prev,
+            zeroBoxDrawn: prev.zeroBoxDrawn || [],
+            zeroBoxRound: prev.zeroBoxRound || 1,
+            updatedAt: Date.now(),
+          };
+        }
+        return prev;
+      });
+    }
+  }, [config.boxCount, setGame]);
+
   const openedCount = config.boxCount - game.availableBoxes.length;
   const remaining = remainingThisCycle(game);
   const exhausted = allBoxesOpened(game);
@@ -99,6 +115,63 @@ export function BoxPlay({
   }
 
   function handleDraw() {
+    if (config.participants.length === 0) {
+      toast.error("Es sind keine Teilnehmenden zum Ziehen vorhanden.");
+      return;
+    }
+
+    if (config.boxCount === 0) {
+      setDrawing(true);
+      const names = config.participants;
+      const interval = window.setInterval(() => {
+        const drawn = (game.zeroBoxDrawn || []);
+        const available = names.filter((n) => !drawn.includes(n));
+        const pool = available.length > 0 ? available : names;
+        setPreviewName(pool[Math.floor(Math.random() * pool.length)] ?? "");
+      }, 70);
+      const timeout = window.setTimeout(() => {
+        window.clearInterval(interval);
+        setGame((prev) => {
+          const drawn = prev.zeroBoxDrawn || [];
+          const available = names.filter((n) => !drawn.includes(n));
+          if (available.length === 0) {
+            const shuffledPool = [...names].sort(() => Math.random() - 0.5);
+            const chosen = shuffledPool[0] ?? null;
+            const newDrawn = chosen ? [chosen] : [];
+            const newRound = (prev.zeroBoxRound || 0) + 1;
+            setPreviewName(null);
+            setDrawing(false);
+            toast.toast("Neuer Durchlauf gestartet – alle kommen wieder dran.", "info");
+            return {
+              ...prev,
+              currentParticipant: chosen,
+              phase: chosen ? "selecting" : prev.phase,
+              status: prev.status === "idle" ? "running" : prev.status,
+              zeroBoxDrawn: newDrawn,
+              zeroBoxRound: newRound,
+              updatedAt: Date.now(),
+            };
+          }
+          const shuffledPool = [...available].sort(() => Math.random() - 0.5);
+          const chosen = shuffledPool[0] ?? null;
+          const newDrawn = chosen ? [...drawn, chosen] : drawn;
+          setPreviewName(null);
+          setDrawing(false);
+          return {
+            ...prev,
+            currentParticipant: chosen,
+            phase: chosen ? "selecting" : prev.phase,
+            status: prev.status === "idle" ? "running" : prev.status,
+            zeroBoxDrawn: newDrawn,
+            zeroBoxRound: prev.zeroBoxRound || 1,
+            updatedAt: Date.now(),
+          };
+        });
+      }, 950);
+      timers.current.push(interval, timeout);
+      return;
+    }
+
     if (game.status !== "running") {
       toast.error("Starte oder setze das Spiel zuerst fort.");
       return;
@@ -153,11 +226,23 @@ export function BoxPlay({
   }
 
   function handleReset() {
+    if (config.boxCount === 0) {
+      setGame((prev) => ({
+        ...resetGame(config),
+        zeroBoxDrawn: [],
+        zeroBoxRound: 1,
+      }));
+      setConfirmReset(false);
+      setReveal(null);
+      setPreviewName(null);
+      toast.success("Spiel zurA�ckgesetzt.");
+      return;
+    }
     setGame(resetGame(config));
     setConfirmReset(false);
     setReveal(null);
     setPreviewName(null);
-    toast.success("Spiel zurückgesetzt.");
+    toast.success("Spiel zurA�ckgesetzt.");
   }
 
   return (
@@ -165,59 +250,123 @@ export function BoxPlay({
       {/* Status bar */}
       <Card>
         <CardBody className="flex flex-wrap items-center gap-3">
-          <Badge tone={game.status === "running" ? "success" : game.status === "paused" ? "warning" : "neutral"}>
-            {statusLabel(game.status)}
-          </Badge>
-          <Badge tone="brand">Runde {game.round}</Badge>
-          <Badge tone="info">Durchlauf {game.cycle}</Badge>
-          <Badge tone="neutral">
-            <Users className="h-3 w-3" /> {remaining} in diesem Durchlauf übrig
-          </Badge>
-          <Badge tone="neutral">
-            <Gift className="h-3 w-3" /> {game.availableBoxes.length} von {config.boxCount} Boxen übrig
-          </Badge>
+          {config.boxCount === 0 ? (
+            <>
+              <Badge tone="brand">Namenslotterie</Badge>
+              <Badge tone="neutral">
+                <Users className="h-3 w-3" /> {config.participants.length} Teilnehmende
+              </Badge>
+            </>
+          ) : (
+            <>
+              <Badge tone={game.status === "running" ? "success" : game.status === "paused" ? "warning" : "neutral"}>
+                {statusLabel(game.status)}
+              </Badge>
+              <Badge tone="brand">Runde {game.round}</Badge>
+              <Badge tone="info">Durchlauf {game.cycle}</Badge>
+              <Badge tone="neutral">
+                <Users className="h-3 w-3" /> {remaining} in diesem Durchlauf übrig
+              </Badge>
+              <Badge tone="neutral">
+                <Gift className="h-3 w-3" /> {game.availableBoxes.length} von {config.boxCount} Boxen übrig
+              </Badge>
+            </>
+          )}
 
           <div className="ml-auto flex flex-wrap gap-2">
-            {game.status === "idle" ? (
-              <Button size="sm" icon={<Play className="h-4 w-4" />} onClick={handleStart}>
-                Spiel starten
-              </Button>
-            ) : null}
-            {game.status === "running" ? (
-              <Button size="sm" variant="secondary" icon={<Pause className="h-4 w-4" />} onClick={() => setGame(pauseGame(game))}>
-                Pausieren
-              </Button>
-            ) : null}
-            {game.status === "paused" ? (
-              <Button size="sm" icon={<Play className="h-4 w-4" />} onClick={() => setGame(resumeGame(game))}>
-                Fortsetzen
-              </Button>
-            ) : null}
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<Repeat className="h-4 w-4" />}
-              onClick={handleRepeatRound}
-              disabled={openedCount === 0}
-            >
-              Runde wiederholen
-            </Button>
-            <Button size="sm" variant="danger" icon={<RotateCcw className="h-4 w-4" />} onClick={() => setConfirmReset(true)}>
-              Zurücksetzen
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onExit}>
-              Einrichtung
-            </Button>
+            {config.boxCount === 0 ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<RotateCcw className="h-4 w-4" />}
+                  onClick={() => setConfirmReset(true)}
+                >
+                  Neue Runde
+                </Button>
+                <Button size="sm" variant="ghost" onClick={onExit}>
+                  Einrichtung
+                </Button>
+              </>
+            ) : (
+              <>
+                {game.status === "idle" ? (
+                  <Button size="sm" icon={<Play className="h-4 w-4" />} onClick={handleStart}>
+                    Spiel starten
+                  </Button>
+                ) : null}
+                {game.status === "running" ? (
+                  <Button size="sm" variant="secondary" icon={<Pause className="h-4 w-4" />} onClick={() => setGame(pauseGame(game))}>
+                    Pausieren
+                  </Button>
+                ) : null}
+                {game.status === "paused" ? (
+                  <Button size="sm" icon={<Play className="h-4 w-4" />} onClick={() => setGame(resumeGame(game))}>
+                    Fortsetzen
+                  </Button>
+                ) : null}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<Repeat className="h-4 w-4" />}
+                  onClick={handleRepeatRound}
+                  disabled={openedCount === 0}
+                >
+                  Runde wiederholen
+                </Button>
+                <Button size="sm" variant="danger" icon={<RotateCcw className="h-4 w-4" />} onClick={() => setConfirmReset(true)}>
+                  Zurücksetzen
+                </Button>
+                <Button size="sm" variant="ghost" onClick={onExit}>
+                  Einrichtung
+                </Button>
+              </>
+            )}
           </div>
         </CardBody>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+      <div className={config.boxCount === 0 ? "" : "grid gap-6 lg:grid-cols-[1.6fr_1fr]"}>
         {/* Board */}
         <div className="space-y-6">
           <Card className="overflow-hidden">
             <CardBody className="space-y-5">
               {/* Turn / draw area */}
+              {config.boxCount === 0 ? (
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
+                  <div className="space-y-4">
+                    {drawing ? (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Los wird gezogen…</p>
+                        <p className="mt-2 text-3xl font-extrabold text-gold-600 sm:text-4xl">{previewName}</p>
+                      </div>
+                    ) : game.currentParticipant ? (
+                      <div className="animate-scale-in">
+                        <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Gezogen</p>
+                        <p className="mt-2 text-3xl font-extrabold text-ink-900 sm:text-4xl">{game.currentParticipant}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.25em] text-gray-400">Namenslotterie</p>
+                        <p className="mt-2 text-2xl font-bold text-ink-900">Ziehe einen Namen aus der Liste</p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button
+                        icon={<Dices className="h-4 w-4" />}
+                        onClick={handleDraw}
+                        disabled={drawing || config.participants.length === 0}
+                      >
+                        Random
+                      </Button>
+                    </div>
+                    {config.participants.length === 0 ? (
+                      <p className="text-xs text-gray-500">Keine Teilnehmenden vorhanden.</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
               <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-center">
                 {game.status === "idle" ? (
                   <p className="py-4 text-sm text-gray-500">
@@ -274,6 +423,7 @@ export function BoxPlay({
                   ) : null}
                 </div>
               </div>
+              )}
 
               {/* Box grid */}
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
@@ -303,6 +453,7 @@ export function BoxPlay({
         </div>
 
         {/* Sidebar */}
+        {config.boxCount === 0 ? null : (
         <div className="space-y-6">
           <Card>
             <CardHeader title="Live-Statistik" icon={<Trophy className="h-5 w-5" />} />
@@ -345,6 +496,7 @@ export function BoxPlay({
             </CardBody>
           </Card>
         </div>
+        )}
       </div>
 
       {/* Reveal modal */}
@@ -390,9 +542,13 @@ export function BoxPlay({
 
       <ConfirmDialog
         open={confirmReset}
-        title="Das gesamte Spiel zurücksetzen?"
-        description="Alle Auswahlen werden gelöscht, der Durchlauf startet neu und alle Boxen werden neu gefüllt. Einrichtung und Namen bleiben erhalten."
-        confirmLabel="Spiel zurücksetzen"
+        title={config.boxCount === 0 ? "Neue Runde starten?" : "Das gesamte Spiel zurA�cksetzen?"}
+        description={
+          config.boxCount === 0
+            ? "Alle bereits gezogenen Namen werden zurA�ckgesetzt. Alle Teilnehmenden werden wieder zum Ziehen freigegeben."
+            : "Alle Auswahlen werden gelAscht, der Durchlauf startet neu und alle Boxen werden neu gefA�llt. Einrichtung und Namen bleiben erhalten."
+        }
+        confirmLabel={config.boxCount === 0 ? "Neue Runde starten" : "Spiel zurA�cksetzen"}
         onConfirm={handleReset}
         onCancel={() => setConfirmReset(false)}
       />
