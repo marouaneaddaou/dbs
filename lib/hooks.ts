@@ -40,6 +40,7 @@ export function useLocalStorage<T>(key: string, fallback: T) {
     (next: T | ((prev: T) => T)) => {
       setValue((prev) => {
         const resolved = typeof next === "function" ? (next as (p: T) => T)(prev) : next;
+        if (Object.is(resolved, prev)) return prev;
         writeJSON(keyRef.current, resolved);
         return resolved;
       });

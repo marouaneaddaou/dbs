@@ -58,7 +58,9 @@ export function readJSON<T>(key: string, fallback: T): T {
 export function writeJSON<T>(key: string, value: T): boolean {
   if (!isBrowser()) return false;
   try {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    const serialized = JSON.stringify(value);
+    if (window.localStorage.getItem(key) === serialized) return true;
+    window.localStorage.setItem(key, serialized);
     touchMeta();
     try {
       window.dispatchEvent(new Event("dbs-storage-written"));

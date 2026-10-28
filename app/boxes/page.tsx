@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Boxes, Info, Plus, Settings2, Trophy } from "lucide-react";
 import type { BoxConfig, BoxGame } from "@/types/boxes";
 import { STORAGE_KEYS } from "@/lib/storage";
@@ -59,6 +59,19 @@ function BoxesPageContent() {
   const manualConfigs = useMemo(
     () => configs.filter((c) => !BOX_GROUP_IDS.has(c.id)),
     [configs],
+  );
+
+  const setGame = useCallback(
+    (next: BoxGame | ((prev: BoxGame) => BoxGame)) => {
+      if (!config) return;
+      setGames((prev) => {
+        const current = prev[config.id] ?? createGame(config);
+        const resolved = typeof next === "function" ? (next as (p: BoxGame) => BoxGame)(current) : next;
+        if (resolved === prev[config.id]) return prev;
+        return { ...prev, [config.id]: resolved };
+      });
+    },
+    [config, setGames],
   );
 
   function updateConfig(next: BoxConfig) {
@@ -284,13 +297,7 @@ function BoxesPageContent() {
         <BoxPlay
           config={config}
           game={game}
-          setGame={(next) =>
-            setGames((prev) => {
-              const current = prev[config.id] ?? createGame(config);
-              const resolved = typeof next === "function" ? (next as (p: BoxGame) => BoxGame)(current) : next;
-              return { ...prev, [config.id]: resolved };
-            })
-          }
+          setGame={setGame}
           onExit={() => setStage("setup")}
         />
       ) : (
