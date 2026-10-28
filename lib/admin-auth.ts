@@ -9,14 +9,17 @@ export interface AdminAuthState {
   hydrated: boolean;
 }
 
-async function fetchSession(): Promise<boolean> {
+type SessionCheck = "authed" | "unauthed" | "unknown";
+
+async function fetchSession(): Promise<SessionCheck> {
   try {
     const res = await fetch("/api/admin/session", { cache: "no-store", credentials: "include" });
-    if (!res.ok) return false;
-    const data = await res.json().catch(() => ({}));
-    return data?.authed === true;
+    if (!res.ok) return "unknown";
+    const data = await res.json().catch(() => null);
+    if (!data || typeof data.authed !== "boolean") return "unknown";
+    return data.authed ? "authed" : "unauthed";
   } catch {
-    return false;
+    return "unknown";
   }
 }
 
@@ -52,15 +55,41 @@ export function useAdminAuth(): AdminAuthState {
 
   useEffect(() => {
     let mounted = true;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
+
     const sync = async () => {
-      const authed = await fetchSession();
-      if (mounted) setState({ authed, hydrated: true });
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+      const result = await fetchSession();
+      if (!mounted) return;
+      if (result === "unknown") {
+        attempts += 1;
+        const delay = Math.min(1000 * 2 ** (attempts - 1), 10000);
+        retryTimer = setTimeout(sync, delay);
+        return;
+      }
+      attempts = 0;
+      setState({ authed: result === "authed", hydrated: true });
     };
+
     sync();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") sync();
+    };
     window.addEventListener(AUTH_EVENT, sync);
+    window.addEventListener("online", sync);
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       mounted = false;
+      if (retryTimer) clearTimeout(retryTimer);
       window.removeEventListener(AUTH_EVENT, sync);
+      window.removeEventListener("online", sync);
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 

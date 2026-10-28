@@ -42,6 +42,7 @@ export async function apiPut(data: SharedData, baseRevision: number, ifMatch?: s
     credentials: "include",
     body: JSON.stringify({ data, baseRevision, ifMatch }),
   });
+  if (res.status === 401) throw new Error("unauthorized");
   return (await res.json().catch(() => ({}))) as PutResponse;
 }
 
@@ -67,9 +68,6 @@ export function applySharedDataToLocal(
     writeJSONFn(STORAGE_KEYS.quizRooms, data.quizRooms ?? []);
     writeJSONFn(STORAGE_KEYS.quizSessions, data.quizSessions ?? {});
     writeJSONFn(STORAGE_KEYS.quizHistory, data.quizHistory ?? {});
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("dbs-storage-written"));
-    }
   } catch {
     /* ignore */
   }

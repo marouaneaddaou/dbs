@@ -56,6 +56,48 @@ function statusLabel(status: string): string {
   return labels[status] ?? status;
 }
 
+function completeZeroBoxDraw(
+  prev: BoxGame,
+  names: string[],
+  choice: number,
+  now: number,
+): { game: BoxGame; startedNewCycle: boolean } {
+  const drawn = prev.zeroBoxDrawn || [];
+  const available = names.filter((name) => !drawn.includes(name));
+
+  if (available.length === 0) {
+    const chosen = names.length > 0 ? names[Math.floor(choice * names.length)] ?? null : null;
+    const newDrawn = chosen ? [chosen] : [];
+    return {
+      startedNewCycle: true,
+      game: {
+        ...prev,
+        currentParticipant: chosen,
+        phase: chosen ? "selecting" : prev.phase,
+        status: prev.status === "idle" ? "running" : prev.status,
+        zeroBoxDrawn: newDrawn,
+        zeroBoxRound: (prev.zeroBoxRound || 0) + 1,
+        updatedAt: now,
+      },
+    };
+  }
+
+  const chosen = available[Math.floor(choice * available.length)] ?? null;
+  const newDrawn = chosen ? [...drawn, chosen] : drawn;
+  return {
+    startedNewCycle: false,
+    game: {
+      ...prev,
+      currentParticipant: chosen,
+      phase: chosen ? "selecting" : prev.phase,
+      status: prev.status === "idle" ? "running" : prev.status,
+      zeroBoxDrawn: newDrawn,
+      zeroBoxRound: prev.zeroBoxRound || 1,
+      updatedAt: now,
+    },
+  };
+}
+
 export function BoxPlay({
   config,
   game,
@@ -74,6 +116,11 @@ export function BoxPlay({
   const [reveal, setReveal] = useState<BoxSelection | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const timers = useRef<number[]>([]);
+  const gameRef = useRef(game);
+
+  useEffect(() => {
+    gameRef.current = game;
+  }, [game]);
 
   useEffect(() => {
     const pending = timers.current;
@@ -131,42 +178,15 @@ export function BoxPlay({
       }, 70);
       const timeout = window.setTimeout(() => {
         window.clearInterval(interval);
-        setGame((prev) => {
-          const drawn = prev.zeroBoxDrawn || [];
-          const available = names.filter((n) => !drawn.includes(n));
-          if (available.length === 0) {
-            const shuffledPool = [...names].sort(() => Math.random() - 0.5);
-            const chosen = shuffledPool[0] ?? null;
-            const newDrawn = chosen ? [chosen] : [];
-            const newRound = (prev.zeroBoxRound || 0) + 1;
-            setPreviewName(null);
-            setDrawing(false);
-            toast.toast("Neuer Durchlauf gestartet – alle kommen wieder dran.", "info");
-            return {
-              ...prev,
-              currentParticipant: chosen,
-              phase: chosen ? "selecting" : prev.phase,
-              status: prev.status === "idle" ? "running" : prev.status,
-              zeroBoxDrawn: newDrawn,
-              zeroBoxRound: newRound,
-              updatedAt: Date.now(),
-            };
-          }
-          const shuffledPool = [...available].sort(() => Math.random() - 0.5);
-          const chosen = shuffledPool[0] ?? null;
-          const newDrawn = chosen ? [...drawn, chosen] : drawn;
-          setPreviewName(null);
-          setDrawing(false);
-          return {
-            ...prev,
-            currentParticipant: chosen,
-            phase: chosen ? "selecting" : prev.phase,
-            status: prev.status === "idle" ? "running" : prev.status,
-            zeroBoxDrawn: newDrawn,
-            zeroBoxRound: prev.zeroBoxRound || 1,
-            updatedAt: Date.now(),
-          };
-        });
+        const now = Date.now();
+        const choice = Math.random();
+        const result = completeZeroBoxDraw(gameRef.current, names, choice, now);
+        setGame(result.game);
+        setPreviewName(null);
+        setDrawing(false);
+        if (result.startedNewCycle) {
+          toast.toast("Neuer Durchlauf gestartet – alle kommen wieder dran.", "info");
+        }
       }, 950);
       timers.current.push(interval, timeout);
       return;
