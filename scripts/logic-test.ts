@@ -579,10 +579,11 @@ ok("four groups with the expected names and roster sizes", () => {
   assert.deepEqual(
     BOX_GROUPS.map((group) => [group.label, group.names.length]),
     [
-      ["Gruppe A: 10:00 Uhr", 21],
-      ["Gruppe B: 13:00 Uhr", 23],
+      ["Gruppe A: 10:00 Uhr", 23],
+      ["Gruppe B: 13:00 Uhr", 24],
       ["Gruppe C: 16:00 Uhr", 19],
       ["Gruppe D: 18:30 Uhr", 19],
+      ["Gruppe E: 16.00 Uhr", 9],
     ],
   );
   assert.equal(BOX_GROUPS[0].names[0], "Mohammed Ali");

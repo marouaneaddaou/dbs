@@ -66,6 +66,7 @@ export const BOX_GROUPS: readonly BoxGroup[] = [
       "Nour",
       "Abdlmounim",
       "Hanane",
+      "Khalid",
     ],
   },
   {
