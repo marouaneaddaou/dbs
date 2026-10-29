@@ -1,4 +1,4 @@
-import { createEmptySharedState, isSharedStateDocument, SHARED_BLOB_PATH, SharedStateDocument } from "@/lib/shared/schema";
+import { createEmptySharedState, isSharedStateDocument, normalizeSharedStateDocument, SHARED_BLOB_PATH, SharedStateDocument } from "@/lib/shared/schema";
 import { head, get, put } from "@vercel/blob";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { join } from "path";
@@ -35,7 +35,7 @@ export async function readSharedState(): Promise<SharedStateResult> {
       const text = Buffer.concat(chunks).toString("utf8");
       const parsed = JSON.parse(text);
       if (isSharedStateDocument(parsed)) {
-        return { state: parsed, etag };
+        return { state: normalizeSharedStateDocument(parsed), etag };
       }
       return { state: createEmptySharedState(), etag };
     } catch (err: any) {
@@ -51,7 +51,7 @@ export async function readSharedState(): Promise<SharedStateResult> {
     const text = await readFile(path, "utf8");
     const parsed = JSON.parse(text);
     if (isSharedStateDocument(parsed)) {
-      return { state: parsed, etag: null };
+      return { state: normalizeSharedStateDocument(parsed), etag: null };
     }
   } catch {
     // ignore

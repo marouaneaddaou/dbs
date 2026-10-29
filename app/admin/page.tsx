@@ -797,6 +797,8 @@ interface RoomRow {
 }
 
 function RoomTable({ headers, rows }: { headers: string[]; rows: RoomRow[] }) {
+  const rowKeyOccurrences = new Map<string, number>();
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[720px] border-collapse text-left">
@@ -810,18 +812,23 @@ function RoomTable({ headers, rows }: { headers: string[]; rows: RoomRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.key} className="border-b border-gray-100 last:border-0 hover:bg-gray-50/60">
-              {row.cells.map((cell, index) => (
-                <td key={index} className="px-5 py-4 align-middle">
-                  {cell}
+          {rows.map((row) => {
+            const occurrence = rowKeyOccurrences.get(row.key) ?? 0;
+            rowKeyOccurrences.set(row.key, occurrence + 1);
+            const rowKey = `${row.key}#${occurrence}`;
+            return (
+              <tr key={rowKey} className="border-b border-gray-100 last:border-0 hover:bg-gray-50/60">
+                {row.cells.map((cell, index) => (
+                  <td key={index} className="px-5 py-4 align-middle">
+                    {cell}
+                  </td>
+                ))}
+                <td className="px-5 py-4">
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">{row.actions}</div>
                 </td>
-              ))}
-              <td className="px-5 py-4">
-                <div className="flex flex-wrap items-center justify-end gap-1.5">{row.actions}</div>
-              </td>
-            </tr>
-          ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

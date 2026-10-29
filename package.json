@@ -12,6 +12,7 @@
     "test:e2e": "tsx scripts/e2e-classroom.ts",
     "test:e2e:boxes": "tsx scripts/e2e-boxes.ts",
     "test:e2e:groups": "tsx scripts/e2e-box-groups.ts",
+    "test:e2e:participants": "tsx scripts/e2e-participants.ts",
     "test:e2e:modifier": "tsx scripts/e2e-modifier.ts"
   },
   "dependencies": {

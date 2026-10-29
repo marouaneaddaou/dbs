@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
   quizRooms: "dbs_quiz_rooms_v1",
   quizSessions: "dbs_quiz_sessions_v1",
   quizHistory: "dbs_quiz_history_v1",
+  boxParticipants: "dbs_box_participants_v1",
   boxGroupMembers: "dbs_box_group_members_v1",
 } as const;
 

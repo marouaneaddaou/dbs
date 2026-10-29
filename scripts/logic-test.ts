@@ -7,6 +7,13 @@ import type { VotingRoom, VotingRoomRecord } from "../types/voting";
 import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildRoomShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing, maxPointsFor } from "../lib/quiz";
 import type { QuizHistoryMap, QuizPlayer, QuizQuestion, QuizResponse, QuizRoom } from "../types/quiz";
 import { BOX_GROUP_IDS, BOX_GROUPS, GROUP_BOX_COUNT, createGroupConfig, withGroupParticipants } from "../lib/box-groups";
+import {
+  membershipNamesForIds,
+  reconcileParticipantData,
+  registerParticipantNames,
+  syncParticipantDataForConfig,
+} from "../lib/participants";
+import { sanitizeSharedData } from "../lib/shared/schema";
 
 let passed = 0;
 function ok(name: string, fn: () => void) {
@@ -662,6 +669,137 @@ ok("legacy name-filled group configs are cleaned without losing typed questions"
       (content, index) => content.text === "My own question" || content.text !== group.names[index],
     ),
   );
+});
+
+console.log("Persistent participants and group memberships");
+ok("saved memberships survive group reopening instead of resetting to the static roster", () => {
+  const group = BOX_GROUPS[0];
+  const initial = createGroupConfig(group, 1);
+  const keptNames = initial.participants.filter((_, index) => index !== 0);
+  const reopened = withGroupParticipants(initial, group, keptNames);
+  assert.deepEqual(reopened.participants, keptNames);
+  assert.notDeepEqual(reopened.participants, [...group.names]);
+});
+
+ok("participant records stay in the registry after removal and are reused on re-add", () => {
+  const group = BOX_GROUPS[0];
+  const config = createGroupConfig(group, 1);
+  const initial = reconcileParticipantData([config], [], {}, 10);
+  const addedName = "Neue Teilnehmerin";
+  const added = syncParticipantDataForConfig(
+    group.id,
+    [...config.participants, addedName],
+    initial.participants,
+    initial.memberships,
+    20,
+  );
+  const record = added.participants.find((participant) => participant.normalizedName === "neue teilnehmerin");
+  assert.ok(record, "new participant is stored in the registry");
+  assert.ok(added.memberships[group.id].includes(record!.id), "new participant is a group member");
+  assert.ok(
+    membershipNamesForIds(added.participants, added.memberships[group.id]).includes(addedName),
+    "membership resolves to the saved name",
+  );
+
+  const remainingNames = membershipNamesForIds(added.participants, added.memberships[group.id]).filter(
+    (name) => name !== addedName,
+  );
+  const removed = syncParticipantDataForConfig(
+    group.id,
+    remainingNames,
+    added.participants,
+    added.memberships,
+    30,
+  );
+  assert.ok(
+    removed.participants.some((participant) => participant.id === record!.id),
+    "removing a group membership never deletes the participant record",
+  );
+  assert.ok(
+    !membershipNamesForIds(removed.participants, removed.memberships[group.id]).includes(addedName),
+    "the name is removed from that group only",
+  );
+
+  const reAdded = syncParticipantDataForConfig(
+    group.id,
+    [...remainingNames, addedName],
+    removed.participants,
+    removed.memberships,
+    40,
+  );
+  const matches = reAdded.participants.filter(
+    (participant) => participant.normalizedName === "neue teilnehmerin",
+  );
+  assert.equal(matches.length, 1, "re-adding reuses the record instead of duplicating it");
+  assert.equal(matches[0].id, record!.id);
+  assert.ok(
+    membershipNamesForIds(reAdded.participants, reAdded.memberships[group.id]).includes(addedName),
+    "re-added name is a permanent group member again",
+  );
+});
+
+ok("removing a participant from one group leaves their other group memberships intact", () => {
+  const groupA = BOX_GROUPS[0];
+  const groupB = BOX_GROUPS[1];
+  const sharedName = "Geteilter Name";
+  let state = reconcileParticipantData(
+    [createGroupConfig(groupA, 1), createGroupConfig(groupB, 1)],
+    [],
+    {},
+    10,
+  );
+  state = syncParticipantDataForConfig(
+    groupA.id,
+    [...groupA.names, sharedName],
+    state.participants,
+    state.memberships,
+    20,
+  );
+  state = syncParticipantDataForConfig(
+    groupB.id,
+    [...groupB.names, sharedName],
+    state.participants,
+    state.memberships,
+    30,
+  );
+  const namesA = membershipNamesForIds(state.participants, state.memberships[groupA.id]).filter(
+    (name) => name !== sharedName,
+  );
+  state = syncParticipantDataForConfig(
+    groupA.id,
+    namesA,
+    state.participants,
+    state.memberships,
+    40,
+  );
+  assert.ok(
+    !membershipNamesForIds(state.participants, state.memberships[groupA.id]).includes(sharedName),
+    "removed from group A",
+  );
+  assert.ok(
+    membershipNamesForIds(state.participants, state.memberships[groupB.id]).includes(sharedName),
+    "still present in group B",
+  );
+});
+
+ok("legacy shared state is migrated without losing existing names", () => {
+  const group = BOX_GROUPS[0];
+  const config = createGroupConfig(group, 1);
+  const migrated = sanitizeSharedData({
+    boxConfigs: [config],
+    boxGames: {},
+    votingRooms: [],
+    quizRooms: [],
+    quizSessions: {},
+    quizHistory: {},
+  });
+  assert.ok(migrated.boxParticipants.length >= config.participants.length);
+  assert.deepEqual(
+    membershipNamesForIds(migrated.boxParticipants, migrated.boxGroupMemberships[group.id]),
+    config.participants,
+  );
+  const namesAfterRegister = registerParticipantNames(migrated.boxParticipants, config.participants);
+  assert.equal(namesAfterRegister.length, migrated.boxParticipants.length, "existing records are not duplicated");
 });
 
 console.log(`\nAll ${passed} logic checks passed.`);

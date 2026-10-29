@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Boxes, Info, Plus, Settings2, Trophy } from "lucide-react";
 import type { BoxConfig, BoxGame } from "@/types/boxes";
+import type { BoxGroupMemberships, BoxParticipant } from "@/types/participants";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { uid } from "@/lib/storage";
 import { createEmptyConfig, createGame, emptyBoxNumbers } from "@/lib/boxes";
@@ -14,6 +15,13 @@ import {
   withGroupParticipants,
   type BoxGroup,
 } from "@/lib/box-groups";
+import {
+  membershipIdsForNames,
+  membershipNamesForIds,
+  registerParticipantNames,
+  stringArraysEqual,
+  syncParticipantDataForConfig,
+} from "@/lib/participants";
 import { useLocalStorage } from "@/lib/hooks";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminGate } from "@/components/admin/AdminGate";
@@ -47,6 +55,14 @@ function BoxesPageContent() {
     STORAGE_KEYS.boxGames,
     {},
   );
+  const { value: participants, setValue: setParticipants } = useLocalStorage<BoxParticipant[]>(
+    STORAGE_KEYS.boxParticipants,
+    [],
+  );
+  const { value: memberships, setValue: setMemberships } = useLocalStorage<BoxGroupMemberships>(
+    STORAGE_KEYS.boxGroupMembers,
+    {},
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("list");
   const [confirmDelete, setConfirmDelete] = useState<BoxConfig | null>(null);
@@ -59,6 +75,17 @@ function BoxesPageContent() {
   const manualConfigs = useMemo(
     () => configs.filter((c) => !BOX_GROUP_IDS.has(c.id)),
     [configs],
+  );
+
+  const displayGroups = useMemo(
+    () =>
+      BOX_GROUPS.map((group) => {
+        const ids = memberships[group.id];
+        if (ids) return { ...group, names: membershipNamesForIds(participants, ids) };
+        const existing = configs.find((config) => config.id === group.id);
+        return existing ? { ...group, names: [...existing.participants] } : group;
+      }),
+    [configs, memberships, participants],
   );
 
   const setGame = useCallback(
@@ -75,7 +102,20 @@ function BoxesPageContent() {
   );
 
   function updateConfig(next: BoxConfig) {
+    const previous = configs.find((c) => c.id === next.id);
     setConfigs((prev) => prev.map((c) => (c.id === next.id ? next : c)));
+
+    if (previous && stringArraysEqual(previous.participants, next.participants)) return;
+    const synced = syncParticipantDataForConfig(
+      next.id,
+      next.participants,
+      participants,
+      memberships,
+    );
+    if (synced.participants !== participants) setParticipants(synced.participants);
+    if (!stringArraysEqual(memberships[next.id] ?? [], synced.memberships[next.id])) {
+      setMemberships(synced.memberships);
+    }
   }
 
   function savedVersion(target: BoxConfig): BoxConfig {
@@ -87,7 +127,25 @@ function BoxesPageContent() {
 
   function handleOpenGroup(group: BoxGroup) {
     const existing = configs.find((c) => c.id === group.id);
-    const next = existing ? withGroupParticipants(existing, group) : createGroupConfig(group);
+    const savedIds = memberships[group.id];
+    const names =
+      savedIds !== undefined
+        ? membershipNamesForIds(participants, savedIds)
+        : existing
+          ? [...existing.participants]
+          : [...group.names];
+    const next = existing
+      ? withGroupParticipants(existing, group, names)
+      : createGroupConfig(group, Date.now(), names);
+
+    const registry = registerParticipantNames(participants, names);
+    if (registry !== participants) setParticipants(registry);
+    if (savedIds === undefined) {
+      setMemberships((prev) => ({
+        ...prev,
+        [group.id]: membershipIdsForNames(registry, names),
+      }));
+    }
 
     if (next !== existing) {
       setConfigs((prev) => {
@@ -142,6 +200,12 @@ function BoxesPageContent() {
       updatedAt: Date.now(),
     };
     setConfigs((prev) => [copy, ...prev]);
+    const registry = registerParticipantNames(participants, copy.participants);
+    if (registry !== participants) setParticipants(registry);
+    setMemberships((prev) => ({
+      ...prev,
+      [copy.id]: membershipIdsForNames(registry, copy.participants),
+    }));
     setSelectedId(copy.id);
     setStage("setup");
   }
@@ -211,7 +275,7 @@ function BoxesPageContent() {
           </p>
         </div>
 
-        <BoxGroups groups={BOX_GROUPS} onOpen={handleOpenGroup} />
+        <BoxGroups groups={displayGroups} onOpen={handleOpenGroup} />
 
         <BoxesList
           configs={manualConfigs}

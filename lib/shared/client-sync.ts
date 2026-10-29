@@ -50,6 +50,8 @@ export function collectLocalSharedData(readJSONFn: <T>(key: string, fallback: T)
   return {
     boxConfigs: readJSONFn(STORAGE_KEYS.boxConfigs, [] as any),
     boxGames: readJSONFn(STORAGE_KEYS.boxGames, {} as any),
+    boxParticipants: readJSONFn(STORAGE_KEYS.boxParticipants, [] as any),
+    boxGroupMemberships: readJSONFn(STORAGE_KEYS.boxGroupMembers, {} as any),
     votingRooms: readJSONFn(STORAGE_KEYS.votingRooms, [] as any),
     quizRooms: readJSONFn(STORAGE_KEYS.quizRooms, [] as any),
     quizSessions: readJSONFn(STORAGE_KEYS.quizSessions, {} as any),
@@ -64,6 +66,12 @@ export function applySharedDataToLocal(
   try {
     writeJSONFn(STORAGE_KEYS.boxConfigs, data.boxConfigs ?? []);
     writeJSONFn(STORAGE_KEYS.boxGames, data.boxGames ?? {});
+    if (Array.isArray(data.boxParticipants)) {
+      writeJSONFn(STORAGE_KEYS.boxParticipants, data.boxParticipants);
+    }
+    if (data.boxGroupMemberships && typeof data.boxGroupMemberships === "object") {
+      writeJSONFn(STORAGE_KEYS.boxGroupMembers, data.boxGroupMemberships);
+    }
     writeJSONFn(STORAGE_KEYS.votingRooms, data.votingRooms ?? []);
     writeJSONFn(STORAGE_KEYS.quizRooms, data.quizRooms ?? []);
     writeJSONFn(STORAGE_KEYS.quizSessions, data.quizSessions ?? {});

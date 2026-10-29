@@ -151,13 +151,17 @@ function emptyGroupContents(group: BoxGroup, count: number): BoxConfig["contents
   }));
 }
 
-export function createGroupConfig(group: BoxGroup, createdAt = Date.now()): BoxConfig {
+export function createGroupConfig(
+  group: BoxGroup,
+  createdAt = Date.now(),
+  participants: readonly string[] = group.names,
+): BoxConfig {
   const now = Date.now();
   return {
     id: group.id,
     name: group.label,
     boxCount: GROUP_BOX_COUNT,
-    participants: [...group.names],
+    participants: [...participants],
     contents: emptyGroupContents(group, GROUP_BOX_COUNT),
     createdAt,
     updatedAt: now,
@@ -167,10 +171,14 @@ export function createGroupConfig(group: BoxGroup, createdAt = Date.now()): BoxC
   };
 }
 
-export function withGroupParticipants(config: BoxConfig, group: BoxGroup): BoxConfig {
+export function withGroupParticipants(
+  config: BoxConfig,
+  group: BoxGroup,
+  participants: readonly string[] = group.names,
+): BoxConfig {
   const participantsChanged =
-    config.participants.length !== group.names.length ||
-    config.participants.some((name, index) => name !== group.names[index]);
+    config.participants.length !== participants.length ||
+    config.participants.some((name, index) => name !== participants[index]);
 
   let boxCount = config.boxCount;
   let contents = config.contents;
@@ -203,7 +211,7 @@ export function withGroupParticipants(config: BoxConfig, group: BoxGroup): BoxCo
   const now = Date.now();
   return {
     ...config,
-    participants: [...group.names],
+    participants: [...participants],
     boxCount,
     contents,
     updatedAt: now,

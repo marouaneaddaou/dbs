@@ -3,7 +3,7 @@ import { BlobPreconditionFailedError } from "@vercel/blob";
 import { isAdminRequest } from "@/lib/server/request-auth";
 import { readSharedState, writeSharedState } from "@/lib/server/shared-storage";
 import { createBackup, readBackup } from "@/lib/server/backup-storage";
-import { assertSharedPayloadSize } from "@/lib/shared/schema";
+import { assertSharedPayloadSize, sanitizeSharedData } from "@/lib/shared/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       revision: current.state.revision + 1,
       updatedAt: Date.now(),
       updatedBy: "restore",
+      data: sanitizeSharedData(backup.data),
     };
     assertSharedPayloadSize(JSON.stringify(nextState));
 
