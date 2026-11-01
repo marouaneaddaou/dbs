@@ -36,6 +36,7 @@ import { normalizeCode, isRoomExpired } from "@/lib/voting";
 import { buildQuizShareUrl, removeQuizHistory } from "@/lib/quiz";
 import { logoutAdmin } from "@/lib/admin-auth";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { GroupManager } from "@/components/admin/GroupManager";
 import { ModifierModal } from "@/components/admin/ModifierModal";
 import { QuizHistoryModal } from "@/components/quiz/QuizHistoryModal";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -323,6 +324,9 @@ function AdminPageContent() {
         <div className="mt-8 h-48 animate-pulse rounded-2xl border border-gray-200 bg-white shadow-card" />
       ) : (
         <div className="mt-8 space-y-8">
+          {/* Box groups */}
+          <GroupManager />
+
           {/* Box games */}
           <Card>
             <CardHeader title="Box-Spiele" subtitle={`${boxConfigs.length} gespeichert`} icon={<Boxes className="h-5 w-5" />} />

@@ -6,7 +6,7 @@ import { castVote, computeResults, createEmptyRoom, isVotingOpen, validateBallot
 import type { VotingRoom, VotingRoomRecord } from "../types/voting";
 import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildRoomShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing, maxPointsFor } from "../lib/quiz";
 import type { QuizHistoryMap, QuizPlayer, QuizQuestion, QuizResponse, QuizRoom } from "../types/quiz";
-import { BOX_GROUP_IDS, BOX_GROUPS, GROUP_BOX_COUNT, createGroupConfig, withGroupParticipants } from "../lib/box-groups";
+import { BOX_GROUP_IDS, BOX_GROUPS, GROUP_BOX_COUNT, boxGroupFromRecord, createGroupConfig, sanitizeBoxGroupRecords, withGroupParticipants } from "../lib/box-groups";
 import {
   membershipNamesForIds,
   reconcileParticipantData,
@@ -800,6 +800,80 @@ ok("legacy shared state is migrated without losing existing names", () => {
   );
   const namesAfterRegister = registerParticipantNames(migrated.boxParticipants, config.participants);
   assert.equal(namesAfterRegister.length, migrated.boxParticipants.length, "existing records are not duplicated");
+});
+
+console.log("Custom persistent groups");
+ok("custom group records are sanitized and mapped to a group card", () => {
+  const records = sanitizeBoxGroupRecords(
+    [
+      {
+        id: "group-f-0700",
+        name: "Gruppe F",
+        time: "07:00 Uhr",
+        createdAt: 1,
+        updatedAt: 2,
+      },
+      { id: BOX_GROUPS[0].id, name: "Built-in", time: "10:00 Uhr" },
+      { id: "", name: "Ohne Id", time: "" },
+    ],
+    10,
+  );
+  assert.equal(records.length, 1);
+  assert.deepEqual(boxGroupFromRecord(records[0], ["Hamid", "Mohsine"]), {
+    id: "group-f-0700",
+    letter: "F",
+    label: "Gruppe F: 07:00 Uhr",
+    names: ["Hamid", "Mohsine"],
+  });
+});
+
+ok("shared state keeps custom groups and their memberships after sanitizing", () => {
+  const records = sanitizeBoxGroupRecords([
+    {
+      id: "group-f-0700",
+      name: "Gruppe F",
+      time: "07:00 Uhr",
+      createdAt: 1,
+      updatedAt: 2,
+    },
+  ]);
+  const state = sanitizeSharedData({
+    boxConfigs: [],
+    boxGames: {},
+    boxParticipants: [
+      {
+        id: "participant:hamid",
+        name: "Hamid",
+        normalizedName: "hamid",
+        createdAt: 1,
+        updatedAt: 1,
+      },
+      {
+        id: "participant:mohsine",
+        name: "Mohsine",
+        normalizedName: "mohsine",
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    ],
+    boxGroupMemberships: {
+      "group-f-0700": ["participant:hamid", "participant:mohsine"],
+    },
+    boxGroups: records,
+    votingRooms: [],
+    quizRooms: [],
+    quizSessions: {},
+    quizHistory: {},
+  });
+  assert.deepEqual(state.boxGroups, records);
+  assert.deepEqual(state.boxGroupMemberships["group-f-0700"], [
+    "participant:hamid",
+    "participant:mohsine",
+  ]);
+  assert.deepEqual(
+    membershipNamesForIds(state.boxParticipants, state.boxGroupMemberships["group-f-0700"]),
+    ["Hamid", "Mohsine"],
+  );
 });
 
 console.log(`\nAll ${passed} logic checks passed.`);

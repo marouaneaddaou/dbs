@@ -1,4 +1,5 @@
 ﻿import type { BoxConfig } from "@/types/boxes";
+import type { BoxGroupRecord } from "@/types/participants";
 
 export interface BoxGroup {
   id: string;
@@ -142,6 +143,69 @@ export const BOX_GROUPS: readonly BoxGroup[] = [
 export const BOX_GROUP_IDS: ReadonlySet<string> = new Set(BOX_GROUPS.map((group) => group.id));
 
 export const GROUP_BOX_COUNT = 6;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function boxGroupLabel(name: string, time: string): string {
+  const cleanName = name.trim();
+  const cleanTime = time.trim();
+  return cleanTime ? `${cleanName}: ${cleanTime}` : cleanName;
+}
+
+export function boxGroupLetter(name: string): string {
+  const cleanName = name.trim();
+  const match = cleanName.match(/^gruppe\s+(.+)$/i);
+  const rest = (match ? match[1] : cleanName).trim();
+  return rest.split(":")[0]?.trim() || "?";
+}
+
+export function boxGroupFromRecord(
+  record: BoxGroupRecord,
+  names: readonly string[] = [],
+): BoxGroup {
+  return {
+    id: record.id,
+    letter: boxGroupLetter(record.name),
+    label: boxGroupLabel(record.name, record.time),
+    names: [...names],
+  };
+}
+
+export function sanitizeBoxGroupRecords(
+  input: unknown,
+  now: number = Date.now(),
+): BoxGroupRecord[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const records: BoxGroupRecord[] = [];
+
+  for (const entry of input) {
+    if (!isRecord(entry)) continue;
+    const id = typeof entry.id === "string" ? entry.id.trim() : "";
+    const name = typeof entry.name === "string" ? entry.name.trim() : "";
+    const time = typeof entry.time === "string" ? entry.time.trim() : "";
+    if (!id || !name || BOX_GROUP_IDS.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    const createdAt =
+      typeof entry.createdAt === "number" && Number.isFinite(entry.createdAt)
+        ? entry.createdAt
+        : now;
+    records.push({
+      id,
+      name,
+      time,
+      createdAt,
+      updatedAt:
+        typeof entry.updatedAt === "number" && Number.isFinite(entry.updatedAt)
+          ? entry.updatedAt
+          : createdAt,
+    });
+  }
+
+  return records;
+}
 
 function emptyGroupContents(group: BoxGroup, count: number): BoxConfig["contents"] {
   return Array.from({ length: count }, (_, index) => ({

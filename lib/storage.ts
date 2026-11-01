@@ -22,6 +22,7 @@ export const STORAGE_KEYS = {
   quizHistory: "dbs_quiz_history_v1",
   boxParticipants: "dbs_box_participants_v1",
   boxGroupMembers: "dbs_box_group_members_v1",
+  boxGroups: "dbs_box_groups_v1",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

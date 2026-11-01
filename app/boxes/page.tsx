@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Boxes, Info, Plus, Settings2, Trophy } from "lucide-react";
 import type { BoxConfig, BoxGame } from "@/types/boxes";
-import type { BoxGroupMemberships, BoxParticipant } from "@/types/participants";
+import type { BoxGroupMemberships, BoxGroupRecord, BoxParticipant } from "@/types/participants";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { uid } from "@/lib/storage";
 import { createEmptyConfig, createGame, emptyBoxNumbers } from "@/lib/boxes";
@@ -11,7 +11,9 @@ import { markSaved } from "@/lib/shared/retention";
 import {
   BOX_GROUPS,
   BOX_GROUP_IDS,
+  boxGroupFromRecord,
   createGroupConfig,
+  sanitizeBoxGroupRecords,
   withGroupParticipants,
   type BoxGroup,
 } from "@/lib/box-groups";
@@ -63,6 +65,8 @@ function BoxesPageContent() {
     STORAGE_KEYS.boxGroupMembers,
     {},
   );
+  const { value: storedGroups } = useLocalStorage<BoxGroupRecord[]>(STORAGE_KEYS.boxGroups, []);
+  const customGroups = useMemo(() => sanitizeBoxGroupRecords(storedGroups), [storedGroups]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("list");
   const [confirmDelete, setConfirmDelete] = useState<BoxConfig | null>(null);
@@ -72,21 +76,29 @@ function BoxesPageContent() {
     [configs, selectedId],
   );
 
-  const manualConfigs = useMemo(
-    () => configs.filter((c) => !BOX_GROUP_IDS.has(c.id)),
-    [configs],
+  const groupIds = useMemo(
+    () => new Set([...BOX_GROUP_IDS, ...customGroups.map((group) => group.id)]),
+    [customGroups],
   );
 
-  const displayGroups = useMemo(
-    () =>
-      BOX_GROUPS.map((group) => {
-        const ids = memberships[group.id];
-        if (ids) return { ...group, names: membershipNamesForIds(participants, ids) };
-        const existing = configs.find((config) => config.id === group.id);
-        return existing ? { ...group, names: [...existing.participants] } : group;
-      }),
-    [configs, memberships, participants],
+  const manualConfigs = useMemo(
+    () => configs.filter((c) => !groupIds.has(c.id)),
+    [configs, groupIds],
   );
+
+  const displayGroups = useMemo(() => {
+    const namesFor = (groupId: string, fallback: readonly string[]): string[] => {
+      const ids = memberships[groupId];
+      if (ids) return membershipNamesForIds(participants, ids);
+      const existing = configs.find((config) => config.id === groupId);
+      return existing ? [...existing.participants] : [...fallback];
+    };
+
+    return [
+      ...BOX_GROUPS.map((group) => ({ ...group, names: namesFor(group.id, group.names) })),
+      ...customGroups.map((record) => boxGroupFromRecord(record, namesFor(record.id, []))),
+    ];
+  }, [configs, customGroups, memberships, participants]);
 
   const setGame = useCallback(
     (next: BoxGame | ((prev: BoxGame) => BoxGame)) => {
