@@ -1,15 +1,22 @@
 ﻿"use client";
 
-import { ArrowRight, Clock, Users } from "lucide-react";
+import { AlertCircle, ArrowRight, Clock, RefreshCw, Users } from "lucide-react";
 import type { BoxGroup } from "@/lib/box-groups";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 
 export function BoxGroups({
   groups,
   onOpen,
+  loading = false,
+  error = null,
+  onRetry,
 }: {
   groups: readonly BoxGroup[];
   onOpen: (group: BoxGroup) => void;
+  loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }) {
   return (
     <section className="mb-8">
@@ -21,10 +28,44 @@ export function BoxGroups({
           </p>
         </div>
         <Badge tone="gold" icon={<Users className="h-3.5 w-3.5" />}>
-          {groups.length} Gruppen
+          {loading && groups.length === 0 ? "Lädt …" : `${groups.length} Gruppen`}
         </Badge>
       </div>
 
+      {error ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700">
+          <span className="inline-flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </span>
+          {onRetry ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<RefreshCw className="h-4 w-4" />}
+              onClick={onRetry}
+              disabled={loading}
+            >
+              Erneut laden
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {loading && groups.length === 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div
+              key={`group-skeleton-${index}`}
+              className="h-44 animate-pulse rounded-2xl border border-gray-200 bg-gray-50"
+            />
+          ))}
+        </div>
+      ) : groups.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-400">
+          Noch keine Gruppen vorhanden.
+        </p>
+      ) : (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {groups.map((group) => (
           <button
@@ -57,6 +98,7 @@ export function BoxGroups({
           </button>
         ))}
       </div>
+      )}
     </section>
   );
 }

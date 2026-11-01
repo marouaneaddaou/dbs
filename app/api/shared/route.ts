@@ -45,12 +45,23 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Groups are owned by /api/groups. A generic shared-data push must never
+    // overwrite newer group records with a stale browser cache.
+    const mergedData = sanitizeSharedData({
+      ...incomingData,
+      boxGroups: current.state.data.boxGroups,
+      boxGroupSeedVersion: Math.max(
+        incomingData.boxGroupSeedVersion,
+        current.state.data.boxGroupSeedVersion,
+      ),
+    });
+
     const nextState = {
       schemaVersion: 1,
       revision: current.state.revision + 1,
       updatedAt: Date.now(),
       updatedBy: 'admin',
-      data: incomingData,
+      data: mergedData,
     };
 
     const json = JSON.stringify(nextState);

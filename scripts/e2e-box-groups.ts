@@ -1,5 +1,13 @@
 import { chromium, type Browser, type Page } from "playwright";
-import { BOX_GROUPS, GROUP_BOX_COUNT } from "../lib/box-groups";
+import { GROUP_BOX_COUNT, boxGroupLabel, boxGroupLetter, type BoxGroup } from "../lib/box-groups";
+import { GROUP_SEEDS } from "../lib/group-seed";
+
+const BOX_GROUPS: BoxGroup[] = GROUP_SEEDS.map((seed) => ({
+  id: seed.id,
+  letter: boxGroupLetter(seed.name),
+  label: boxGroupLabel(seed.name, seed.time),
+  names: seed.participants,
+}));
 
 const BASE = (process.env.E2E_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 const ADMIN_SESSION_KEY = "dbs_admin_session_v1";

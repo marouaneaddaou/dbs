@@ -3,28 +3,25 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Boxes, Info, Plus, Settings2, Trophy } from "lucide-react";
 import type { BoxConfig, BoxGame } from "@/types/boxes";
-import type { BoxGroupMemberships, BoxGroupRecord, BoxParticipant } from "@/types/participants";
+import type { BoxGroupMemberships, BoxParticipant } from "@/types/participants";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { uid } from "@/lib/storage";
 import { createEmptyConfig, createGame, emptyBoxNumbers } from "@/lib/boxes";
 import { markSaved } from "@/lib/shared/retention";
 import {
-  BOX_GROUPS,
-  BOX_GROUP_IDS,
   boxGroupFromRecord,
   createGroupConfig,
-  sanitizeBoxGroupRecords,
   withGroupParticipants,
   type BoxGroup,
 } from "@/lib/box-groups";
 import {
   membershipIdsForNames,
-  membershipNamesForIds,
   registerParticipantNames,
   stringArraysEqual,
   syncParticipantDataForConfig,
 } from "@/lib/participants";
 import { useLocalStorage } from "@/lib/hooks";
+import { useGroups } from "@/lib/use-groups";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { Button } from "@/components/ui/Button";
@@ -65,8 +62,12 @@ function BoxesPageContent() {
     STORAGE_KEYS.boxGroupMembers,
     {},
   );
-  const { value: storedGroups } = useLocalStorage<BoxGroupRecord[]>(STORAGE_KEYS.boxGroups, []);
-  const customGroups = useMemo(() => sanitizeBoxGroupRecords(storedGroups), [storedGroups]);
+  const {
+    groups: storedGroups,
+    loading: groupsLoading,
+    error: groupsError,
+    refresh: refreshGroups,
+  } = useGroups();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("list");
   const [confirmDelete, setConfirmDelete] = useState<BoxConfig | null>(null);
@@ -77,8 +78,8 @@ function BoxesPageContent() {
   );
 
   const groupIds = useMemo(
-    () => new Set([...BOX_GROUP_IDS, ...customGroups.map((group) => group.id)]),
-    [customGroups],
+    () => new Set(storedGroups.map((group) => group.id)),
+    [storedGroups],
   );
 
   const manualConfigs = useMemo(
@@ -86,19 +87,10 @@ function BoxesPageContent() {
     [configs, groupIds],
   );
 
-  const displayGroups = useMemo(() => {
-    const namesFor = (groupId: string, fallback: readonly string[]): string[] => {
-      const ids = memberships[groupId];
-      if (ids) return membershipNamesForIds(participants, ids);
-      const existing = configs.find((config) => config.id === groupId);
-      return existing ? [...existing.participants] : [...fallback];
-    };
-
-    return [
-      ...BOX_GROUPS.map((group) => ({ ...group, names: namesFor(group.id, group.names) })),
-      ...customGroups.map((record) => boxGroupFromRecord(record, namesFor(record.id, []))),
-    ];
-  }, [configs, customGroups, memberships, participants]);
+  const displayGroups = useMemo(
+    () => storedGroups.map((record) => boxGroupFromRecord(record)),
+    [storedGroups],
+  );
 
   const setGame = useCallback(
     (next: BoxGame | ((prev: BoxGame) => BoxGame)) => {
@@ -139,25 +131,13 @@ function BoxesPageContent() {
 
   function handleOpenGroup(group: BoxGroup) {
     const existing = configs.find((c) => c.id === group.id);
-    const savedIds = memberships[group.id];
-    const names =
-      savedIds !== undefined
-        ? membershipNamesForIds(participants, savedIds)
-        : existing
-          ? [...existing.participants]
-          : [...group.names];
+    const names = [...group.names];
     const next = existing
       ? withGroupParticipants(existing, group, names)
       : createGroupConfig(group, Date.now(), names);
 
     const registry = registerParticipantNames(participants, names);
     if (registry !== participants) setParticipants(registry);
-    if (savedIds === undefined) {
-      setMemberships((prev) => ({
-        ...prev,
-        [group.id]: membershipIdsForNames(registry, names),
-      }));
-    }
 
     if (next !== existing) {
       setConfigs((prev) => {
@@ -287,7 +267,13 @@ function BoxesPageContent() {
           </p>
         </div>
 
-        <BoxGroups groups={displayGroups} onOpen={handleOpenGroup} />
+        <BoxGroups
+          groups={displayGroups}
+          onOpen={handleOpenGroup}
+          loading={groupsLoading}
+          error={groupsError}
+          onRetry={() => void refreshGroups()}
+        />
 
         <BoxesList
           configs={manualConfigs}

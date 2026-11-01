@@ -1,6 +1,6 @@
 import type { BoxConfig } from "@/types/boxes";
-import type { BoxGroupMemberships, BoxParticipant } from "@/types/participants";
-import { BOX_GROUPS, type BoxGroup } from "@/lib/box-groups";
+import type { BoxGroupMemberships, BoxGroupRecord, BoxParticipant } from "@/types/participants";
+import { sanitizeGroupNames } from "@/lib/box-groups";
 
 const PARTICIPANT_ID_PREFIX = "participant:";
 
@@ -149,18 +149,6 @@ export function membershipNamesForIds(
   return names;
 }
 
-function groupParticipantNames(
-  group: BoxGroup,
-  configs: readonly BoxConfig[],
-  participants: readonly BoxParticipant[],
-  memberships: BoxGroupMemberships,
-): string[] {
-  const membership = memberships[group.id];
-  if (membership) return membershipNamesForIds(participants, membership);
-  const config = configs.find((item) => item.id === group.id);
-  return config ? [...config.participants] : [...group.names];
-}
-
 export interface ReconciledParticipantData {
   participants: BoxParticipant[];
   memberships: BoxGroupMemberships;
@@ -178,18 +166,11 @@ export function reconcileParticipantData(
 
   const namesToKeep: string[] = existingParticipants.map((participant) => participant.name);
   for (const config of configList) namesToKeep.push(...config.participants);
-  for (const group of BOX_GROUPS) namesToKeep.push(...group.names);
   for (const ids of Object.values(memberships)) {
     for (const id of ids) namesToKeep.push(participantNameFromId(id));
   }
 
   const participants = registerParticipantNames(existingParticipants, namesToKeep, now);
-
-  for (const group of BOX_GROUPS) {
-    if (Object.prototype.hasOwnProperty.call(memberships, group.id)) continue;
-    const names = groupParticipantNames(group, configList, participants, memberships);
-    memberships[group.id] = membershipIdsForNames(participants, names);
-  }
 
   for (const config of configList) {
     if (Object.prototype.hasOwnProperty.call(memberships, config.id)) continue;
@@ -213,6 +194,50 @@ export function reconcileParticipantData(
   }
 
   return { participants, memberships };
+}
+
+export interface ReconciledGroupData extends ReconciledParticipantData {
+  groups: BoxGroupRecord[];
+}
+
+export function reconcileGroupParticipants(
+  groups: readonly BoxGroupRecord[],
+  participantInput: readonly BoxParticipant[],
+  membershipInput: BoxGroupMemberships,
+  now: number = Date.now(),
+): ReconciledGroupData {
+  let participants = [...participantInput];
+  const memberships = { ...membershipInput };
+  const nextGroups: BoxGroupRecord[] = [];
+
+  for (const group of groups) {
+    let names = sanitizeGroupNames(group.participants);
+    if (names.length === 0) {
+      const memberIds = memberships[group.id];
+      if (memberIds && memberIds.length > 0) {
+        names = sanitizeGroupNames(membershipNamesForIds(participants, memberIds));
+      }
+    }
+
+    if (names.length === 0) {
+      memberships[group.id] = memberships[group.id] ?? [];
+      nextGroups.push(group);
+      continue;
+    }
+
+    participants = registerParticipantNames(participants, names, now);
+    const ids = membershipIdsForNames(participants, names);
+    if (!stringArraysEqual(memberships[group.id] ?? [], ids)) {
+      memberships[group.id] = ids;
+    }
+
+    const participantsChanged =
+      names.length !== group.participants.length ||
+      names.some((name, index) => name !== group.participants[index]);
+    nextGroups.push(participantsChanged ? { ...group, participants: names } : group);
+  }
+
+  return { participants, memberships, groups: nextGroups };
 }
 
 export function syncParticipantDataForConfig(

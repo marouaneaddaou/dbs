@@ -1,11 +1,18 @@
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
-import { BOX_GROUPS } from "../lib/box-groups";
+import { boxGroupLabel, boxGroupLetter, type BoxGroup } from "../lib/box-groups";
+import { GROUP_SEEDS } from "../lib/group-seed";
 import { membershipNamesForIds, normalizeParticipantName } from "../lib/participants";
 import type { SharedStateDocument } from "../lib/shared/schema";
 
 const BASE = (process.env.E2E_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
-const GROUP = BOX_GROUPS[0];
+const seed = GROUP_SEEDS[0];
+const GROUP: BoxGroup = {
+  id: seed.id,
+  letter: boxGroupLetter(seed.name),
+  label: boxGroupLabel(seed.name, seed.time),
+  names: seed.participants,
+};
 const TEST_NAME = `E2E Persist ${Date.now()}`;
 
 let passed = 0;

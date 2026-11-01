@@ -1,26 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Pencil, Plus, Save, Trash2, UserPlus, Users, X } from "lucide-react";
-import type { BoxConfig, BoxGame } from "@/types/boxes";
-import type { BoxGroupMemberships, BoxGroupRecord, BoxParticipant } from "@/types/participants";
-import {
-  BOX_GROUPS,
-  boxGroupFromRecord,
-  boxGroupLabel,
-  sanitizeBoxGroupRecords,
-  type BoxGroup,
-} from "@/lib/box-groups";
-import {
-  membershipIdsForNames,
-  membershipNamesForIds,
-  registerParticipantNames,
-} from "@/lib/participants";
+import { useState } from "react";
+import { AlertCircle, Pencil, Plus, RefreshCw, Save, Trash2, UserPlus, Users, X } from "lucide-react";
+import type { BoxGroupRecord } from "@/types/participants";
+import { useGroups } from "@/lib/use-groups";
 import { normalizeNames, parseNameList } from "@/lib/randomization";
-import { STORAGE_KEYS, uid } from "@/lib/storage";
-import { useLocalStorage } from "@/lib/hooks";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Field, Input, Textarea } from "@/components/ui/Field";
@@ -34,57 +19,22 @@ interface GroupFormState {
   names: string[];
 }
 
-interface GroupRow {
-  group: BoxGroup;
-  record: BoxGroupRecord | null;
-}
-
 export function GroupManager() {
   const toast = useToast();
-  const { value: storedGroups, setValue: setGroups } = useLocalStorage<BoxGroupRecord[]>(
-    STORAGE_KEYS.boxGroups,
-    [],
-  );
-  const { value: participants, setValue: setParticipants } = useLocalStorage<BoxParticipant[]>(
-    STORAGE_KEYS.boxParticipants,
-    [],
-  );
-  const { value: memberships, setValue: setMemberships } = useLocalStorage<BoxGroupMemberships>(
-    STORAGE_KEYS.boxGroupMembers,
-    {},
-  );
-  const { value: configs, setValue: setConfigs } = useLocalStorage<BoxConfig[]>(
-    STORAGE_KEYS.boxConfigs,
-    [],
-  );
-  const { value: games, setValue: setGames } = useLocalStorage<Record<string, BoxGame>>(
-    STORAGE_KEYS.boxGames,
-    {},
-  );
-
-  const groups = useMemo(() => sanitizeBoxGroupRecords(storedGroups), [storedGroups]);
+  const {
+    groups,
+    loading,
+    saving,
+    error,
+    refresh,
+    createGroup,
+    updateGroup,
+    deleteGroup,
+  } = useGroups();
   const [form, setForm] = useState<GroupFormState | null>(null);
   const [newName, setNewName] = useState("");
   const [pasteNames, setPasteNames] = useState("");
   const [pendingDelete, setPendingDelete] = useState<BoxGroupRecord | null>(null);
-
-  function namesFor(groupId: string, fallback: readonly string[]): string[] {
-    const ids = memberships[groupId];
-    if (ids) return membershipNamesForIds(participants, ids);
-    const existing = configs.find((config) => config.id === groupId);
-    return existing ? [...existing.participants] : [...fallback];
-  }
-
-  const rows = useMemo<GroupRow[]>(() => {
-    return [
-      ...BOX_GROUPS.map((group) => ({ group: { ...group, names: namesFor(group.id, group.names) }, record: null })),
-      ...groups.map((record) => ({
-        group: boxGroupFromRecord(record, namesFor(record.id, [])),
-        record,
-      })),
-    ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configs, groups, memberships, participants]);
 
   function startCreate() {
     setForm({ id: null, name: "", time: "", names: [] });
@@ -97,7 +47,7 @@ export function GroupManager() {
       id: record.id,
       name: record.name,
       time: record.time,
-      names: namesFor(record.id, []),
+      names: [...record.participants],
     });
     setNewName("");
     setPasteNames("");
@@ -139,8 +89,8 @@ export function GroupManager() {
     );
   }
 
-  function saveGroup() {
-    if (!form) return;
+  async function saveGroup() {
+    if (!form || saving) return;
     const name = form.name.trim();
     const time = form.time.trim();
     const names = normalizeNames(form.names);
@@ -158,64 +108,37 @@ export function GroupManager() {
       return;
     }
 
-    const now = Date.now();
-    const existing = form.id ? groups.find((group) => group.id === form.id) : null;
-    const id = existing?.id ?? uid("group");
-    const record: BoxGroupRecord = {
-      id,
-      name,
-      time,
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    };
-
-    const registry = registerParticipantNames(participants, names, now);
-    const nextMemberships = {
-      ...memberships,
-      [id]: membershipIdsForNames(registry, names),
-    };
-    const label = boxGroupLabel(name, time);
-
-    setGroups((prev) =>
-      existing ? prev.map((group) => (group.id === id ? record : group)) : [...prev, record],
-    );
-    if (registry !== participants) setParticipants(registry);
-    setMemberships(nextMemberships);
-    setConfigs((prev) =>
-      prev.map((config) =>
-        config.id === id
-          ? { ...config, name: label, participants: names, updatedAt: now }
-          : config,
-      ),
-    );
-
-    setForm(null);
-    toast.success(existing ? "Gruppe aktualisiert." : "Gruppe erstellt.");
+    try {
+      const input = { name, time, participants: names };
+      if (form.id) await updateGroup(form.id, input);
+      else await createGroup(input);
+      setForm(null);
+      toast.success(form.id ? "Gruppe aktualisiert." : "Gruppe erstellt.");
+    } catch (saveError) {
+      toast.error(
+        saveError instanceof Error ? saveError.message : "Die Gruppe konnte nicht gespeichert werden.",
+      );
+    }
   }
 
-  function deleteGroup(record: BoxGroupRecord) {
-    setGroups((prev) => prev.filter((group) => group.id !== record.id));
-    setMemberships((prev) => {
-      const next = { ...prev };
-      delete next[record.id];
-      return next;
-    });
-    setConfigs((prev) => prev.filter((config) => config.id !== record.id));
-    setGames((prev) => {
-      if (!(record.id in prev)) return prev;
-      const next = { ...prev };
-      delete next[record.id];
-      return next;
-    });
-    setPendingDelete(null);
-    toast.success("Gruppe entfernt.");
+  async function removeGroup() {
+    if (!pendingDelete || saving) return;
+    try {
+      await deleteGroup(pendingDelete.id);
+      setPendingDelete(null);
+      toast.success("Gruppe entfernt.");
+    } catch (deleteError) {
+      toast.error(
+        deleteError instanceof Error ? deleteError.message : "Die Gruppe konnte nicht entfernt werden.",
+      );
+    }
   }
 
   return (
     <Card>
       <CardHeader
         title="Gruppen"
-        subtitle={`${rows.length} Gruppen`}
+        subtitle={loading ? "Gruppen werden geladen …" : `${groups.length} Gruppen`}
         icon={<Users className="h-5 w-5" />}
         action={
           <Button
@@ -229,6 +152,24 @@ export function GroupManager() {
         }
       />
       <CardBody className="p-0">
+        {error ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-100 bg-brand-50 px-5 py-3 text-sm text-brand-700">
+            <span className="inline-flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              {error}
+            </span>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<RefreshCw className="h-4 w-4" />}
+              onClick={() => void refresh()}
+              disabled={loading}
+            >
+              Erneut laden
+            </Button>
+          </div>
+        ) : null}
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
@@ -240,54 +181,62 @@ export function GroupManager() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ group, record }) => {
-                const separator = group.label.indexOf(":");
-                const rowName = record
-                  ? record.name
-                  : group.label.slice(0, separator >= 0 ? separator : undefined).trim();
-                const rowTime = record
-                  ? record.time
-                  : separator >= 0
-                    ? group.label.slice(separator + 1).trim()
-                    : "";
-                return (
+              {loading && groups.length === 0 ? (
+                Array.from({ length: 4 }, (_, index) => (
+                  <tr key={`skeleton-${index}`} className="border-b border-gray-100 last:border-0">
+                    <td className="px-5 py-4">
+                      <div className="h-4 w-32 animate-pulse rounded bg-gray-100" />
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="h-4 w-20 animate-pulse rounded bg-gray-100" />
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="h-4 w-16 animate-pulse rounded bg-gray-100" />
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="ml-auto h-8 w-20 animate-pulse rounded bg-gray-100" />
+                    </td>
+                  </tr>
+                ))
+              ) : groups.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-10 text-center text-sm text-gray-400">
+                    Noch keine Gruppen vorhanden.
+                  </td>
+                </tr>
+              ) : (
+                groups.map((group) => (
                   <tr
                     key={group.id}
                     className="border-b border-gray-100 last:border-0 hover:bg-gray-50/60"
                   >
                     <td className="px-5 py-4 align-middle">
-                      <p className="font-medium text-ink-900">{rowName}</p>
+                      <p className="font-medium text-ink-900">{group.name}</p>
                     </td>
                     <td className="px-5 py-4 align-middle text-sm text-gray-600">
-                      {rowTime || "—"}
+                      {group.time || "—"}
                     </td>
                     <td className="px-5 py-4 align-middle text-xs text-gray-500">
-                      {group.names.length} Namen
+                      {group.participants.length} Namen
                     </td>
                     <td className="px-5 py-4 align-middle">
                       <div className="flex flex-wrap items-center justify-end gap-1.5">
-                        {record ? (
-                          <>
-                            <IconBtn
-                              label="Gruppe bearbeiten"
-                              icon={<Pencil className="h-4 w-4" />}
-                              onClick={() => startEdit(record)}
-                            />
-                            <IconBtn
-                              label="Gruppe löschen"
-                              tone="danger"
-                              icon={<Trash2 className="h-4 w-4" />}
-                              onClick={() => setPendingDelete(record)}
-                            />
-                          </>
-                        ) : (
-                          <Badge tone="neutral">Vorlage</Badge>
-                        )}
+                        <IconBtn
+                          label="Gruppe bearbeiten"
+                          icon={<Pencil className="h-4 w-4" />}
+                          onClick={() => startEdit(group)}
+                        />
+                        <IconBtn
+                          label="Gruppe löschen"
+                          tone="danger"
+                          icon={<Trash2 className="h-4 w-4" />}
+                          onClick={() => setPendingDelete(group)}
+                        />
                       </div>
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -295,16 +244,20 @@ export function GroupManager() {
 
       <Modal
         open={!!form}
-        onClose={() => setForm(null)}
+        onClose={() => (saving ? undefined : setForm(null))}
         title={form?.id ? "Gruppe bearbeiten" : "Gruppe erstellen"}
-        description="Name, Uhrzeit und Teilnehmende werden dauerhaft gespeichert und synchronisiert."
+        description="Name, Uhrzeit und Teilnehmende werden dauerhaft in der Datenbank gespeichert und synchronisiert."
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setForm(null)}>
+            <Button variant="secondary" onClick={() => setForm(null)} disabled={saving}>
               Abbrechen
             </Button>
-            <Button icon={<Save className="h-4 w-4" />} onClick={saveGroup}>
+            <Button
+              icon={<Save className="h-4 w-4" />}
+              onClick={() => void saveGroup()}
+              loading={saving}
+            >
               Speichern
             </Button>
           </>
@@ -320,6 +273,7 @@ export function GroupManager() {
                     setForm((prev) => (prev ? { ...prev, name: event.target.value } : prev))
                   }
                   placeholder="z. B. Gruppe F"
+                  maxLength={120}
                 />
               </Field>
               <Field label="Uhrzeit">
@@ -328,7 +282,8 @@ export function GroupManager() {
                   onChange={(event) =>
                     setForm((prev) => (prev ? { ...prev, time: event.target.value } : prev))
                   }
-                  placeholder="z. B. 07:00 Uhr"
+                  placeholder="z. B. 19:00 Uhr"
+                  maxLength={80}
                 />
               </Field>
             </div>
@@ -425,8 +380,8 @@ export function GroupManager() {
             : undefined
         }
         confirmLabel="Löschen"
-        onConfirm={() => pendingDelete && deleteGroup(pendingDelete)}
-        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => void removeGroup()}
+        onCancel={() => (saving ? undefined : setPendingDelete(null))}
       />
     </Card>
   );

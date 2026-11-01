@@ -8,144 +8,26 @@ export interface BoxGroup {
   names: readonly string[];
 }
 
-export const BOX_GROUPS: readonly BoxGroup[] = [
-  {
-    id: "group-a-1000",
-    letter: "A",
-    label: "Gruppe A: 10:00 Uhr",
-    names: [
-      "Mohammed Ali",
-      "Maryam El",
-      "Maryam",
-      "Oussama A",
-      "Oussama B",
-      "Marwan A",
-      "Marwan B",
-      "Nacer",
-      "Douae",
-      "Nadia",
-      "Khadija A",
-      "Khadija B",
-      "Aya",
-      "Salma",
-      "Imad",
-      "Tarik",
-      "Mohammed",
-      "Layla",
-      "Sanae",
-      "Rachid",
-      "Yassin",
-      "MohamedB",
-      "Azzedin",
-    ],
-  },
-  {
-    id: "group-b-1300",
-    letter: "B",
-    label: "Gruppe B: 13:00 Uhr",
-    names: [
-      "Anwar",
-      "Karim",
-      "Soukaina",
-      "Hajar",
-      "Touda",
-      "Maria",
-      "Oumayma",
-      "Bassma",
-      "Fayza",
-      "Adam",
-      "Walid",
-      "Mohammed",
-      "Nourdine",
-      "Hamza A",
-      "Hamza B",
-      "Haytham",
-      "Mouhssine",
-      "Amine",
-      "Lahsen",
-      "Manal",
-      "Nour",
-      "Abdlmounim",
-      "Hanane",
-      "Khalid",
-    ],
-  },
-  {
-    id: "group-c-1600",
-    letter: "C",
-    label: "Gruppe C: 16:00 Uhr",
-    names: [
-      "Asmae",
-      "Smahane",
-      "Saad",
-      "Hajar",
-      "Amina",
-      "Ayoub",
-      "Omar",
-      "Rida",
-      "Hamid",
-      "Zine Eddine",
-      "Souad",
-      "Roa",
-      "Farah",
-      "Abdeljalil",
-      "Mohammed",
-      "Driss",
-      "Fatim Zahrae",
-      "Fati",
-      "Soukaina",
-    ],
-  },
-  {
-    id: "group-d-1830",
-    letter: "D",
-    label: "Gruppe D: 18:30 Uhr",
-    names: [
-      "Fatima Zahra El",
-      "Mohammed 1",
-      "Mohammed 2",
-      "Mohammed 3",
-      "Mohammed 4",
-      "Issam",
-      "Youssef",
-      "Zakaria 1",
-      "Zakaria 2",
-      "Oumayma",
-      "Jamal",
-      "Houssam",
-      "Fatima Zahra",
-      "Fati 3",
-      "Fati 4",
-      "Meriem",
-      "Rabab",
-      "Hamza",
-      "Nasser",
-    ],
-  },
-  {
-    id: "group-e-1600",
-    letter: "E",
-    label: "Gruppe E: 16.00 Uhr",
-    names: [
-      "Soufiane Soga",
-      "Noufal Kouita",
-      "Aya Blutmizguida",
-      "Imad Chibane",
-      "Moslih Zineb",
-      "Saida Zaikaoumi",
-      "Ghita Bouzeggar",
-      "Hossam El Adel",
-      "Amine Ajloca",
-    ],
-  },
-];
-
-export const BOX_GROUP_IDS: ReadonlySet<string> = new Set(BOX_GROUPS.map((group) => group.id));
-
 export const GROUP_BOX_COUNT = 6;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function sanitizeGroupNames(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const entry of input) {
+    if (typeof entry !== "string") continue;
+    const name = entry.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    names.push(name);
+  }
+  return names;
 }
 
 export function boxGroupLabel(name: string, time: string): string {
@@ -163,7 +45,7 @@ export function boxGroupLetter(name: string): string {
 
 export function boxGroupFromRecord(
   record: BoxGroupRecord,
-  names: readonly string[] = [],
+  names: readonly string[] = record.participants,
 ): BoxGroup {
   return {
     id: record.id,
@@ -186,7 +68,7 @@ export function sanitizeBoxGroupRecords(
     const id = typeof entry.id === "string" ? entry.id.trim() : "";
     const name = typeof entry.name === "string" ? entry.name.trim() : "";
     const time = typeof entry.time === "string" ? entry.time.trim() : "";
-    if (!id || !name || BOX_GROUP_IDS.has(id) || seen.has(id)) continue;
+    if (!id || !name || seen.has(id)) continue;
     seen.add(id);
     const createdAt =
       typeof entry.createdAt === "number" && Number.isFinite(entry.createdAt)
@@ -196,6 +78,7 @@ export function sanitizeBoxGroupRecords(
       id,
       name,
       time,
+      participants: sanitizeGroupNames(entry.participants),
       createdAt,
       updatedAt:
         typeof entry.updatedAt === "number" && Number.isFinite(entry.updatedAt)

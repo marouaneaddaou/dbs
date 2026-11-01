@@ -12,6 +12,7 @@ export interface BoxGroupRecord {
   id: string;
   name: string;
   time: string;
+  participants: string[];
   createdAt: number;
   updatedAt: number;
 }

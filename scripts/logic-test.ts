@@ -6,14 +6,24 @@ import { castVote, computeResults, createEmptyRoom, isVotingOpen, validateBallot
 import type { VotingRoom, VotingRoomRecord } from "../types/voting";
 import { computeScores, pointsForAnswer, createEmptyRoom as createQuizRoom, validateRoom, buildHistoryEntry, addHistoryEntry, removeQuizHistory, formatTotalTime, QUIZ_HISTORY_LIMIT, flattenQuizResults, rankQuizResults, scorePercent, summarizeQuizResults, hardestQuestions, buildQuizShareUrl, buildRoomShareUrl, buildWhatsAppShareUrl, isSharedRoomMissing, maxPointsFor } from "../lib/quiz";
 import type { QuizHistoryMap, QuizPlayer, QuizQuestion, QuizResponse, QuizRoom } from "../types/quiz";
-import { BOX_GROUP_IDS, BOX_GROUPS, GROUP_BOX_COUNT, boxGroupFromRecord, createGroupConfig, sanitizeBoxGroupRecords, withGroupParticipants } from "../lib/box-groups";
+import { GROUP_BOX_COUNT, boxGroupFromRecord, boxGroupLabel, boxGroupLetter, createGroupConfig, sanitizeBoxGroupRecords, withGroupParticipants, type BoxGroup } from "../lib/box-groups";
+import { GROUP_SEEDS } from "../lib/group-seed";
+import { migrateGroupSeeds } from "../lib/group-migration";
 import {
   membershipNamesForIds,
   reconcileParticipantData,
   registerParticipantNames,
   syncParticipantDataForConfig,
 } from "../lib/participants";
-import { sanitizeSharedData } from "../lib/shared/schema";
+import { createEmptySharedData, sanitizeSharedData } from "../lib/shared/schema";
+
+const BOX_GROUPS: BoxGroup[] = GROUP_SEEDS.map((seed) => ({
+  id: seed.id,
+  letter: boxGroupLetter(seed.name),
+  label: boxGroupLabel(seed.name, seed.time),
+  names: seed.participants,
+}));
+const BOX_GROUP_IDS = new Set(BOX_GROUPS.map((group) => group.id));
 
 let passed = 0;
 function ok(name: string, fn: () => void) {
@@ -582,7 +592,7 @@ ok("isSharedRoomMissing only fires on quiz-managing browsers", () => {
 });
 
 console.log("Preconfigured box groups");
-ok("four groups with the expected names and roster sizes", () => {
+ok("all seeded groups have the expected names and roster sizes", () => {
   assert.deepEqual(
     BOX_GROUPS.map((group) => [group.label, group.names.length]),
     [
@@ -591,6 +601,7 @@ ok("four groups with the expected names and roster sizes", () => {
       ["Gruppe C: 16:00 Uhr", 19],
       ["Gruppe D: 18:30 Uhr", 19],
       ["Gruppe E: 16.00 Uhr", 9],
+      ["Gruppe F: 19:00 Uhr", 7],
     ],
   );
   assert.equal(BOX_GROUPS[0].names[0], "Mohammed Ali");
@@ -818,13 +829,14 @@ ok("custom group records are sanitized and mapped to a group card", () => {
     ],
     10,
   );
-  assert.equal(records.length, 1);
+  assert.equal(records.length, 2);
   assert.deepEqual(boxGroupFromRecord(records[0], ["Hamid", "Mohsine"]), {
     id: "group-f-0700",
     letter: "F",
     label: "Gruppe F: 07:00 Uhr",
     names: ["Hamid", "Mohsine"],
   });
+  assert.equal(records[1].id, BOX_GROUPS[0].id, "seeded group ids are valid database ids");
 });
 
 ok("shared state keeps custom groups and their memberships after sanitizing", () => {
@@ -865,7 +877,9 @@ ok("shared state keeps custom groups and their memberships after sanitizing", ()
     quizSessions: {},
     quizHistory: {},
   });
-  assert.deepEqual(state.boxGroups, records);
+  assert.deepEqual(state.boxGroups, [
+    { ...records[0], participants: ["Hamid", "Mohsine"] },
+  ]);
   assert.deepEqual(state.boxGroupMemberships["group-f-0700"], [
     "participant:hamid",
     "participant:mohsine",
@@ -874,6 +888,39 @@ ok("shared state keeps custom groups and their memberships after sanitizing", ()
     membershipNamesForIds(state.boxParticipants, state.boxGroupMemberships["group-f-0700"]),
     ["Hamid", "Mohsine"],
   );
+});
+
+console.log("Database group migration");
+ok("A-F are seeded once from existing memberships without overwriting current data", () => {
+  const legacy = sanitizeSharedData({
+    ...createEmptySharedData(),
+    boxParticipants: [
+      {
+        id: "participant:nur a",
+        name: "Nur A",
+        normalizedName: "nur a",
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    ],
+    boxGroupMemberships: {
+      "group-a-1000": ["participant:nur a"],
+    },
+    boxGroups: [],
+    boxGroupSeedVersion: 0,
+  });
+  const migrated = migrateGroupSeeds(legacy, 123);
+  assert.equal(migrated.changed, true);
+  assert.deepEqual(
+    migrated.data.boxGroups.map((group) => group.id),
+    GROUP_SEEDS.map((seed) => seed.id),
+  );
+  assert.deepEqual(migrated.data.boxGroups[0].participants, ["Nur A"]);
+  assert.equal(migrated.data.boxGroups[5].time, "19:00 Uhr");
+  assert.equal(migrated.data.boxGroupSeedVersion, 1);
+
+  const second = migrateGroupSeeds(migrated.data, 456);
+  assert.equal(second.changed, false, "a completed migration never reseeds deleted groups");
 });
 
 console.log(`\nAll ${passed} logic checks passed.`);

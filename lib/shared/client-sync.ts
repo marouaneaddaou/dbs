@@ -53,6 +53,7 @@ export function collectLocalSharedData(readJSONFn: <T>(key: string, fallback: T)
     boxParticipants: readJSONFn(STORAGE_KEYS.boxParticipants, [] as any),
     boxGroupMemberships: readJSONFn(STORAGE_KEYS.boxGroupMembers, {} as any),
     boxGroups: readJSONFn(STORAGE_KEYS.boxGroups, [] as any),
+    boxGroupSeedVersion: 0,
     votingRooms: readJSONFn(STORAGE_KEYS.votingRooms, [] as any),
     quizRooms: readJSONFn(STORAGE_KEYS.quizRooms, [] as any),
     quizSessions: readJSONFn(STORAGE_KEYS.quizSessions, {} as any),

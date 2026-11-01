@@ -3,7 +3,7 @@ import type { BoxGroupMemberships, BoxGroupRecord, BoxParticipant } from "@/type
 import type { VotingRoomRecord } from "@/types/voting";
 import type { QuizHistoryMap, QuizRoom, QuizSessionRecord } from "@/types/quiz";
 import { normalizeSharedSaveTracking } from "@/lib/shared/retention";
-import { reconcileParticipantData, sanitizeMemberships, sanitizeParticipantRecords } from "@/lib/participants";
+import { reconcileGroupParticipants, reconcileParticipantData, sanitizeMemberships, sanitizeParticipantRecords } from "@/lib/participants";
 import { sanitizeBoxGroupRecords } from "@/lib/box-groups";
 
 export const SHARED_SCHEMA_VERSION = 1;
@@ -16,6 +16,7 @@ export interface SharedData {
   boxParticipants: BoxParticipant[];
   boxGroupMemberships: BoxGroupMemberships;
   boxGroups: BoxGroupRecord[];
+  boxGroupSeedVersion: number;
   votingRooms: VotingRoomRecord[];
   quizRooms: QuizRoom[];
   quizSessions: Record<string, QuizSessionRecord>;
@@ -37,6 +38,7 @@ export function createEmptySharedData(): SharedData {
     boxParticipants: [],
     boxGroupMemberships: {},
     boxGroups: [],
+    boxGroupSeedVersion: 0,
     votingRooms: [],
     quizRooms: [],
     quizSessions: {},
@@ -80,19 +82,24 @@ export function sanitizeSharedData(input: unknown): SharedData {
     boxParticipants,
     boxGroupMemberships,
   );
-  const memberships = { ...reconciled.memberships };
-  for (const group of boxGroups) {
-    if (!Object.prototype.hasOwnProperty.call(memberships, group.id)) {
-      memberships[group.id] = [];
-    }
-  }
+  const reconciledGroups = reconcileGroupParticipants(
+    boxGroups,
+    reconciled.participants,
+    reconciled.memberships,
+  );
 
   return normalizeSharedSaveTracking({
     boxConfigs,
     boxGames: isRecord(data.boxGames) ? (data.boxGames as Record<string, BoxGame>) : {},
-    boxParticipants: reconciled.participants,
-    boxGroupMemberships: memberships,
-    boxGroups,
+    boxParticipants: reconciledGroups.participants,
+    boxGroupMemberships: reconciledGroups.memberships,
+    boxGroups: reconciledGroups.groups,
+    boxGroupSeedVersion:
+      typeof data.boxGroupSeedVersion === "number" &&
+      Number.isFinite(data.boxGroupSeedVersion) &&
+      data.boxGroupSeedVersion > 0
+        ? Math.floor(data.boxGroupSeedVersion)
+        : 0,
     votingRooms: Array.isArray(data.votingRooms) ? (data.votingRooms as VotingRoomRecord[]) : [],
     quizRooms: Array.isArray(data.quizRooms) ? (data.quizRooms as QuizRoom[]) : [],
     quizSessions: isRecord(data.quizSessions) ? (data.quizSessions as Record<string, QuizSessionRecord>) : {},
@@ -114,6 +121,10 @@ export function mergeSharedData(base: SharedData, incoming: SharedData): SharedD
     boxParticipants: incoming.boxParticipants ?? base.boxParticipants,
     boxGroupMemberships: incoming.boxGroupMemberships ?? base.boxGroupMemberships,
     boxGroups: incoming.boxGroups ?? base.boxGroups,
+    boxGroupSeedVersion: Math.max(
+      incoming.boxGroupSeedVersion ?? 0,
+      base.boxGroupSeedVersion ?? 0,
+    ),
     votingRooms: incoming.votingRooms ?? base.votingRooms,
     quizRooms: incoming.quizRooms ?? base.quizRooms,
     quizSessions: incoming.quizSessions ?? base.quizSessions,
