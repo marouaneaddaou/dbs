@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import type { SharedData } from "@/lib/shared/schema";
 import { assertSharedPayloadSize, sanitizeSharedData } from "@/lib/shared/schema";
 import { readSharedState, writeSharedState, type SharedStateResult } from "@/lib/server/shared-storage";
@@ -91,42 +90,6 @@ export async function ensureGroupsMigrated(): Promise<SharedStateResult> {
     "groups-migration",
   );
   return result.state;
-}
-
-export async function createGroup(input: GroupInput): Promise<MutationResult> {
-  const initial = await readSharedState();
-  return mutateGroups(
-    initial,
-    (draft) => {
-      const now = Date.now();
-      const data = migrate(draft, now);
-      const id = `group-${randomUUID()}`;
-      const participants = registerParticipantNames(
-        data.boxParticipants,
-        input.participants,
-        now,
-      );
-      data.boxParticipants = participants;
-      data.boxGroups = [
-        ...data.boxGroups,
-        {
-          id,
-          name: input.name,
-          time: input.time,
-          participants: [...input.participants],
-          createdAt: now,
-          updatedAt: now,
-        },
-      ];
-      data.boxGroupMemberships = {
-        ...data.boxGroupMemberships,
-        [id]: membershipIdsForNames(participants, input.participants),
-      };
-      data.boxGroupSeedVersion = Math.max(data.boxGroupSeedVersion, GROUP_SEED_VERSION);
-      return { changed: true, data, groupId: id };
-    },
-    "groups",
-  );
 }
 
 export async function updateGroup(id: string, input: GroupInput): Promise<MutationResult> {

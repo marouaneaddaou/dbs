@@ -13,7 +13,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 
 interface GroupFormState {
-  id: string | null;
+  id: string;
   name: string;
   time: string;
   names: string[];
@@ -27,7 +27,6 @@ export function GroupManager() {
     saving,
     error,
     refresh,
-    createGroup,
     updateGroup,
     deleteGroup,
   } = useGroups();
@@ -35,12 +34,6 @@ export function GroupManager() {
   const [newName, setNewName] = useState("");
   const [pasteNames, setPasteNames] = useState("");
   const [pendingDelete, setPendingDelete] = useState<BoxGroupRecord | null>(null);
-
-  function startCreate() {
-    setForm({ id: null, name: "", time: "", names: [] });
-    setNewName("");
-    setPasteNames("");
-  }
 
   function startEdit(record: BoxGroupRecord) {
     setForm({
@@ -110,10 +103,9 @@ export function GroupManager() {
 
     try {
       const input = { name, time, participants: names };
-      if (form.id) await updateGroup(form.id, input);
-      else await createGroup(input);
+      await updateGroup(form.id, input);
       setForm(null);
-      toast.success(form.id ? "Gruppe aktualisiert." : "Gruppe erstellt.");
+      toast.success("Gruppe aktualisiert.");
     } catch (saveError) {
       toast.error(
         saveError instanceof Error ? saveError.message : "Die Gruppe konnte nicht gespeichert werden.",
@@ -140,16 +132,6 @@ export function GroupManager() {
         title="Gruppen"
         subtitle={loading ? "Gruppen werden geladen …" : `${groups.length} Gruppen`}
         icon={<Users className="h-5 w-5" />}
-        action={
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<Plus className="h-4 w-4" />}
-            onClick={startCreate}
-          >
-            Gruppe erstellen
-          </Button>
-        }
       />
       <CardBody className="p-0">
         {error ? (
@@ -245,7 +227,7 @@ export function GroupManager() {
       <Modal
         open={!!form}
         onClose={() => (saving ? undefined : setForm(null))}
-        title={form?.id ? "Gruppe bearbeiten" : "Gruppe erstellen"}
+        title="Gruppe bearbeiten"
         description="Name, Uhrzeit und Teilnehmende werden dauerhaft in der Datenbank gespeichert und synchronisiert."
         size="lg"
         footer={

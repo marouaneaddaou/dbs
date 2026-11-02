@@ -93,7 +93,7 @@ export function useGroups() {
   }, []);
 
   const mutate = useCallback(
-    async (url: string, method: "POST" | "PUT" | "DELETE", body?: GroupInput) => {
+    async (url: string, method: "PUT" | "DELETE", body?: GroupInput) => {
       mutationRef.current += 1;
       setSaving(true);
       try {
@@ -139,11 +139,6 @@ export function useGroups() {
     };
   }, [load]);
 
-  const createGroup = useCallback(
-    (input: GroupInput) => mutate("/api/groups", "POST", input),
-    [mutate],
-  );
-
   const updateGroup = useCallback(
     (id: string, input: GroupInput) =>
       mutate(`/api/groups/${encodeURIComponent(id)}`, "PUT", input),
@@ -161,7 +156,6 @@ export function useGroups() {
     saving,
     error,
     refresh: load,
-    createGroup,
     updateGroup,
     deleteGroup,
   } as const;
